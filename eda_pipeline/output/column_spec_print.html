@@ -1,0 +1,1231 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset='utf-8'>
+    <title>Column Specification</title>
+    
+<style>
+    @page { margin: 1cm; }
+    body { 
+        font-family: 'Malgun Gothic', sans-serif; 
+        background-color: #ffffff; 
+        color: #000000; 
+        line-height: 1.4;
+        font-size: 11pt;
+    }
+    h1, h2, h3 { color: #000000; page-break-after: avoid; }
+    table { 
+        border-collapse: collapse; 
+        width: 100%; 
+        margin-bottom: 20px; 
+        page-break-inside: avoid;
+    }
+    th, td { 
+        border: 1px solid #000000; 
+        text-align: left; 
+        padding: 6px; 
+        font-size: 10pt;
+    }
+    th { background-color: #f0f0f0; }
+    blockquote {
+        border-left: 4px solid #cccccc;
+        padding-left: 10px;
+        color: #555555;
+    }
+</style>
+
+</head>
+<body>
+    <h1>📋 차주별 통합 시트 — 컬럼 명세서</h1>
+<blockquote>
+<p><strong>파일</strong>: <code>eda_pipeline/output/nh_borrower_sheet.csv</code><br />
+<strong>Shape</strong>: 32,135행 × 181컬럼<br />
+⚠️ = 결측률 20%+, 🔴 = 결측률 80%+, 🔁 = 중복/통합 검토 필요</p>
+</blockquote>
+<hr />
+<h2>🔑 그룹 0 — 키 &amp; Target (15개)</h2>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>컬럼명</th>
+<th>타입</th>
+<th>결측률</th>
+<th>설명</th>
+<th>비고</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td><code>V_BZNO</code></td>
+<td>int64</td>
+<td>0%</td>
+<td>사업자번호 (익명화)</td>
+<td>PK</td>
+</tr>
+<tr>
+<td>2</td>
+<td><code>CONM</code></td>
+<td>str</td>
+<td>0%</td>
+<td>기업명 (익명화)</td>
+<td>—</td>
+</tr>
+<tr>
+<td>3</td>
+<td><code>IS_DEFAULT</code></td>
+<td>int64</td>
+<td>0%</td>
+<td>부도 여부 (0/1)</td>
+<td><strong>Target</strong></td>
+</tr>
+<tr>
+<td>4</td>
+<td><code>DEFAULT_YM</code></td>
+<td>float64</td>
+<td>96.3%</td>
+<td>부도 발생 월 (YYYYMM)</td>
+<td>IS_DEFAULT=1이면 유효</td>
+</tr>
+<tr>
+<td>5</td>
+<td><code>DEFAULT_YEAR</code></td>
+<td>float64</td>
+<td>96.3%</td>
+<td>부도 발생 연도</td>
+<td>← DEFAULT_YM에서 파생, <strong>중복</strong> 🔁</td>
+</tr>
+<tr>
+<td>6</td>
+<td><code>DSH_RSN_DSC</code></td>
+<td>float64</td>
+<td>96.3%</td>
+<td>부도 사유 코드</td>
+<td>—</td>
+</tr>
+<tr>
+<td>7</td>
+<td><code>IS_RECOVERED</code></td>
+<td>int64</td>
+<td>0%</td>
+<td>정상화 여부 (0/1)</td>
+<td>—</td>
+</tr>
+<tr>
+<td>8</td>
+<td><code>NMLZ_DT_STR</code></td>
+<td>float64</td>
+<td>99.7%</td>
+<td>정상화 일자</td>
+<td>IS_RECOVERED=1이면 유효</td>
+</tr>
+<tr>
+<td>9</td>
+<td><code>BRWR_DSH_YN</code></td>
+<td>float64</td>
+<td>96.3%</td>
+<td>차주 부도 여부 플래그</td>
+<td>← IS_DEFAULT와 거의 중복 🔁</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2>🏢 그룹 1 — 기업 기본정보 (6개)</h2>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>컬럼명</th>
+<th>타입</th>
+<th>결측률</th>
+<th>설명</th>
+<th>비고</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>10</td>
+<td><code>ETB_DT</code></td>
+<td>int64</td>
+<td>0.1%</td>
+<td>설립일 (YYYYMMDD)</td>
+<td>—</td>
+</tr>
+<tr>
+<td>11</td>
+<td><code>ETB_YEAR</code></td>
+<td>float64</td>
+<td>0.1%</td>
+<td>설립연도</td>
+<td>← ETB_DT에서 파생, <strong>중복</strong> 🔁</td>
+</tr>
+<tr>
+<td>12</td>
+<td><code>COMPANY_AGE</code></td>
+<td>float64</td>
+<td>0.1%</td>
+<td>업력 (년)</td>
+<td>← ETB_YEAR에서 파생, <strong>중복</strong> 🔁</td>
+</tr>
+<tr>
+<td>13</td>
+<td><code>COPR_OPNP_C</code></td>
+<td>int64</td>
+<td>0%</td>
+<td>법인구분코드 (개인/법인 등)</td>
+<td>—</td>
+</tr>
+<tr>
+<td>14</td>
+<td><code>BZSCAL_C</code></td>
+<td>int64</td>
+<td>4.6%</td>
+<td>기업규모 코드 (대/중/소)</td>
+<td>—</td>
+</tr>
+<tr>
+<td>15</td>
+<td><code>STD_INDS_CFC</code></td>
+<td>int64</td>
+<td>0.1%</td>
+<td>표준산업분류코드</td>
+<td>—</td>
+</tr>
+<tr>
+<td>16</td>
+<td><code>EMPCN</code></td>
+<td>int64</td>
+<td>0%</td>
+<td>종업원수 (UPCHE 기준, 특정 시점)</td>
+<td>← AA10과 <strong>중복</strong> 🔁</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2>🏦 그룹 2 — OBV 관찰세부등급 (30개)</h2>
+<blockquote>
+<p>당행 여신 관찰등급 월별 데이터 집계. <strong>결측 15% = 당행 여신 없는 기업</strong></p>
+</blockquote>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>컬럼명</th>
+<th>타입</th>
+<th>결측률</th>
+<th>설명</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>17</td>
+<td><code>OBV_MONTHS_CNT</code></td>
+<td>float64</td>
+<td>15.1%</td>
+<td>총 관찰 월수 (데이터 품질 지표)</td>
+</tr>
+<tr>
+<td>18</td>
+<td><code>OBV_GRD_LATEST</code></td>
+<td>str</td>
+<td>15.1%</td>
+<td>최근 관찰등급 (문자 코드)</td>
+</tr>
+<tr>
+<td></td>
+<td><strong>여신한도</strong></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>19</td>
+<td><code>OBV_LN_LMT_AM_FIRST</code></td>
+<td>float64</td>
+<td>15.1%</td>
+<td>최초 여신한도</td>
+</tr>
+<tr>
+<td>20</td>
+<td><code>OBV_LN_LMT_AM_LAST</code></td>
+<td>float64</td>
+<td>15.1%</td>
+<td>최근 여신한도</td>
+</tr>
+<tr>
+<td>21</td>
+<td><code>OBV_LN_LMT_AM_MEAN</code></td>
+<td>float64</td>
+<td>15.1%</td>
+<td>평균 여신한도</td>
+</tr>
+<tr>
+<td>22</td>
+<td><code>OBV_LN_LMT_AM_TREND</code></td>
+<td>float64</td>
+<td><strong>90.2%</strong> 🔴</td>
+<td>여신한도 추세</td>
+</tr>
+<tr>
+<td></td>
+<td><strong>여신잔액</strong></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>23</td>
+<td><code>OBV_LN_BAC_FIRST</code></td>
+<td>float64</td>
+<td>15.1%</td>
+<td>최초 여신잔액</td>
+</tr>
+<tr>
+<td>24</td>
+<td><code>OBV_LN_BAC_LAST</code></td>
+<td>float64</td>
+<td>15.1%</td>
+<td>최근 여신잔액</td>
+</tr>
+<tr>
+<td>25</td>
+<td><code>OBV_LN_BAC_MEAN</code></td>
+<td>float64</td>
+<td>15.1%</td>
+<td>평균 여신잔액</td>
+</tr>
+<tr>
+<td>26</td>
+<td><code>OBV_LN_BAC_TREND</code></td>
+<td>float64</td>
+<td><strong>50.1%</strong> ⚠️</td>
+<td>여신잔액 추세</td>
+</tr>
+<tr>
+<td></td>
+<td><strong>한도잔액</strong></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>27</td>
+<td><code>OBV_LN_LMT_BAC_FIRST</code></td>
+<td>float64</td>
+<td>15.1%</td>
+<td>최초 한도잔액</td>
+</tr>
+<tr>
+<td>28</td>
+<td><code>OBV_LN_LMT_BAC_LAST</code></td>
+<td>float64</td>
+<td>15.1%</td>
+<td>최근 한도잔액</td>
+</tr>
+<tr>
+<td>29</td>
+<td><code>OBV_LN_LMT_BAC_MEAN</code></td>
+<td>float64</td>
+<td>15.1%</td>
+<td>평균 한도잔액</td>
+</tr>
+<tr>
+<td>30</td>
+<td><code>OBV_LN_LMT_BAC_TREND</code></td>
+<td>float64</td>
+<td><strong>90.3%</strong> 🔴</td>
+<td>한도잔액 추세</td>
+</tr>
+<tr>
+<td></td>
+<td><strong>PD (부도확률)</strong></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>31</td>
+<td><code>OBV_RZVL_POD_FIRST</code></td>
+<td>float64</td>
+<td>15.1%</td>
+<td>최초 PD</td>
+</tr>
+<tr>
+<td>32</td>
+<td><code>OBV_RZVL_POD_LAST</code></td>
+<td>float64</td>
+<td>15.1%</td>
+<td>최근 PD</td>
+</tr>
+<tr>
+<td>33</td>
+<td><code>OBV_RZVL_POD_MEAN</code></td>
+<td>float64</td>
+<td>15.1%</td>
+<td>평균 PD</td>
+</tr>
+<tr>
+<td>34</td>
+<td><code>OBV_RZVL_POD_TREND</code></td>
+<td>float64</td>
+<td>44.6% ⚠️</td>
+<td>PD 추세</td>
+</tr>
+<tr>
+<td></td>
+<td><strong>LGD (손실율)</strong></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>35</td>
+<td><code>OBV_BZL_RZVL_ASP_ELGD_FIRST</code></td>
+<td>float64</td>
+<td>15.1%</td>
+<td>최초 LGD</td>
+</tr>
+<tr>
+<td>36</td>
+<td><code>OBV_BZL_RZVL_ASP_ELGD_LAST</code></td>
+<td>float64</td>
+<td>15.1%</td>
+<td>최근 LGD</td>
+</tr>
+<tr>
+<td>37</td>
+<td><code>OBV_BZL_RZVL_ASP_ELGD_MEAN</code></td>
+<td>float64</td>
+<td>15.1%</td>
+<td>평균 LGD</td>
+</tr>
+<tr>
+<td>38</td>
+<td><code>OBV_BZL_RZVL_ASP_ELGD_TREND</code></td>
+<td>float64</td>
+<td>44.7% ⚠️</td>
+<td>LGD 추세</td>
+</tr>
+<tr>
+<td></td>
+<td><strong>대손충당금</strong></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>39</td>
+<td><code>OBV_LD_AM_FIRST</code></td>
+<td>float64</td>
+<td>15.1%</td>
+<td>최초 대손충당금</td>
+</tr>
+<tr>
+<td>40</td>
+<td><code>OBV_LD_AM_LAST</code></td>
+<td>float64</td>
+<td>15.1%</td>
+<td>최근 대손충당금</td>
+</tr>
+<tr>
+<td>41</td>
+<td><code>OBV_LD_AM_MEAN</code></td>
+<td>float64</td>
+<td>15.1%</td>
+<td>평균 대손충당금</td>
+</tr>
+<tr>
+<td>42</td>
+<td><code>OBV_LD_AM_TREND</code></td>
+<td>float64</td>
+<td>15.8%</td>
+<td>대손충당금 추세</td>
+</tr>
+<tr>
+<td></td>
+<td><strong>기대손실액</strong></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>43</td>
+<td><code>OBV_XPC_LSS_AM_FIRST</code></td>
+<td>float64</td>
+<td>15.1%</td>
+<td>최초 기대손실액</td>
+</tr>
+<tr>
+<td>44</td>
+<td><code>OBV_XPC_LSS_AM_LAST</code></td>
+<td>float64</td>
+<td>15.1%</td>
+<td>최근 기대손실액</td>
+</tr>
+<tr>
+<td>45</td>
+<td><code>OBV_XPC_LSS_AM_MEAN</code></td>
+<td>float64</td>
+<td>15.1%</td>
+<td>평균 기대손실액</td>
+</tr>
+<tr>
+<td>46</td>
+<td><code>OBV_XPC_LSS_AM_TREND</code></td>
+<td>float64</td>
+<td>44.7% ⚠️</td>
+<td>기대손실액 추세</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2>📊 그룹 3 — JEMU 재무데이터 (59개)</h2>
+<blockquote>
+<p>최신 결산 기준. <code>_LATEST</code> = 절대값, <code>_YOY</code> = 전년 대비 변화율(%)</p>
+</blockquote>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>컬럼명 (LATEST / YOY 쌍)</th>
+<th>결측률</th>
+<th>설명</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>47</td>
+<td><code>JEMU_AVAIL_YEARS</code></td>
+<td>0.7%</td>
+<td>보유 재무제표 연수</td>
+</tr>
+<tr>
+<td>48</td>
+<td><code>JEMU_LATEST_YEAR</code></td>
+<td>0.7%</td>
+<td>최근 결산 연도</td>
+</tr>
+<tr>
+<td>49</td>
+<td><code>JEMU_감사의견_LATEST</code></td>
+<td>0.7%</td>
+<td>감사의견 코드</td>
+</tr>
+<tr>
+<td></td>
+<td><strong>재무상태표</strong></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>50~51</td>
+<td><code>JEMU_유동자산</code></td>
+<td>0.7%</td>
+<td>유동자산 (112000)</td>
+</tr>
+<tr>
+<td>52~53</td>
+<td><code>JEMU_비유동자산</code></td>
+<td>0.7%</td>
+<td>비유동자산 (114000)</td>
+</tr>
+<tr>
+<td>54~55</td>
+<td><code>JEMU_자산총계</code></td>
+<td>0.7%</td>
+<td>자산총계 (115000)</td>
+</tr>
+<tr>
+<td>56~57</td>
+<td><code>JEMU_유동부채</code></td>
+<td>0.7%</td>
+<td>유동부채 (116000)</td>
+</tr>
+<tr>
+<td>58~59</td>
+<td><code>JEMU_비유동부채</code></td>
+<td>0.7%</td>
+<td>비유동부채 (117000)</td>
+</tr>
+<tr>
+<td>60~61</td>
+<td><code>JEMU_부채총계</code></td>
+<td>0.7%</td>
+<td>부채총계 (118000)</td>
+</tr>
+<tr>
+<td>62~63</td>
+<td><code>JEMU_유동부채(재)</code></td>
+<td>0.7%</td>
+<td>유동부채 재분류 (118100)</td>
+</tr>
+<tr>
+<td>64~65</td>
+<td><code>JEMU_비유동부채(재)</code></td>
+<td>0.7%</td>
+<td>비유동부채 재분류 (118900)</td>
+</tr>
+<tr>
+<td>66~67</td>
+<td><code>JEMU_자본총계</code></td>
+<td>0.7%</td>
+<td>자본총계 (121000)</td>
+</tr>
+<tr>
+<td>68~69</td>
+<td><code>JEMU_자본금</code></td>
+<td>0.7%</td>
+<td>자본금 (123000)</td>
+</tr>
+<tr>
+<td></td>
+<td><strong>손익계산서</strong></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>70~71</td>
+<td><code>JEMU_매출액</code></td>
+<td>0.7%</td>
+<td>매출액 (125000)</td>
+</tr>
+<tr>
+<td>72~73</td>
+<td><code>JEMU_제품매출</code></td>
+<td>0.7%</td>
+<td>제품매출 (125100)</td>
+</tr>
+<tr>
+<td>74~75</td>
+<td><code>JEMU_영업이익</code></td>
+<td>0.7%</td>
+<td>영업이익 (126000)</td>
+</tr>
+<tr>
+<td>76~77</td>
+<td><code>JEMU_당기순이익</code></td>
+<td>0.7%</td>
+<td>당기순이익 (128000)</td>
+</tr>
+<tr>
+<td>78~79</td>
+<td><code>JEMU_EBITDA</code></td>
+<td>0.7%</td>
+<td>EBITDA (129000)</td>
+</tr>
+<tr>
+<td></td>
+<td><strong>재무비율</strong></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>80~81</td>
+<td><code>JEMU_유동비율</code></td>
+<td>0.7%</td>
+<td>유동비율 (191104)</td>
+</tr>
+<tr>
+<td>82~83</td>
+<td><code>JEMU_부채비율</code></td>
+<td>0.7%</td>
+<td>부채비율 (191105)</td>
+</tr>
+<tr>
+<td>84~85</td>
+<td><code>JEMU_자기자본비율</code></td>
+<td>0.7%</td>
+<td>자기자본비율 (191108)</td>
+</tr>
+<tr>
+<td>86~87</td>
+<td><code>JEMU_영업이익률</code></td>
+<td>0.7%</td>
+<td>영업이익률 (191110)</td>
+</tr>
+<tr>
+<td>88~89</td>
+<td><code>JEMU_ROE</code></td>
+<td>0.7%</td>
+<td>ROE (191204)</td>
+</tr>
+<tr>
+<td>90~91</td>
+<td><code>JEMU_총자산회전율</code></td>
+<td>0.7%</td>
+<td>총자산회전율 (191207)</td>
+</tr>
+<tr>
+<td>92~93</td>
+<td><code>JEMU_매출채권회전율</code></td>
+<td>0.7%</td>
+<td>매출채권회전율 (191208)</td>
+</tr>
+<tr>
+<td>94~95</td>
+<td><code>JEMU_재고자산회전율</code></td>
+<td>3.7%</td>
+<td>재고자산회전율 (191210)</td>
+</tr>
+<tr>
+<td>96~97</td>
+<td><code>JEMU_이자보상배율</code></td>
+<td>0.7%</td>
+<td>이자보상배율 (191310)</td>
+</tr>
+<tr>
+<td>98~99</td>
+<td><code>JEMU_매출액증가율</code></td>
+<td>0.7%</td>
+<td>매출액증가율 (191502)</td>
+</tr>
+<tr>
+<td>100~101</td>
+<td><code>JEMU_영업이익증가율</code></td>
+<td>24.9% ⚠️</td>
+<td>영업이익증가율 (191503)</td>
+</tr>
+<tr>
+<td>102~103</td>
+<td><code>JEMU_자산증가율</code></td>
+<td>0.7%</td>
+<td>자산증가율 (191505)</td>
+</tr>
+<tr>
+<td>104~105</td>
+<td><code>JEMU_자본증가율</code></td>
+<td>0.7%</td>
+<td>자본증가율 (191506)</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2>📈 그룹 4 — GRD 당행 내부등급 이력 (13개)</h2>
+<blockquote>
+<p><strong>핵심 신호</strong>: 등급 하락 횟수, 최근 2년 변화가 부도 예측력 높음</p>
+</blockquote>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>컬럼명</th>
+<th>타입</th>
+<th>결측률</th>
+<th>설명</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>106</td>
+<td><code>GRD_NICS_2021</code></td>
+<td>float64</td>
+<td>35.5% ⚠️</td>
+<td>2021년 NICS 등급 (숫자, 클수록 낮은 등급)</td>
+</tr>
+<tr>
+<td>107</td>
+<td><code>GRD_NICS_2022</code></td>
+<td>float64</td>
+<td>31.9% ⚠️</td>
+<td>2022년 NICS 등급</td>
+</tr>
+<tr>
+<td>108</td>
+<td><code>GRD_NICS_2023</code></td>
+<td>float64</td>
+<td>29.8% ⚠️</td>
+<td>2023년 NICS 등급</td>
+</tr>
+<tr>
+<td>109</td>
+<td><code>GRD_NICS_2024</code></td>
+<td>float64</td>
+<td>31.4% ⚠️</td>
+<td>2024년 NICS 등급</td>
+</tr>
+<tr>
+<td>110</td>
+<td><code>GRD_NICS_2025</code></td>
+<td>float64</td>
+<td>33.1% ⚠️</td>
+<td>2025년 NICS 등급</td>
+</tr>
+<tr>
+<td>111</td>
+<td><code>GRD_NICS_LATEST</code></td>
+<td>float64</td>
+<td>2.7%</td>
+<td>가장 최근 NICS 등급</td>
+</tr>
+<tr>
+<td>112</td>
+<td><code>GRD_NICS_EARLIEST</code></td>
+<td>float64</td>
+<td>2.7%</td>
+<td>최초 NICS 등급</td>
+</tr>
+<tr>
+<td>113</td>
+<td><code>GRD_NICS_CHANGE_TOTAL</code></td>
+<td>float64</td>
+<td>2.7%</td>
+<td>전체 등급 변화 (양수=악화)</td>
+</tr>
+<tr>
+<td>114</td>
+<td><code>GRD_NICS_CHANGE_LAST2Y</code></td>
+<td>float64</td>
+<td>17.5%</td>
+<td>최근 2년 등급 변화 ⭐</td>
+</tr>
+<tr>
+<td>115</td>
+<td><code>GRD_NICS_DOWNGRADE_CNT</code></td>
+<td>float64</td>
+<td>2.7%</td>
+<td>등급 하락 횟수 ⭐</td>
+</tr>
+<tr>
+<td>116</td>
+<td><code>GRD_NICS_UPGRADE_CNT</code></td>
+<td>float64</td>
+<td>2.7%</td>
+<td>등급 상승 횟수</td>
+</tr>
+<tr>
+<td>117</td>
+<td><code>GRD_NICS_VOLATILITY</code></td>
+<td>float64</td>
+<td>17.5%</td>
+<td>등급 변동성 (표준편차)</td>
+</tr>
+<tr>
+<td>118</td>
+<td><code>GRD_CRDEVL_PTTP_LATEST</code></td>
+<td>int64</td>
+<td>2.7%</td>
+<td>모형구분 최신값 (일반/특별관리 등)</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2>📉 그룹 5 — CG01 나이스 신용평점 (9개)</h2>
+<blockquote>
+<p>양수 클수록 좋은 평점. <strong>결측 = 나이스 평가 대상 아님</strong></p>
+</blockquote>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>컬럼명</th>
+<th>결측률</th>
+<th>설명</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>119</td>
+<td><code>CG01_KIS_2021</code></td>
+<td>19.8%</td>
+<td>2021년 KIS 종합평점</td>
+</tr>
+<tr>
+<td>120</td>
+<td><code>CG01_KIS_2022</code></td>
+<td>18.0%</td>
+<td>2022년 KIS 종합평점</td>
+</tr>
+<tr>
+<td>121</td>
+<td><code>CG01_KIS_2023</code></td>
+<td>19.6%</td>
+<td>2023년 KIS 종합평점</td>
+</tr>
+<tr>
+<td>122</td>
+<td><code>CG01_KIS_2024</code></td>
+<td>20.0%</td>
+<td>2024년 KIS 종합평점</td>
+</tr>
+<tr>
+<td>123</td>
+<td><code>CG01_KIS_2025</code></td>
+<td><strong>47.7%</strong> ⚠️</td>
+<td>2025년 KIS 종합평점</td>
+</tr>
+<tr>
+<td>124</td>
+<td><code>CG01_KIS_LATEST</code></td>
+<td>3.8%</td>
+<td>최근 KIS 평점</td>
+</tr>
+<tr>
+<td>125</td>
+<td><code>CG01_KIS_EARLIEST</code></td>
+<td>3.8%</td>
+<td>최초 KIS 평점</td>
+</tr>
+<tr>
+<td>126</td>
+<td><code>CG01_KIS_CHANGE_TOTAL</code></td>
+<td>3.8%</td>
+<td>전체 변화량</td>
+</tr>
+<tr>
+<td>127</td>
+<td><code>CG01_KIS_TREND_SLOPE</code></td>
+<td>9.5%</td>
+<td>추세 기울기 (양수=개선)</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2>🏷️ 그룹 6 — C302 나이스 CRI 외부등급 (7개)</h2>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>컬럼명</th>
+<th>결측률</th>
+<th>설명</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>128</td>
+<td><code>C302_CRI_LATEST_GRD</code></td>
+<td>1.9%</td>
+<td>최근 CRI 등급 (문자, AAA~D)</td>
+</tr>
+<tr>
+<td>129</td>
+<td><code>C302_CRI_EARLIEST_GRD</code></td>
+<td>1.9%</td>
+<td>최초 CRI 등급</td>
+</tr>
+<tr>
+<td>130</td>
+<td><code>C302_CRI_LATEST_ORD</code></td>
+<td>1.9%</td>
+<td>최근 등급 서열 (숫자 인코딩)</td>
+</tr>
+<tr>
+<td>131</td>
+<td><code>C302_CRI_CHANGE_ORD</code></td>
+<td>2.6%</td>
+<td>서열 변화 (양수=하락=악화)</td>
+</tr>
+<tr>
+<td>132</td>
+<td><code>C302_CRI_DOWNGRADE_CNT</code></td>
+<td>1.9%</td>
+<td>등급 하락 횟수</td>
+</tr>
+<tr>
+<td>133</td>
+<td><code>C302_CRI_UPGRADE_CNT</code></td>
+<td>1.9%</td>
+<td>등급 상승 횟수</td>
+</tr>
+<tr>
+<td>134</td>
+<td><code>C302_CRI_PERIODS_CNT</code></td>
+<td>1.9%</td>
+<td>등급 변경 이력 수</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2>💱 그룹 7 — AC12 외화부채 (14개)</h2>
+<blockquote>
+<p><strong>결측 90.5% = 외화 거래 없는 기업 (내수 위주)</strong> → 결측 자체가 정보</p>
+</blockquote>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>컬럼명</th>
+<th>결측률</th>
+<th>설명</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>135~136</td>
+<td><code>AC12_US_KRW_AM_LATEST / AVG</code></td>
+<td>90.5% 🔴</td>
+<td>미국달러 원화환산 (최신/평균)</td>
+</tr>
+<tr>
+<td>137~138</td>
+<td><code>AC12_JP_KRW_AM_LATEST / AVG</code></td>
+<td>90.5% 🔴</td>
+<td>일본엔화 원화환산</td>
+</tr>
+<tr>
+<td>139~140</td>
+<td><code>AC12_CN_KRW_AM_LATEST / AVG</code></td>
+<td>90.5% 🔴</td>
+<td>중국위안화 원화환산</td>
+</tr>
+<tr>
+<td>141~142</td>
+<td><code>AC12_EU_KRW_AM_LATEST / AVG</code></td>
+<td>90.5% 🔴</td>
+<td>유로화 원화환산</td>
+</tr>
+<tr>
+<td>143~144</td>
+<td><code>AC12_TOTAL_KRW_AM_LATEST / AVG</code></td>
+<td>90.5% 🔴</td>
+<td>외화부채 총합 원화환산</td>
+</tr>
+<tr>
+<td>145~146</td>
+<td><code>AC12_EXT_OTHER_KRW_AM_LATEST / AVG</code></td>
+<td>90.5% 🔴</td>
+<td>기타통화 원화환산</td>
+</tr>
+<tr>
+<td>147</td>
+<td><code>AC12_FC_CURRENCY_CNT</code></td>
+<td>90.5% 🔴</td>
+<td>거래 통화 수</td>
+</tr>
+<tr>
+<td>148</td>
+<td><code>AC12_US_RATIO_LATEST</code></td>
+<td>92.8% 🔴</td>
+<td>달러 비중</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2>🏭 그룹 8 — AA17 생산판매 (22개)</h2>
+<blockquote>
+<p><strong>결측 90% = 생산판매 데이터 없는 기업</strong> → 제조업 중심 데이터</p>
+</blockquote>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>컬럼명</th>
+<th>결측률</th>
+<th>설명</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>149</td>
+<td><code>AA17_AVAIL_QUARTERS</code></td>
+<td>84.7% 🔴</td>
+<td>보유 분기 수</td>
+</tr>
+<tr>
+<td>150</td>
+<td><code>AA17_SEL_YOY</code></td>
+<td>89.5% 🔴</td>
+<td>총판매 YoY 성장률</td>
+</tr>
+<tr>
+<td>151~155</td>
+<td><code>AA17_TOT_SEL_AM_2021~2025</code></td>
+<td>~90% 🔴</td>
+<td>연도별 총판매액</td>
+</tr>
+<tr>
+<td>156~160</td>
+<td><code>AA17_LA_XPO_AM_2021~2025</code></td>
+<td>~90% 🔴</td>
+<td>연도별 수출액</td>
+</tr>
+<tr>
+<td>161~165</td>
+<td><code>AA17_DME_AM_2021~2025</code></td>
+<td>~90% 🔴</td>
+<td>연도별 내수액</td>
+</tr>
+<tr>
+<td>166~170</td>
+<td><code>AA17_XPO_RATIO_2021~2025</code></td>
+<td>~90% 🔴</td>
+<td>연도별 수출비율</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2>👥 그룹 9 — AA10 종업원수 (5개)</h2>
+<blockquote>
+<p><strong>결측 85.4% = UPCHE의 EMPCN과 중복 → 통합 필요</strong> 🔁</p>
+</blockquote>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>컬럼명</th>
+<th>결측률</th>
+<th>설명</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>171</td>
+<td><code>AA10_PERS_LATEST</code></td>
+<td>85.4% 🔴</td>
+<td>최근 측정 인원수</td>
+</tr>
+<tr>
+<td>172</td>
+<td><code>AA10_PERS_EARLIEST</code></td>
+<td>85.4% 🔴</td>
+<td>최초 측정 인원수</td>
+</tr>
+<tr>
+<td>173</td>
+<td><code>AA10_PERS_CHANGE_RATE</code></td>
+<td>85.4% 🔴</td>
+<td>변화율 (%)</td>
+</tr>
+<tr>
+<td>174</td>
+<td><code>AA10_PERS_LAST_DATE</code></td>
+<td>85.4% 🔴</td>
+<td>마지막 측정 일자</td>
+</tr>
+<tr>
+<td>175</td>
+<td><code>AA10_MEASURE_CNT</code></td>
+<td>85.4% 🔴</td>
+<td>측정 횟수</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2>⚠️ 그룹 10 — CRIF 신용불량 이력 (6개)</h2>
+<blockquote>
+<p><strong>결측 93.6% = 불량 이력 없음 (정상)</strong> → 결측=정상으로 해석해야 함</p>
+</blockquote>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>컬럼명</th>
+<th>결측률</th>
+<th>설명</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>176</td>
+<td><code>CRIF_HAS_HISTORY_YN</code></td>
+<td><strong>0%</strong></td>
+<td>불량 이력 존재 여부 (0/1) ← 결측 없도록 0 채움</td>
+</tr>
+<tr>
+<td>177</td>
+<td><code>CRIF_RECORD_CNT</code></td>
+<td><strong>0%</strong></td>
+<td>불량 이력 건수 (없으면 0)</td>
+</tr>
+<tr>
+<td>178</td>
+<td><code>CRIF_LATEST_OCU_YY</code></td>
+<td>93.6% 🔴</td>
+<td>최근 불량 발생 연도</td>
+</tr>
+<tr>
+<td>179</td>
+<td><code>CRIF_LATEST_RSNC</code></td>
+<td>93.6% 🔴</td>
+<td>최근 불량 사유</td>
+</tr>
+<tr>
+<td>180</td>
+<td><code>CRIF_TOTAL_RSNC_AMT</code></td>
+<td>93.6% 🔴</td>
+<td>불량 사유 금액 합계</td>
+</tr>
+<tr>
+<td>181</td>
+<td><code>CRIF_TOTAL_OVD_AMT</code></td>
+<td>93.6% 🔴</td>
+<td>연체 금액 합계</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2>🔁 중복/통합 검토 권고사항</h2>
+<table>
+<thead>
+<tr>
+<th>중복 컬럼</th>
+<th>통합 방안</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>DEFAULT_YEAR</code> ← <code>DEFAULT_YM</code>에서 파생</td>
+<td><strong>삭제</strong> (DEFAULT_YM.str[:4]로 복원 가능)</td>
+</tr>
+<tr>
+<td><code>ETB_YEAR</code> ← <code>ETB_DT</code>에서 파생</td>
+<td><strong>삭제</strong> (ETB_DT.str[:4]로 복원 가능)</td>
+</tr>
+<tr>
+<td><code>COMPANY_AGE</code> ← <code>ETB_YEAR</code>에서 파생</td>
+<td><strong>유지</strong> (분석 편의상) 또는 삭제</td>
+</tr>
+<tr>
+<td><code>BRWR_DSH_YN</code> ≈ <code>IS_DEFAULT</code></td>
+<td><strong>삭제</strong> (IS_DEFAULT로 대체)</td>
+</tr>
+<tr>
+<td><code>EMPCN</code> (UPCHE) vs <code>AA10_PERS_LATEST</code></td>
+<td><strong>통합</strong> → <code>AA10_PERS_LATEST</code>가 더 정확 (시점 보정됨)</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p>✅ 정리 후 예상 컬럼 수: <strong>181 → 약 176개</strong> (5개 삭제)</p>
+</blockquote>
+<hr />
+<h2>📌 결측률 범례 요약</h2>
+<table>
+<thead>
+<tr>
+<th>결측률</th>
+<th>개수</th>
+<th>해석</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>0%</strong></td>
+<td>7개</td>
+<td>완전 데이터 (키/Target/플래그)</td>
+</tr>
+<tr>
+<td><strong>0~20%</strong></td>
+<td>110개</td>
+<td>활용 가능, 필요 시 중앙값/평균 대체</td>
+</tr>
+<tr>
+<td><strong>20~50%</strong></td>
+<td>11개</td>
+<td>주의 필요, 결측 플래그 컬럼 추가 권장</td>
+</tr>
+<tr>
+<td><strong>50~80%</strong></td>
+<td>1개</td>
+<td>(<code>OBV_LN_BAC_TREND</code>) 활용 시 주의</td>
+</tr>
+<tr>
+<td><strong>80%+</strong></td>
+<td>52개</td>
+<td>AC12·AA17·AA10·CRIF → <strong>결측 자체가 정보</strong> (외화거래 없음, 제조업 아님 등)</td>
+</tr>
+</tbody>
+</table>
+</body>
+</html>

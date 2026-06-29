@@ -1,0 +1,1000 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NH 차주 데이터 EDA 리포트</title>
+  
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Inter', 'Malgun Gothic', sans-serif; background: #F0F4FF; color: #1A1D2E; }
+  .container { max-width: 1400px; margin: 0 auto; padding: 20px; }
+  header { background: linear-gradient(135deg, #4F6EF5 0%, #7B5EA7 100%);
+           color: white; padding: 40px; border-radius: 16px; margin-bottom: 30px; }
+  header h1 { font-size: 2rem; margin-bottom: 8px; }
+  header p  { opacity: 0.85; font-size: 1rem; }
+  section   { background: white; border-radius: 16px; padding: 30px;
+              margin-bottom: 24px; box-shadow: 0 2px 12px rgba(79,110,245,0.08); }
+  h2 { font-size: 1.4rem; margin-bottom: 20px; color: #4F6EF5;
+       border-bottom: 2px solid #E8EDFF; padding-bottom: 10px; }
+  h3 { font-size: 1.1rem; margin: 20px 0 10px; color: #1A1D2E; }
+  .stats-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+                gap: 16px; margin-bottom: 24px; }
+  .stat-card { background: #F0F4FF; border-radius: 12px; padding: 16px;
+               text-align: center; border: 1px solid #E0E8FF; }
+  .stat-card.highlight { background: #FFF0F0; border-color: #FFD0D0; }
+  .stat-card.danger  { background: #FFF0F0; border-color: #E84040; }
+  .stat-card.warning { background: #FFF8E8; border-color: #F5A623; }
+  .stat-value { font-size: 1.8rem; font-weight: 700; color: #4F6EF5; }
+  .stat-card.highlight .stat-value { color: #E84040; }
+  .stat-card.danger   .stat-value  { color: #E84040; }
+  .stat-card.warning  .stat-value  { color: #F5A623; }
+  .stat-label { font-size: 0.8rem; color: #6B7280; margin-top: 4px; }
+  .plot-img { width: 100%; border-radius: 12px; margin: 16px 0;
+              box-shadow: 0 4px 16px rgba(0,0,0,0.08); }
+  .note { font-size: 0.85rem; color: #6B7280; margin-top: 8px; }
+  table.data-table { width: 100%; border-collapse: collapse; font-size: 0.85rem;
+                     margin-top: 12px; }
+  table.data-table th { background: #4F6EF5; color: white; padding: 10px 14px;
+                        text-align: left; }
+  table.data-table td { padding: 8px 14px; border-bottom: 1px solid #E8EDFF; }
+  table.data-table tr:nth-child(even) { background: #F7F9FF; }
+  table.data-table tr:hover { background: #EEF2FF; }
+  nav { background: white; border-radius: 12px; padding: 16px 24px;
+        margin-bottom: 24px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+  nav a { color: #4F6EF5; text-decoration: none; margin-right: 20px;
+          font-weight: 600; font-size: 0.9rem; }
+  nav a:hover { text-decoration: underline; }
+</style>
+
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>📊 NH 차주 데이터 EDA 리포트</h1>
+    <p>탐색적 데이터 분석(EDA) — 통합 패널 데이터셋 기반 부도율 예측 모형 준비</p>
+    <p style="margin-top:8px; font-size:0.85rem; opacity:0.7">자동 생성 | eda_pipeline/step3_eda.py</p>
+  </header>
+  <nav><a href="#overview">1.개요</a><a href="#target">2.결측치</a><a href="#missing">3.Target</a><a href="#numeric">4.수치형</a><a href="#categorical">5.범주형</a><a href="#timeseries">6.시계열</a><a href="#correlation">7.상관관계</a><a href="#trajectory">8.부도궤적</a></nav>
+  
+<section id="overview">
+  <h2>📊 1. 데이터 개요</h2>
+  <div class="stats-grid">
+    <div class="stat-card"><div class="stat-value">2,171,130</div><div class="stat-label">전체 행수</div></div>
+    <div class="stat-card"><div class="stat-value">70</div><div class="stat-label">전체 컬럼수</div></div>
+    <div class="stat-card"><div class="stat-value">32,135</div><div class="stat-label">차주 수</div></div>
+    <div class="stat-card"><div class="stat-value">66</div><div class="stat-label">관측 월수</div></div>
+    <div class="stat-card highlight"><div class="stat-value">2,868</div><div class="stat-label">부도 건수</div></div>
+    <div class="stat-card highlight"><div class="stat-value">0.132%</div><div class="stat-label">전체 부도율</div></div>
+    <div class="stat-card"><div class="stat-value">1,178,774</div><div class="stat-label">Train 행수 (≤2023)</div></div>
+    <div class="stat-card"><div class="stat-value">992,356</div><div class="stat-label">Valid 행수 (≥2024)</div></div>
+  </div>
+  <p class="note">데이터 타입: float64: 53, str: 15, int64: 1, datetime64[us]: 1</p>
+  <p class="note">기간: 202101 ~ 202606</p>
+</section>
+
+<section id="missing">
+  <h2>📉 2. 결측치 분석</h2>
+  <div class="stats-grid">
+    <div class="stat-card danger"><div class="stat-value">56</div><div class="stat-label">결측률 ≥45% (제거 후보)</div></div>
+    <div class="stat-card warning"><div class="stat-value">4</div><div class="stat-label">결측률 20~45% (주의)</div></div>
+    <div class="stat-card"><div class="stat-value">5</div><div class="stat-label">결측률 &lt;20% (양호)</div></div>
+  </div>
+  <img src="eda_plots/missing_rate.png" alt="결측률" class="plot-img">
+  <h3>결측률 상위 20개 컬럼</h3>
+  <table class="dataframe data-table">
+  <thead>
+    <tr style="text-align: right;">
+      <th>컬럼명</th>
+      <th>결측률(%)</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>CRIF_MAX(CRDBD_RLS_OCU_DT)</td>
+      <td>99.71</td>
+    </tr>
+    <tr>
+      <td>CRIF_CRDBD_RSNC</td>
+      <td>96.28</td>
+    </tr>
+    <tr>
+      <td>CRIF_SUM(CRDBD_OVD_AM)</td>
+      <td>96.28</td>
+    </tr>
+    <tr>
+      <td>CRIF_SUM(CRDBD_RSN_AM)</td>
+      <td>96.28</td>
+    </tr>
+    <tr>
+      <td>CRIF_MAX(CRDBD_RLS_RSNC)</td>
+      <td>96.28</td>
+    </tr>
+    <tr>
+      <td>AA17_TOT_SEL_AM</td>
+      <td>95.88</td>
+    </tr>
+    <tr>
+      <td>AA17_EXT_PROD_RECORD_YN</td>
+      <td>95.88</td>
+    </tr>
+    <tr>
+      <td>AA17_LA_XPO_AM</td>
+      <td>95.88</td>
+    </tr>
+    <tr>
+      <td>AA17_DME_AM</td>
+      <td>95.88</td>
+    </tr>
+    <tr>
+      <td>AC12_EU_FC_AM</td>
+      <td>94.81</td>
+    </tr>
+    <tr>
+      <td>AC12_US_KRW_AM</td>
+      <td>94.81</td>
+    </tr>
+    <tr>
+      <td>AC12_JP_FC_AM</td>
+      <td>94.81</td>
+    </tr>
+    <tr>
+      <td>AC12_CN_KRW_AM</td>
+      <td>94.81</td>
+    </tr>
+    <tr>
+      <td>AC12_EXT_OTHER_KRW_AM</td>
+      <td>94.81</td>
+    </tr>
+    <tr>
+      <td>AC12_CN_FC_AM</td>
+      <td>94.81</td>
+    </tr>
+    <tr>
+      <td>AC12_JP_KRW_AM</td>
+      <td>94.81</td>
+    </tr>
+    <tr>
+      <td>AC12_TOTAL_KRW_AM</td>
+      <td>94.81</td>
+    </tr>
+    <tr>
+      <td>AC12_EU_KRW_AM</td>
+      <td>94.81</td>
+    </tr>
+    <tr>
+      <td>AC12_US_FC_AM</td>
+      <td>94.81</td>
+    </tr>
+    <tr>
+      <td>JEMU_191506</td>
+      <td>92.92</td>
+    </tr>
+  </tbody>
+</table>
+</section>
+
+<section id="target">
+  <h2>🎯 3. Target 분포 (부도 여부)</h2>
+  <img src="eda_plots/target_distribution.png" alt="Target 분포" class="plot-img">
+  <h3>업종별 부도율 (상위 20)</h3><table class="dataframe data-table">
+  <thead>
+    <tr style="text-align: right;">
+      <th>STD_INDS_CFC</th>
+      <th>부도건수</th>
+      <th>전체건수</th>
+      <th>부도율</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>10129</td>
+      <td>87</td>
+      <td>32226</td>
+      <td>0.270</td>
+    </tr>
+    <tr>
+      <td>46313</td>
+      <td>78</td>
+      <td>28548</td>
+      <td>0.273</td>
+    </tr>
+    <tr>
+      <td>10309</td>
+      <td>66</td>
+      <td>23334</td>
+      <td>0.283</td>
+    </tr>
+    <tr>
+      <td>10121</td>
+      <td>66</td>
+      <td>19926</td>
+      <td>0.331</td>
+    </tr>
+    <tr>
+      <td>46312</td>
+      <td>65</td>
+      <td>27606</td>
+      <td>0.235</td>
+    </tr>
+    <tr>
+      <td>10122</td>
+      <td>53</td>
+      <td>13494</td>
+      <td>0.393</td>
+    </tr>
+    <tr>
+      <td>46315</td>
+      <td>50</td>
+      <td>12720</td>
+      <td>0.393</td>
+    </tr>
+    <tr>
+      <td>46800</td>
+      <td>41</td>
+      <td>27558</td>
+      <td>0.149</td>
+    </tr>
+    <tr>
+      <td>46311</td>
+      <td>38</td>
+      <td>22650</td>
+      <td>0.168</td>
+    </tr>
+    <tr>
+      <td>10212</td>
+      <td>37</td>
+      <td>8268</td>
+      <td>0.448</td>
+    </tr>
+    <tr>
+      <td>46413</td>
+      <td>37</td>
+      <td>5280</td>
+      <td>0.701</td>
+    </tr>
+    <tr>
+      <td>30399</td>
+      <td>34</td>
+      <td>36156</td>
+      <td>0.094</td>
+    </tr>
+    <tr>
+      <td>46721</td>
+      <td>33</td>
+      <td>22446</td>
+      <td>0.147</td>
+    </tr>
+    <tr>
+      <td>58222</td>
+      <td>28</td>
+      <td>28752</td>
+      <td>0.097</td>
+    </tr>
+    <tr>
+      <td>46201</td>
+      <td>28</td>
+      <td>10230</td>
+      <td>0.274</td>
+    </tr>
+    <tr>
+      <td>41100</td>
+      <td>27</td>
+      <td>9822</td>
+      <td>0.275</td>
+    </tr>
+    <tr>
+      <td>46101</td>
+      <td>26</td>
+      <td>4992</td>
+      <td>0.521</td>
+    </tr>
+    <tr>
+      <td>46329</td>
+      <td>26</td>
+      <td>18066</td>
+      <td>0.144</td>
+    </tr>
+    <tr>
+      <td>10519</td>
+      <td>26</td>
+      <td>4056</td>
+      <td>0.641</td>
+    </tr>
+    <tr>
+      <td>1110</td>
+      <td>24</td>
+      <td>15420</td>
+      <td>0.156</td>
+    </tr>
+  </tbody>
+</table>
+</section>
+
+<section id="numeric">
+  <h2>📈 4. 수치형 변수 분포</h2>
+  <img src="eda_plots/numeric_distributions.png" alt="수치형 분포" class="plot-img">
+  <h3>기술 통계 (상위 30개 수치형 컬럼)</h3>
+  <table class="dataframe data-table">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>count</th>
+      <th>mean</th>
+      <th>std</th>
+      <th>min</th>
+      <th>1%</th>
+      <th>5%</th>
+      <th>25%</th>
+      <th>50%</th>
+      <th>75%</th>
+      <th>95%</th>
+      <th>99%</th>
+      <th>max</th>
+      <th>skew</th>
+      <th>kurtosis</th>
+      <th>missing_pct</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>OBV_LN_LMT_AM</th>
+      <td>995819.0</td>
+      <td>5.505019e+07</td>
+      <td>1.631112e+09</td>
+      <td>0.000000e+00</td>
+      <td>0.000000e+00</td>
+      <td>0.000000e+00</td>
+      <td>0.00</td>
+      <td>0.000000e+00</td>
+      <td>0.000000e+00</td>
+      <td>0.000000e+00</td>
+      <td>5.500000e+08</td>
+      <td>3.515100e+11</td>
+      <td>113.4981</td>
+      <td>18278.7026</td>
+      <td>54.1336</td>
+    </tr>
+    <tr>
+      <th>OBV_LN_BAC</th>
+      <td>995819.0</td>
+      <td>1.405029e+08</td>
+      <td>1.608213e+09</td>
+      <td>0.000000e+00</td>
+      <td>0.000000e+00</td>
+      <td>0.000000e+00</td>
+      <td>0.00</td>
+      <td>0.000000e+00</td>
+      <td>0.000000e+00</td>
+      <td>4.700000e+08</td>
+      <td>2.185000e+09</td>
+      <td>2.000000e+11</td>
+      <td>47.1635</td>
+      <td>3339.1605</td>
+      <td>54.1336</td>
+    </tr>
+    <tr>
+      <th>OBV_LN_LMT_BAC</th>
+      <td>995819.0</td>
+      <td>3.825518e+07</td>
+      <td>1.141995e+09</td>
+      <td>0.000000e+00</td>
+      <td>0.000000e+00</td>
+      <td>0.000000e+00</td>
+      <td>0.00</td>
+      <td>0.000000e+00</td>
+      <td>0.000000e+00</td>
+      <td>0.000000e+00</td>
+      <td>3.093477e+08</td>
+      <td>3.400500e+11</td>
+      <td>115.8766</td>
+      <td>21852.9268</td>
+      <td>54.1336</td>
+    </tr>
+    <tr>
+      <th>OBV_RZVL_POD</th>
+      <td>995819.0</td>
+      <td>1.280200e+00</td>
+      <td>5.189400e+00</td>
+      <td>0.000000e+00</td>
+      <td>0.000000e+00</td>
+      <td>0.000000e+00</td>
+      <td>0.00</td>
+      <td>0.000000e+00</td>
+      <td>0.000000e+00</td>
+      <td>7.826000e+00</td>
+      <td>3.021700e+01</td>
+      <td>1.000000e+02</td>
+      <td>6.6426</td>
+      <td>56.7731</td>
+      <td>54.1336</td>
+    </tr>
+    <tr>
+      <th>OBV_BZL_RZVL_ASP_ELGD</th>
+      <td>995819.0</td>
+      <td>5.155200e+00</td>
+      <td>1.627360e+01</td>
+      <td>0.000000e+00</td>
+      <td>0.000000e+00</td>
+      <td>0.000000e+00</td>
+      <td>0.00</td>
+      <td>0.000000e+00</td>
+      <td>0.000000e+00</td>
+      <td>6.673000e+01</td>
+      <td>6.735000e+01</td>
+      <td>7.555000e+01</td>
+      <td>3.3425</td>
+      <td>9.6172</td>
+      <td>54.1336</td>
+    </tr>
+    <tr>
+      <th>OBV_LD_AM</th>
+      <td>995819.0</td>
+      <td>1.736363e+09</td>
+      <td>2.228571e+10</td>
+      <td>0.000000e+00</td>
+      <td>2.511396e+04</td>
+      <td>7.700000e+05</td>
+      <td>26640900.00</td>
+      <td>1.094901e+08</td>
+      <td>3.349000e+08</td>
+      <td>3.056910e+09</td>
+      <td>2.381936e+10</td>
+      <td>2.627676e+12</td>
+      <td>51.6670</td>
+      <td>4238.5673</td>
+      <td>54.1336</td>
+    </tr>
+    <tr>
+      <th>OBV_XPC_LSS_AM</th>
+      <td>995819.0</td>
+      <td>5.362499e+06</td>
+      <td>5.680368e+08</td>
+      <td>0.000000e+00</td>
+      <td>0.000000e+00</td>
+      <td>0.000000e+00</td>
+      <td>0.00</td>
+      <td>0.000000e+00</td>
+      <td>0.000000e+00</td>
+      <td>1.021880e+07</td>
+      <td>6.398694e+07</td>
+      <td>2.447487e+11</td>
+      <td>338.0378</td>
+      <td>125505.1844</td>
+      <td>54.1336</td>
+    </tr>
+    <tr>
+      <th>JEMU_112000</th>
+      <td>156509.0</td>
+      <td>3.834380e+07</td>
+      <td>6.212056e+08</td>
+      <td>0.000000e+00</td>
+      <td>4.430300e+04</td>
+      <td>3.216624e+05</td>
+      <td>1486572.00</td>
+      <td>2.913131e+06</td>
+      <td>7.184267e+06</td>
+      <td>7.124149e+07</td>
+      <td>4.591333e+08</td>
+      <td>1.014394e+11</td>
+      <td>81.4869</td>
+      <td>9819.2931</td>
+      <td>92.7914</td>
+    </tr>
+    <tr>
+      <th>JEMU_114000</th>
+      <td>156509.0</td>
+      <td>7.091915e+07</td>
+      <td>1.600267e+09</td>
+      <td>0.000000e+00</td>
+      <td>1.695952e+04</td>
+      <td>1.257664e+05</td>
+      <td>962320.00</td>
+      <td>2.632113e+06</td>
+      <td>7.766310e+06</td>
+      <td>8.842026e+07</td>
+      <td>8.455135e+08</td>
+      <td>2.574626e+11</td>
+      <td>100.3520</td>
+      <td>13374.5050</td>
+      <td>92.7914</td>
+    </tr>
+    <tr>
+      <th>JEMU_115000</th>
+      <td>156509.0</td>
+      <td>1.094388e+08</td>
+      <td>2.179215e+09</td>
+      <td>0.000000e+00</td>
+      <td>6.496726e+05</td>
+      <td>1.703260e+06</td>
+      <td>3086689.00</td>
+      <td>5.977949e+06</td>
+      <td>1.542977e+07</td>
+      <td>1.653036e+08</td>
+      <td>1.283330e+09</td>
+      <td>3.589021e+11</td>
+      <td>97.7686</td>
+      <td>12967.8232</td>
+      <td>92.7914</td>
+    </tr>
+    <tr>
+      <th>JEMU_116000</th>
+      <td>156509.0</td>
+      <td>3.204151e+07</td>
+      <td>4.893281e+08</td>
+      <td>0.000000e+00</td>
+      <td>1.216032e+04</td>
+      <td>8.022700e+04</td>
+      <td>463312.00</td>
+      <td>1.361119e+06</td>
+      <td>5.509782e+06</td>
+      <td>6.138938e+07</td>
+      <td>4.118921e+08</td>
+      <td>8.015798e+10</td>
+      <td>79.2258</td>
+      <td>9918.5914</td>
+      <td>92.7914</td>
+    </tr>
+    <tr>
+      <th>JEMU_117000</th>
+      <td>156509.0</td>
+      <td>1.821706e+07</td>
+      <td>2.679610e+08</td>
+      <td>-3.627116e+06</td>
+      <td>0.000000e+00</td>
+      <td>0.000000e+00</td>
+      <td>400000.00</td>
+      <td>1.401173e+06</td>
+      <td>3.494952e+06</td>
+      <td>2.036169e+07</td>
+      <td>2.287697e+08</td>
+      <td>3.163659e+10</td>
+      <td>47.5606</td>
+      <td>3597.5080</td>
+      <td>92.7914</td>
+    </tr>
+    <tr>
+      <th>JEMU_118000</th>
+      <td>156509.0</td>
+      <td>5.006258e+07</td>
+      <td>7.087555e+08</td>
+      <td>-2.688081e+06</td>
+      <td>7.487408e+04</td>
+      <td>3.800000e+05</td>
+      <td>1507965.00</td>
+      <td>3.257047e+06</td>
+      <td>8.753622e+06</td>
+      <td>8.276377e+07</td>
+      <td>6.447937e+08</td>
+      <td>1.045720e+11</td>
+      <td>61.6720</td>
+      <td>6320.4468</td>
+      <td>92.7914</td>
+    </tr>
+    <tr>
+      <th>JEMU_118100</th>
+      <td>156509.0</td>
+      <td>4.958699e+06</td>
+      <td>6.207880e+07</td>
+      <td>-1.839337e+08</td>
+      <td>1.000000e+04</td>
+      <td>5.000000e+04</td>
+      <td>150000.00</td>
+      <td>3.550000e+05</td>
+      <td>9.500000e+05</td>
+      <td>9.304226e+06</td>
+      <td>6.600000e+07</td>
+      <td>5.125197e+09</td>
+      <td>37.9418</td>
+      <td>1901.7890</td>
+      <td>92.7914</td>
+    </tr>
+    <tr>
+      <th>JEMU_118900</th>
+      <td>156509.0</td>
+      <td>5.944793e+07</td>
+      <td>1.549649e+09</td>
+      <td>-8.371726e+08</td>
+      <td>-1.822858e+06</td>
+      <td>1.906474e+05</td>
+      <td>1127182.00</td>
+      <td>2.397999e+06</td>
+      <td>6.431876e+06</td>
+      <td>7.890638e+07</td>
+      <td>6.607304e+08</td>
+      <td>2.543301e+11</td>
+      <td>109.1916</td>
+      <td>15062.6536</td>
+      <td>92.7914</td>
+    </tr>
+    <tr>
+      <th>JEMU_121000</th>
+      <td>156509.0</td>
+      <td>8.443531e+07</td>
+      <td>1.543627e+09</td>
+      <td>-3.907374e+07</td>
+      <td>0.000000e+00</td>
+      <td>3.330106e+05</td>
+      <td>2389600.00</td>
+      <td>6.002279e+06</td>
+      <td>1.665613e+07</td>
+      <td>1.418885e+08</td>
+      <td>1.059451e+09</td>
+      <td>2.380430e+11</td>
+      <td>89.5140</td>
+      <td>11156.1616</td>
+      <td>92.7914</td>
+    </tr>
+    <tr>
+      <th>JEMU_123000</th>
+      <td>156509.0</td>
+      <td>1.704112e+07</td>
+      <td>4.224343e+08</td>
+      <td>-1.635890e+09</td>
+      <td>-7.075960e+05</td>
+      <td>4.576880e+04</td>
+      <td>506087.00</td>
+      <td>1.158885e+06</td>
+      <td>3.197244e+06</td>
+      <td>2.543771e+07</td>
+      <td>2.122206e+08</td>
+      <td>7.204872e+10</td>
+      <td>109.8612</td>
+      <td>15318.6843</td>
+      <td>92.7914</td>
+    </tr>
+    <tr>
+      <th>JEMU_125000</th>
+      <td>156509.0</td>
+      <td>4.840036e+06</td>
+      <td>1.965891e+08</td>
+      <td>-1.152630e+10</td>
+      <td>-6.594663e+06</td>
+      <td>-7.819594e+05</td>
+      <td>64468.00</td>
+      <td>2.290050e+05</td>
+      <td>6.600120e+05</td>
+      <td>6.659014e+06</td>
+      <td>6.026146e+07</td>
+      <td>4.400741e+10</td>
+      <td>137.5270</td>
+      <td>24894.1291</td>
+      <td>92.7914</td>
+    </tr>
+    <tr>
+      <th>JEMU_125100</th>
+      <td>156509.0</td>
+      <td>4.971706e+06</td>
+      <td>1.503811e+08</td>
+      <td>-1.398733e+08</td>
+      <td>1.000000e+01</td>
+      <td>4.750000e+02</td>
+      <td>14991.00</td>
+      <td>5.680100e+04</td>
+      <td>2.393140e+05</td>
+      <td>4.707268e+06</td>
+      <td>4.881407e+07</td>
+      <td>3.703198e+10</td>
+      <td>142.1704</td>
+      <td>28296.4315</td>
+      <td>92.7914</td>
+    </tr>
+    <tr>
+      <th>JEMU_126000</th>
+      <td>156509.0</td>
+      <td>4.660824e+06</td>
+      <td>8.544453e+07</td>
+      <td>-1.398733e+08</td>
+      <td>0.000000e+00</td>
+      <td>4.062400e+03</td>
+      <td>41127.00</td>
+      <td>1.114410e+05</td>
+      <td>3.611460e+05</td>
+      <td>5.558627e+06</td>
+      <td>5.472294e+07</td>
+      <td>1.225634e+10</td>
+      <td>65.7443</td>
+      <td>6426.9786</td>
+      <td>92.7914</td>
+    </tr>
+    <tr>
+      <th>JEMU_128000</th>
+      <td>156509.0</td>
+      <td>5.156465e+06</td>
+      <td>2.388768e+08</td>
+      <td>-7.578702e+09</td>
+      <td>-1.279341e+07</td>
+      <td>-1.148559e+06</td>
+      <td>39031.00</td>
+      <td>1.769560e+05</td>
+      <td>5.762680e+05</td>
+      <td>6.709090e+06</td>
+      <td>6.215884e+07</td>
+      <td>5.005846e+10</td>
+      <td>133.1658</td>
+      <td>21991.6444</td>
+      <td>92.7914</td>
+    </tr>
+    <tr>
+      <th>JEMU_129000</th>
+      <td>156509.0</td>
+      <td>4.353811e+06</td>
+      <td>2.148110e+08</td>
+      <td>-4.836170e+09</td>
+      <td>-1.250912e+07</td>
+      <td>-1.131322e+06</td>
+      <td>27785.00</td>
+      <td>1.548490e+05</td>
+      <td>4.972680e+05</td>
+      <td>5.603443e+06</td>
+      <td>5.141079e+07</td>
+      <td>4.268882e+10</td>
+      <td>131.3698</td>
+      <td>20483.1011</td>
+      <td>92.7914</td>
+    </tr>
+    <tr>
+      <th>JEMU_191104</th>
+      <td>156509.0</td>
+      <td>3.521388e+02</td>
+      <td>1.778991e+03</td>
+      <td>-3.967700e+02</td>
+      <td>-8.357000e+01</td>
+      <td>-4.581000e+01</td>
+      <td>-9.34</td>
+      <td>5.640000e+00</td>
+      <td>2.735000e+01</td>
+      <td>2.885720e+02</td>
+      <td>1.000000e+04</td>
+      <td>1.000300e+04</td>
+      <td>5.1920</td>
+      <td>25.1322</td>
+      <td>92.7914</td>
+    </tr>
+    <tr>
+      <th>JEMU_191105</th>
+      <td>156509.0</td>
+      <td>2.521017e+03</td>
+      <td>4.271853e+03</td>
+      <td>-1.000000e+02</td>
+      <td>-9.630000e+01</td>
+      <td>-7.975000e+01</td>
+      <td>-20.01</td>
+      <td>3.395000e+01</td>
+      <td>2.793900e+03</td>
+      <td>1.000300e+04</td>
+      <td>1.000300e+04</td>
+      <td>1.000300e+04</td>
+      <td>1.1666</td>
+      <td>-0.6187</td>
+      <td>92.7914</td>
+    </tr>
+    <tr>
+      <th>JEMU_191108</th>
+      <td>156509.0</td>
+      <td>2.439617e+03</td>
+      <td>4.236200e+03</td>
+      <td>-1.000000e+02</td>
+      <td>-9.342920e+01</td>
+      <td>-7.056000e+01</td>
+      <td>-13.59</td>
+      <td>3.249000e+01</td>
+      <td>1.088460e+03</td>
+      <td>1.000300e+04</td>
+      <td>1.000300e+04</td>
+      <td>1.000300e+04</td>
+      <td>1.2152</td>
+      <td>-0.5082</td>
+      <td>92.7914</td>
+    </tr>
+    <tr>
+      <th>JEMU_191110</th>
+      <td>156509.0</td>
+      <td>6.864470e+01</td>
+      <td>5.999629e+02</td>
+      <td>-9.999990e+03</td>
+      <td>-1.000000e+02</td>
+      <td>-7.655000e+01</td>
+      <td>-7.65</td>
+      <td>0.000000e+00</td>
+      <td>2.238000e+01</td>
+      <td>1.886700e+02</td>
+      <td>1.288004e+03</td>
+      <td>1.000000e+04</td>
+      <td>13.6109</td>
+      <td>213.6711</td>
+      <td>92.7914</td>
+    </tr>
+    <tr>
+      <th>JEMU_191204</th>
+      <td>156509.0</td>
+      <td>1.410370e+02</td>
+      <td>1.266645e+03</td>
+      <td>-9.999990e+03</td>
+      <td>-2.011436e+02</td>
+      <td>-1.878000e+01</td>
+      <td>1.47</td>
+      <td>4.200000e+00</td>
+      <td>9.000000e+00</td>
+      <td>3.757600e+01</td>
+      <td>1.000000e+04</td>
+      <td>1.000000e+04</td>
+      <td>6.7374</td>
+      <td>56.0536</td>
+      <td>92.7914</td>
+    </tr>
+    <tr>
+      <th>JEMU_191207</th>
+      <td>156509.0</td>
+      <td>5.242641e+02</td>
+      <td>2.206921e+03</td>
+      <td>-9.999990e+03</td>
+      <td>-6.721600e+01</td>
+      <td>-6.990000e+00</td>
+      <td>1.08</td>
+      <td>2.760000e+00</td>
+      <td>9.820000e+00</td>
+      <td>9.999990e+03</td>
+      <td>1.000000e+04</td>
+      <td>1.000000e+04</td>
+      <td>3.9516</td>
+      <td>14.3592</td>
+      <td>92.7914</td>
+    </tr>
+    <tr>
+      <th>JEMU_191208</th>
+      <td>156506.0</td>
+      <td>2.316817e+02</td>
+      <td>1.497243e+03</td>
+      <td>-9.999990e+03</td>
+      <td>-1.352770e+02</td>
+      <td>-2.357250e+01</td>
+      <td>2.09</td>
+      <td>7.870000e+00</td>
+      <td>1.846000e+01</td>
+      <td>7.438750e+01</td>
+      <td>1.000000e+04</td>
+      <td>1.000000e+04</td>
+      <td>6.2028</td>
+      <td>38.4612</td>
+      <td>92.7915</td>
+    </tr>
+    <tr>
+      <th>JEMU_191210</th>
+      <td>156506.0</td>
+      <td>5.050860e+01</td>
+      <td>6.787673e+02</td>
+      <td>-9.999990e+03</td>
+      <td>-3.206000e+01</td>
+      <td>-8.870000e+00</td>
+      <td>0.67</td>
+      <td>2.980000e+00</td>
+      <td>7.210000e+00</td>
+      <td>2.259000e+01</td>
+      <td>6.891450e+01</td>
+      <td>1.000000e+04</td>
+      <td>14.2767</td>
+      <td>209.2731</td>
+      <td>92.7915</td>
+    </tr>
+  </tbody>
+</table>
+</section>
+
+<section id="categorical">
+  <h2>🏷️ 5. 범주형 변수 분포</h2>
+  <img src="eda_plots/categorical_distributions.png" alt="범주형 분포" class="plot-img">
+</section>
+
+<section id="timeseries">
+  <h2>📅 6. 주요 지표 시계열 추이</h2>
+  <img src="eda_plots/timeseries_trends.png" alt="시계열" class="plot-img">
+  <p class="note">점선: 학습(Train) / 검증(Valid) 분리 시점 (2023-12)</p>
+</section>
+
+<section id="correlation">
+  <h2>🔗 7. 상관관계 분석</h2>
+  <img src="eda_plots/target_correlation.png" alt="Target 상관" class="plot-img">
+  <img src="eda_plots/correlation_heatmap.png" alt="상관행렬" class="plot-img">
+  <h3>Target(IS_BUDO_YN)과의 상관 상위 20개</h3><table class="dataframe data-table">
+  <thead>
+    <tr style="text-align: right;">
+      <th>컬럼명</th>
+      <th>상관계수</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>IS_BUDO_YN</td>
+      <td>1.000000</td>
+    </tr>
+    <tr>
+      <td>C302_CRI_ORD</td>
+      <td>0.049655</td>
+    </tr>
+    <tr>
+      <td>CG01_KIS_SCORE</td>
+      <td>-0.042751</td>
+    </tr>
+    <tr>
+      <td>JEMU_191105</td>
+      <td>0.016521</td>
+    </tr>
+    <tr>
+      <td>JEMU_191208</td>
+      <td>0.014940</td>
+    </tr>
+    <tr>
+      <td>JEMU_191108</td>
+      <td>0.014260</td>
+    </tr>
+    <tr>
+      <td>OBV_BZL_RZVL_ASP_ELGD</td>
+      <td>-0.013034</td>
+    </tr>
+    <tr>
+      <td>OBV_RZVL_POD</td>
+      <td>-0.009561</td>
+    </tr>
+    <tr>
+      <td>AA10_PERS_CNT</td>
+      <td>-0.005630</td>
+    </tr>
+    <tr>
+      <td>JEMU_191506</td>
+      <td>-0.004295</td>
+    </tr>
+    <tr>
+      <td>OBV_LN_BAC</td>
+      <td>-0.003597</td>
+    </tr>
+    <tr>
+      <td>JEMU_191110</td>
+      <td>-0.003570</td>
+    </tr>
+    <tr>
+      <td>JEMU_191310</td>
+      <td>-0.003033</td>
+    </tr>
+    <tr>
+      <td>JEMU_191207</td>
+      <td>-0.002876</td>
+    </tr>
+    <tr>
+      <td>OBV_LD_AM</td>
+      <td>-0.002876</td>
+    </tr>
+    <tr>
+      <td>JEMU_191502</td>
+      <td>-0.002820</td>
+    </tr>
+    <tr>
+      <td>JEMU_191204</td>
+      <td>-0.002365</td>
+    </tr>
+    <tr>
+      <td>JEMU_191505</td>
+      <td>-0.002175</td>
+    </tr>
+    <tr>
+      <td>JEMU_191104</td>
+      <td>-0.001876</td>
+    </tr>
+    <tr>
+      <td>JEMU_191210</td>
+      <td>-0.001777</td>
+    </tr>
+  </tbody>
+</table>
+</section>
+
+<section id="trajectory">
+  <h2>📉 8. 부도 전 주요 지표 변화 궤적</h2>
+  <p class="note">부도 발생 12개월 전부터의 평균 지표 변화 (최대 200개사 기준)</p>
+  <img src="eda_plots/default_trajectory.png" alt="부도 전 궤적" class="plot-img">
+</section>
+
+</div>
+</body>
+</html>

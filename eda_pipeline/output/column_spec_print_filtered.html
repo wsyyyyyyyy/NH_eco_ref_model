@@ -1,0 +1,495 @@
+<!DOCTYPE html><html><head><meta charset='utf-8'><title>Column Spec (Size 4.0 Filtered)</title>
+<style>
+    @page { margin: 1cm; }
+    body { font-family: 'Malgun Gothic', sans-serif; background-color: #ffffff; color: #000000; line-height: 1.4; font-size: 11pt; }
+    h1, h2, h3 { color: #000000; page-break-after: avoid; }
+    table { border-collapse: collapse; width: 100%; margin-bottom: 20px; page-break-inside: avoid; }
+    th, td { border: 1px solid #000000; text-align: left; padding: 6px; font-size: 10pt; }
+    th { background-color: #f0f0f0; }
+    blockquote { border-left: 4px solid #cccccc; padding-left: 10px; color: #555555; }
+</style>
+</head><body><h1>📋 차주별 통합 시트 — 컬럼 명세서 (규모코드 4.0 전용)</h1>
+<blockquote>
+<p><strong>파일</strong>: <code>eda_pipeline/output/nh_borrower_sheet.csv</code><br />
+<strong>Shape</strong>: 26,184행 × 182컬럼 (중소기업 추정 데이터만 포함)<br />
+⚠️ = 결측률 20%+, 🔴 = 결측률 80%+, 🔁 = 중복/통합 검토 필요</p>
+</blockquote>
+<hr />
+<h2>🔑 그룹 0 — 키 &amp; Target (16개)</h2>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>컬럼명</th>
+<th>타입</th>
+<th>결측률</th>
+<th>설명</th>
+<th>비고</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td><code>V_BZNO</code></td>
+<td>int64</td>
+<td>0%</td>
+<td>사업자번호 (익명화)</td>
+<td>PK</td>
+</tr>
+<tr>
+<td>2</td>
+<td><code>CONM</code></td>
+<td>str</td>
+<td>0%</td>
+<td>기업명 (익명화)</td>
+<td>—</td>
+</tr>
+<tr>
+<td>3</td>
+<td><code>IS_DEFAULT</code></td>
+<td>int64</td>
+<td>0%</td>
+<td>부도 여부 (0/1)</td>
+<td><strong>Target</strong></td>
+</tr>
+<tr>
+<td>4</td>
+<td><code>DEFAULT_CNT</code></td>
+<td>int64</td>
+<td>0%</td>
+<td>전체 기간 부도 발생 횟수</td>
+<td><strong>신규 추가됨</strong></td>
+</tr>
+<tr>
+<td>5</td>
+<td><code>DEFAULT_YM</code></td>
+<td>float64</td>
+<td>95.9% 🔴</td>
+<td><strong>최초</strong> 부도 발생 월 (YYYYMM)</td>
+<td>IS_DEFAULT=1이면 유효</td>
+</tr>
+<tr>
+<td>6</td>
+<td><code>DEFAULT_YEAR</code></td>
+<td>float64</td>
+<td>95.9% 🔴</td>
+<td><strong>최초</strong> 부도 발생 연도</td>
+<td>← DEFAULT_YM에서 파생, <strong>중복</strong> 🔁</td>
+</tr>
+<tr>
+<td>7</td>
+<td><code>DSH_RSN_DSC</code></td>
+<td>float64</td>
+<td>95.9% 🔴</td>
+<td><strong>최초</strong> 부도 사유 코드</td>
+<td>—</td>
+</tr>
+<tr>
+<td>8</td>
+<td><code>IS_RECOVERED</code></td>
+<td>int64</td>
+<td>0%</td>
+<td><strong>최초</strong> 부도 기준 정상화 여부 (0/1)</td>
+<td>—</td>
+</tr>
+<tr>
+<td>9</td>
+<td><code>NMLZ_DT_STR</code></td>
+<td>float64</td>
+<td>99.8% 🔴</td>
+<td>정상화 일자</td>
+<td>IS_RECOVERED=1이면 유효</td>
+</tr>
+<tr>
+<td>10</td>
+<td><code>BRWR_DSH_YN</code></td>
+<td>float64</td>
+<td>95.9% 🔴</td>
+<td>차주 부도 여부 플래그</td>
+<td>← IS_DEFAULT와 거의 중복 🔁</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2>🏢 그룹 1 — 기업 기본정보 (6개)</h2>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>컬럼명</th>
+<th>타입</th>
+<th>결측률</th>
+<th>설명</th>
+<th>비고</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>11</td>
+<td><code>ETB_DT</code></td>
+<td>int64</td>
+<td>0.1%</td>
+<td>설립일 (YYYYMMDD)</td>
+<td>—</td>
+</tr>
+<tr>
+<td>12</td>
+<td><code>ETB_YEAR</code></td>
+<td>float64</td>
+<td>0.1%</td>
+<td>설립연도</td>
+<td>← ETB_DT에서 파생, <strong>중복</strong> 🔁</td>
+</tr>
+<tr>
+<td>13</td>
+<td><code>COMPANY_AGE</code></td>
+<td>float64</td>
+<td>0.1%</td>
+<td>업력 (년)</td>
+<td>← ETB_YEAR에서 파생, <strong>유지 추천</strong></td>
+</tr>
+<tr>
+<td>14</td>
+<td><code>COPR_OPNP_C</code></td>
+<td>int64</td>
+<td>0%</td>
+<td>법인구분코드 (개인/법인 등)</td>
+<td>—</td>
+</tr>
+<tr>
+<td>15</td>
+<td><code>BZSCAL_C</code></td>
+<td>int64</td>
+<td>0%</td>
+<td>기업규모 코드</td>
+<td><strong>전부 4.0이므로 삭제 권고</strong></td>
+</tr>
+<tr>
+<td>16</td>
+<td><code>STD_INDS_CFC</code></td>
+<td>int64</td>
+<td>0.1%</td>
+<td>표준산업분류코드</td>
+<td>—</td>
+</tr>
+<tr>
+<td>17</td>
+<td><code>EMPCN</code></td>
+<td>int64</td>
+<td>0%</td>
+<td>종업원수 (UPCHE 기준)</td>
+<td>← AA10과 <strong>중복/통합 필요</strong> 🔁</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2>🏦 그룹 2 — OBV 관찰세부등급 (30개)</h2>
+<blockquote>
+<p>당행 여신 관찰등급 월별 데이터 집계. 결측 11.2% 수준</p>
+</blockquote>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>컬럼명</th>
+<th>결측률</th>
+<th>설명</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>18</td>
+<td><code>OBV_MONTHS_CNT</code></td>
+<td>~11%</td>
+<td>총 관찰 월수 (데이터 품질 지표)</td>
+</tr>
+<tr>
+<td>19</td>
+<td><code>OBV_GRD_LATEST</code></td>
+<td>~11%</td>
+<td>최근 관찰등급 (문자 코드)</td>
+</tr>
+<tr>
+<td>20~23</td>
+<td><code>OBV_LN_LMT_AM_ FIRST/LAST/MEAN/TREND</code></td>
+<td>~11~85%</td>
+<td>여신한도 지표 (추세는 결측률 높음)</td>
+</tr>
+<tr>
+<td>24~27</td>
+<td><code>OBV_LN_BAC_ FIRST/LAST/MEAN/TREND</code></td>
+<td>~11~48%</td>
+<td>여신잔액 지표</td>
+</tr>
+<tr>
+<td>28~31</td>
+<td><code>OBV_LN_LMT_BAC_ FIRST/LAST/MEAN/TREND</code></td>
+<td>~11~86%</td>
+<td>한도잔액 지표</td>
+</tr>
+<tr>
+<td>32~35</td>
+<td><code>OBV_RZVL_POD_ FIRST/LAST/MEAN/TREND</code></td>
+<td>~11~43%</td>
+<td>부도확률(PD) 지표</td>
+</tr>
+<tr>
+<td>36~39</td>
+<td><code>OBV_BZL_RZVL_ASP_ELGD_ FIRST/LAST/MEAN/TREND</code></td>
+<td>~11~43%</td>
+<td>손실율(LGD) 지표</td>
+</tr>
+<tr>
+<td>40~43</td>
+<td><code>OBV_LD_AM_ FIRST/LAST/MEAN/TREND</code></td>
+<td>~11~14%</td>
+<td>대손충당금 지표</td>
+</tr>
+<tr>
+<td>44~47</td>
+<td><code>OBV_XPC_LSS_AM_ FIRST/LAST/MEAN/TREND</code></td>
+<td>~11~43%</td>
+<td>기대손실액 지표</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2>📊 그룹 3 — JEMU 재무데이터 (59개)</h2>
+<blockquote>
+<p>최근 결산 기준. 결측률 약 0.8%로 매우 양호</p>
+</blockquote>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>컬럼명</th>
+<th>결측률</th>
+<th>설명</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>48</td>
+<td><code>JEMU_AVAIL_YEARS</code></td>
+<td>0.8%</td>
+<td>보유 재무제표 연수</td>
+</tr>
+<tr>
+<td>49</td>
+<td><code>JEMU_LATEST_YEAR</code></td>
+<td>0.8%</td>
+<td>최근 결산 연도</td>
+</tr>
+<tr>
+<td>50</td>
+<td><code>JEMU_감사의견_LATEST</code></td>
+<td>0.8%</td>
+<td>감사의견 코드</td>
+</tr>
+<tr>
+<td>51~106</td>
+<td><code>JEMU_{계정명}_LATEST</code> 및 <code>_YOY</code></td>
+<td>~0.8~20%</td>
+<td>28개 재무 항목의 최신값 및 YoY 성장률</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2>📈 그룹 4 — GRD 당행 내부등급 이력 (13개)</h2>
+<blockquote>
+<p>부도 예측의 핵심 시그널 그룹</p>
+</blockquote>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>컬럼명</th>
+<th>결측률</th>
+<th>설명</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>107</td>
+<td><code>GRD_NICS_2021~2025</code></td>
+<td>27~32% ⚠️</td>
+<td>연도별 NICS 등급 Wide</td>
+</tr>
+<tr>
+<td>108</td>
+<td><code>GRD_NICS_LATEST/EARLIEST</code></td>
+<td>2.5%</td>
+<td>최근/최초 NICS 등급</td>
+</tr>
+<tr>
+<td>109</td>
+<td><code>GRD_NICS_CHANGE_LAST2Y</code></td>
+<td>17.5%</td>
+<td>최근 2년 등급 변화 (가장 중요) ⭐</td>
+</tr>
+<tr>
+<td>110</td>
+<td><code>GRD_NICS_DOWNGRADE_CNT</code></td>
+<td>2.5%</td>
+<td>등급 하락 횟수 ⭐</td>
+</tr>
+<tr>
+<td>111</td>
+<td><code>GRD_NICS_VOLATILITY</code></td>
+<td>17.5%</td>
+<td>등급 변동성 (표준편차)</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2>📉 그룹 5 — CG01 &amp; 6 — C302 나이스 신용등급 (16개)</h2>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>컬럼명</th>
+<th>결측률</th>
+<th>설명</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>112</td>
+<td><code>CG01_KIS_LATEST</code></td>
+<td>4.4%</td>
+<td>최근 KIS 종합평점</td>
+</tr>
+<tr>
+<td>113</td>
+<td><code>CG01_KIS_TREND_SLOPE</code></td>
+<td>11.2%</td>
+<td>KIS 평점 추세 기울기 (양수=개선)</td>
+</tr>
+<tr>
+<td>114</td>
+<td><code>C302_CRI_LATEST_GRD</code></td>
+<td>2.0%</td>
+<td>최근 CRI 등급 (문자)</td>
+</tr>
+<tr>
+<td>115</td>
+<td><code>C302_CRI_DOWNGRADE_CNT</code></td>
+<td>2.0%</td>
+<td>CRI 등급 하락 횟수</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2>💱 그룹 7 — AC12 외화부채 (14개)</h2>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>컬럼명</th>
+<th>결측률</th>
+<th>설명</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>116</td>
+<td><code>AC12_TOTAL_KRW_AM_LATEST</code></td>
+<td>93.1% 🔴</td>
+<td>외화부채 총합 원화환산</td>
+</tr>
+<tr>
+<td>117</td>
+<td><code>AC12_US_RATIO_LATEST</code></td>
+<td>95.6% 🔴</td>
+<td>달러 비중</td>
+</tr>
+</tbody>
+</table>
+<p><em>(결측 = 외화 거래 없음)</em></p>
+<hr />
+<h2>🏭 그룹 8 — AA17 생산판매 (22개)</h2>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>컬럼명</th>
+<th>결측률</th>
+<th>설명</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>118</td>
+<td><code>AA17_TOT_SEL_AM_YYYY</code></td>
+<td>94~96% 🔴</td>
+<td>연도별 총판매액</td>
+</tr>
+<tr>
+<td>119</td>
+<td><code>AA17_XPO_RATIO_YYYY</code></td>
+<td>94~96% 🔴</td>
+<td>연도별 수출비율</td>
+</tr>
+</tbody>
+</table>
+<p><em>(결측 = 제조/생산판매 이력 없음)</em></p>
+<hr />
+<h2>👥 그룹 9 — AA10 종업원수 (5개)</h2>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>컬럼명</th>
+<th>결측률</th>
+<th>설명</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>120</td>
+<td><code>AA10_PERS_LATEST</code></td>
+<td>83.9% 🔴</td>
+<td>최근 측정 인원수 (UPCHE의 EMPCN과 통합 필요)</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2>⚠️ 그룹 10 — CRIF 신용불량 이력 (6개)</h2>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>컬럼명</th>
+<th>결측률</th>
+<th>설명</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>121</td>
+<td><code>CRIF_HAS_HISTORY_YN</code></td>
+<td>0%</td>
+<td>불량 이력 존재 여부 (없으면 0)</td>
+</tr>
+<tr>
+<td>122</td>
+<td><code>CRIF_RECORD_CNT</code></td>
+<td>0%</td>
+<td>불량 이력 건수</td>
+</tr>
+<tr>
+<td>123</td>
+<td><code>CRIF_TOTAL_OVD_AMT</code></td>
+<td>93.7% 🔴</td>
+<td>연체 금액 합계</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2>🎯 필터링 후 요약 및 추천 전략</h2>
+<ul>
+<li><strong>부도 횟수 파생변수 반영 완료 (<code>DEFAULT_CNT</code>)</strong></li>
+<li><strong>최신 부도 이력 우선 남기기 반영 완료</strong></li>
+<li>4.0 기업의 특성상 JEMU(재무)나 외부평가 등급(GRD, CG01) 보유율이 매우 높음(결측 5% 미만).</li>
+<li>외화부채(AC12)나 생산판매(AA17)는 결측이 90% 이상으로, 대부분의 4.0 중소기업은 내수 위주 서비스업/도소매업 등으로 보임. 결측치는 0으로 채우는 것이 모델링에 타당함.</li>
+</ul></body></html>
