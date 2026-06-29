@@ -1,0 +1,22 @@
+# Python
+**/__pycache__/
+*.pyc
+
+# Environments
+.env
+.venv/
+venv/
+ENV/
+env/
+
+# Database & Logs
+*.db
+*.log
+logs/
+
+# Model inputs
+model_building/input/*.csv
+model_building/input/**/*.csv
+*.csv
+*.xlsx
+eda_pipeline/output/*.csv
