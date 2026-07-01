@@ -1,0 +1,19 @@
+=== STEP 13: Core Performance Metrics ===
+
+[1] ROC-AUC Score
+ - Train AUC : 0.9970
+ - Valid AUC : 0.9011
+ - Degradation : 0.0959
+
+[2] Gini Index
+ - Train Gini: 0.9939 (99.4)
+ - Valid Gini: 0.8022 (80.2)
+
+[3] Kolmogorov-Smirnov (K-S) Statistic
+ - Train K-S : 0.9518 (95.2)
+ - Valid K-S : 0.6723 (67.2)
+   * Interpretation: > 0.4 (40) indicates excellent separation.
+
+[4] Population Stability Index (PSI)
+ - Total PSI : 0.1247
+   * Interpretation: < 0.1 (Very Stable), 0.1~0.25 (Monitor), > 0.25 (Unstable, Needs Retraining)

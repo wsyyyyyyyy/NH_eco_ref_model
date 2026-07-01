@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI 경제참조모델 리스크 관리 시스템</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Pretendard:wght@400;600;700&display=swap');
+        body { font-family: 'Pretendard', sans-serif; background-color: #f3f4f6; }
+    </style>
+</head>
+<body class="p-6">
+
+    <div class="max-w-7xl mx-auto">
+        <div class="flex justify-between items-center mb-8">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-800">경제참조모델(ERM) 리스크 모니터링</h1>
+                <p class="text-gray-500">거시경제 지표 연동 차주 부도 예측 시뮬레이션</p>
+            </div>
+            <div class="text-right text-sm text-gray-400 font-medium">
+                Last Update: 2026. 04. 25
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+            <div class="bg-white p-6 rounded-xl shadow-sm border-l-4 border-blue-500">
+                <p class="text-sm text-gray-500 mb-1">전체 평균 PD (부도확률)</p>
+                <h3 class="text-2xl font-bold text-gray-800">4.2% <span class="text-xs text-red-500">▲ 0.5%</span></h3>
+            </div>
+            <div class="bg-white p-6 rounded-xl shadow-sm border-l-4 border-red-500">
+                <p class="text-sm text-gray-500 mb-1">조기경보(EWS) 타겟</p>
+                <h3 class="text-2xl font-bold text-gray-800 text-red-600">128건</h3>
+            </div>
+            <div class="bg-white p-6 rounded-xl shadow-sm border-l-4 border-green-500">
+                <p class="text-sm text-gray-500 mb-1">가망고객(우량 등급)</p>
+                <h3 class="text-2xl font-bold text-gray-800 text-green-600">842건</h3>
+            </div>
+            <div class="bg-white p-6 rounded-xl shadow-sm border-l-4 border-purple-500">
+                <p class="text-sm text-gray-500 mb-1">금리 시나리오 적용값</p>
+                <h3 class="text-2xl font-bold text-gray-800">3.75%</h3>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+            <div class="bg-white p-6 rounded-xl shadow-sm">
+                <h2 class="text-lg font-semibold mb-4 border-b pb-2">거시경제 지표 기반 부도 추이 분석 (PD-Lag)</h2>
+                <canvas id="pdTrendChart" height="200"></canvas>
+            </div>
+
+            <div class="bg-white p-6 rounded-xl shadow-sm">
+                <h2 class="text-lg font-semibold mb-4 border-b pb-2">경제참조모형 등급별 분포 (참조등급)</h2>
+                <canvas id="gradeDistChart" height="200"></canvas>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div class="lg:col-span-2 bg-white rounded-xl shadow-sm overflow-hidden">
+                <div class="p-4 bg-gray-50 border-b flex justify-between items-center">
+                    <h2 class="font-semibold text-gray-700">관리 대상 차주 (조기경보 및 등급 조정)</h2>
+                    <button class="text-xs bg-blue-600 text-white px-3 py-1 rounded">상세 분석</button>
+                </div>
+                <table class="w-full text-left text-sm">
+                    <thead>
+                        <tr class="bg-gray-100">
+                            <th class="p-4 font-semibold">차주명</th>
+                            <th class="p-4 font-semibold">기존 등급</th>
+                            <th class="p-4 font-semibold text-red-600">참조 등급</th>
+                            <th class="p-4 font-semibold">부도확률(PD)</th>
+                            <th class="p-4 font-semibold text-center">조치사항</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y">
+                        <tr>
+                            <td class="p-4 font-medium">(주)한국테크</td>
+                            <td class="p-4">BBB+</td>
+                            <td class="p-4 text-red-500">BB-</td>
+                            <td class="p-4">8.2%</td>
+                            <td class="p-4 text-center text-xs font-bold text-red-500">조기경보</td>
+                        </tr>
+                        <tr>
+                            <td class="p-4 font-medium">에이치유통</td>
+                            <td class="p-4">A-</td>
+                            <td class="p-4 text-blue-500">A+</td>
+                            <td class="p-4">0.4%</td>
+                            <td class="p-4 text-center text-xs font-bold text-blue-500">등급상향검토</td>
+                        </tr>
+                         <tr>
+                            <td class="p-4 font-medium">스타트업 S</td>
+                            <td class="p-4">B+</td>
+                            <td class="p-4 text-red-500">CCC</td>
+                            <td class="p-4">15.5%</td>
+                            <td class="p-4 text-center text-xs font-bold text-red-500">사후관리</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-sm p-6">
+                <h2 class="font-semibold text-gray-700 mb-4">가망고객 마케팅 타겟 (Top 3 산업)</h2>
+                <div class="space-y-4">
+                    <div class="flex items-center justify-between p-3 bg-green-50 rounded-lg">
+                        <div>
+                            <p class="text-sm font-bold text-green-800">친환경 에너지</p>
+                            <p class="text-xs text-gray-500">평균 PD 0.8% 하락</p>
+                        </div>
+                        <span class="text-xs font-semibold bg-white px-2 py-1 border border-green-200 rounded">우량추세</span>
+                    </div>
+                    <div class="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
+                        <div>
+                            <p class="text-sm font-bold text-blue-800">IT 소프트웨어</p>
+                            <p class="text-xs text-gray-500">참조등급 A 이상 15개사</p>
+                        </div>
+                        <span class="text-xs font-semibold bg-white px-2 py-1 border border-blue-200 rounded">영업집중</span>
+                    </div>
+                    <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                        <div>
+                            <p class="text-sm font-bold text-gray-800">의료 바이오</p>
+                            <p class="text-xs text-gray-500">성장성 지표 우수</p>
+                        </div>
+                        <span class="text-xs font-semibold bg-white px-2 py-1 border border-gray-200 rounded">지속모니터링</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // PD 추이 차트
+        const ctx1 = document.getElementById('pdTrendChart').getContext('2d');
+        new Chart(ctx1, {
+            type: 'line',
+            data: {
+                labels: ['23.4Q', '24.1Q', '24.2Q', '24.3Q', '24.4Q', '25.1Q(E)'],
+                datasets: [{
+                    label: '경제참조모델 예측 PD (%)',
+                    data: [3.2, 3.5, 3.4, 3.8, 4.1, 4.2],
+                    borderColor: '#3b82f6',
+                    tension: 0.4,
+                    fill: true,
+                    backgroundColor: 'rgba(59, 130, 246, 0.1)'
+                }, {
+                    label: '시장 실질 부도율 (%)',
+                    data: [3.1, 3.3, 3.2, 3.5, 3.9, null],
+                    borderColor: '#9ca3af',
+                    borderDash: [5, 5],
+                    tension: 0.4
+                }]
+            }
+        });
+
+        // 등급 분포 차트
+        const ctx2 = document.getElementById('gradeDistChart').getContext('2d');
+        new Chart(ctx2, {
+            type: 'bar',
+            data: {
+                labels: ['AAA~AA', 'A', 'BBB', 'BB', 'B 이하'],
+                datasets: [{
+                    label: '현재 차주 수',
+                    data: [45, 120, 310, 150, 60],
+                    backgroundColor: ['#1e40af', '#3b82f6', '#93c5fd', '#f87171', '#ef4444']
+                }]
+            }
+        });
+    </script>
+</body>
+</html>
