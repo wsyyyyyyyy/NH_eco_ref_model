@@ -1,3 +1,0 @@
-# Netlify Redirects
-# Default entry point is the login page (index.html)
-/   /index.html   200
