@@ -50,36 +50,27 @@ export default function BranchDashboard({ branch = 'VB001', baseYm = '202402' }:
     }
   }, [branch, baseYm, useRealData]);
 
-  const getLegacyGrade = (grade: string) => {
-    const map: Record<string, string> = {
-      'G1': '2등급 (AA+)',
-      'G2': '5등급 (A0)',
-      'G3': '8등급 (BBB0)',
-      'G4': '12등급 (BB-)',
-      'G5': '16등급 (C)'
-    };
-    return map[grade] || `${grade}등급`;
+  // Z_GRADE는 DB가 실측 PROB_FULL 분포 대비 Z-score 컷오프(-1/0/1/2)로 산출한
+  // 실제 등급이다. 화면 표시용 라벨만 붙이고 등급 자체는 재계산하지 않는다.
+  const ERM_GRADE_LABELS: Record<string, string> = {
+    'G1': 'G1 (최우량)',
+    'G2': 'G2 (안정권)',
+    'G3': 'G3 (주의요망)',
+    'G4': 'G4 (고위험)',
+    'G5': 'G5 (부실우려)',
   };
-
-  const getErmGrade = (prob: number) => {
-    if (prob >= 0.6) return 'G5 (부실우려)';
-    if (prob >= 0.3) return 'G4 (고위험)';
-    if (prob >= 0.1) return 'G3 (주의요망)';
-    if (prob >= 0.02) return 'G2 (안정권)';
-    return 'G1 (최우량)';
-  };
+  const getErmGrade = (grade: string) => ERM_GRADE_LABELS[grade] || grade;
 
   const checkIsBlindSpot = (b: any) => b.PROB_FULL >= 0.25 && b.OLD_PROB <= 0.06; // 기존평가 확률은 6% 이하로 낮았으나 ERM 실측은 25% 이상 고위험으로 판명된 AI 조기경보(사각지대) 대상
 
   const filteredData = borrowers.filter(b => {
-    const legacyStr = getLegacyGrade(b.Z_GRADE);
-    const ermStr = getErmGrade(b.PROB_FULL);
-    const matchSearch = String(b.V_BZNO).includes(searchTerm) || 
-                        legacyStr.toLowerCase().includes(searchTerm.toLowerCase()) || 
+    const ermStr = getErmGrade(b.Z_GRADE);
+    const matchSearch = String(b.V_BZNO).includes(searchTerm) ||
+                        String(b.NICE_GRADE_CUR).toLowerCase().includes(searchTerm.toLowerCase()) ||
                         ermStr.toLowerCase().includes(searchTerm.toLowerCase()) ||
                         String(b.Z_GRADE).toLowerCase().includes(searchTerm.toLowerCase());
     const matchInd = industryFilter ? getIndustryName(b.STD_INDS_CFC) === industryFilter : true;
-    const matchLegacy = legacyGradeFilter ? b.Z_GRADE === legacyGradeFilter : true;
+    const matchLegacy = legacyGradeFilter ? b.NICE_GRADE_CUR === legacyGradeFilter : true;
     const matchErm = ermGradeFilter ? ermStr.startsWith(ermGradeFilter) : true;
     const matchTab = activeTabFilter === 'highRisk' ? (b.PROB_FULL >= 0.25) : 
                      activeTabFilter === 'mismatch' ? checkIsBlindSpot(b) : true;
@@ -134,18 +125,16 @@ export default function BranchDashboard({ branch = 'VB001', baseYm = '202402' }:
             ))}
           </select>
 
-          <select 
-            className="card" 
+          <select
+            className="card"
             style={{padding: '8px 14px', fontSize: '13px', fontWeight: 600, minWidth: '135px'}}
-            value={legacyGradeFilter} 
+            value={legacyGradeFilter}
             onChange={(e) => setLegacyGradeFilter(e.target.value)}
           >
-            <option value="">🏛️ 기존 평가 등급</option>
-            <option value="G1">2등급 (AA+)</option>
-            <option value="G2">5등급 (A0)</option>
-            <option value="G3">8등급 (BBB0)</option>
-            <option value="G4">12등급 (BB-)</option>
-            <option value="G5">16등급 (C)</option>
+            <option value="">🏛️ NICE 등급</option>
+            {Array.from(new Set(borrowers.map(b => b.NICE_GRADE_CUR))).sort().map(grade => (
+              <option key={grade as string} value={grade as string}>{grade as string}</option>
+            ))}
           </select>
 
           <select 
@@ -271,7 +260,6 @@ export default function BranchDashboard({ branch = 'VB001', baseYm = '202402' }:
             <tr>
               <th style={{minWidth: '190px'}}>기업명 (사업자번호)</th>
               <th style={{minWidth: '130px'}}>업종</th>
-              <th style={{minWidth: '140px', textAlign: 'center'}}>🏛️ 기존평가 등급</th>
               <th style={{minWidth: '120px', textAlign: 'right'}}>기존모델 확률</th>
               <th style={{minWidth: '130px', textAlign: 'center'}}>⚡ ERM 등급</th>
               <th style={{minWidth: '120px', textAlign: 'right'}}>⚡ ERM 확률</th>
@@ -283,7 +271,7 @@ export default function BranchDashboard({ branch = 'VB001', baseYm = '202402' }:
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan={9} style={{textAlign: 'center', padding: '60px 0', color: 'var(--text-muted)'}}>
+                <td colSpan={8} style={{textAlign: 'center', padding: '60px 0', color: 'var(--text-muted)'}}>
                   <div className="flex-col" style={{alignItems: 'center', gap: '12px'}}>
                     <div style={{fontSize: '24px'}}>⏳</div>
                     <span className="font-bold">DuckDB에서 실제 차주 패널 데이터를 분석 중입니다...</span>
@@ -309,11 +297,6 @@ export default function BranchDashboard({ branch = 'VB001', baseYm = '202402' }:
                     </div>
                   </td>
                   <td style={{fontSize: '14px'}}>{getIndustryName(item.STD_INDS_CFC)}</td>
-                  <td style={{textAlign: 'center'}}>
-                    <span className="badge" style={{backgroundColor: '#f1f5f9', color: '#475569', fontSize: '12px', fontWeight: 700, border: '1px solid #cbd5e1'}}>
-                      {getLegacyGrade(item.Z_GRADE)}
-                    </span>
-                  </td>
                   <td style={{textAlign: 'right'}}>
                     <div className="flex-col" style={{alignItems: 'flex-end', gap: '4px'}}>
                       <span className="font-bold" style={{color: '#64748b'}}>
@@ -325,8 +308,8 @@ export default function BranchDashboard({ branch = 'VB001', baseYm = '202402' }:
                     </div>
                   </td>
                   <td style={{textAlign: 'center'}}>
-                    <span className="badge badge-primary" style={{padding: '4px 10px', fontSize: '12px', fontWeight: 800, backgroundColor: ['G4 (고위험)','G5 (부실우려)'].includes(getErmGrade(item.PROB_FULL)) ? '#fee2e2' : ['G3 (주의요망)'].includes(getErmGrade(item.PROB_FULL)) ? '#fef3c7' : '#d1fae5', color: ['G4 (고위험)','G5 (부실우려)'].includes(getErmGrade(item.PROB_FULL)) ? '#dc2626' : ['G3 (주의요망)'].includes(getErmGrade(item.PROB_FULL)) ? '#d97706' : '#059669', border: 'none'}}>
-                      {getErmGrade(item.PROB_FULL)}
+                    <span className="badge badge-primary" style={{padding: '4px 10px', fontSize: '12px', fontWeight: 800, backgroundColor: ['G4', 'G5'].includes(item.Z_GRADE) ? '#fee2e2' : item.Z_GRADE === 'G3' ? '#fef3c7' : '#d1fae5', color: ['G4', 'G5'].includes(item.Z_GRADE) ? '#dc2626' : item.Z_GRADE === 'G3' ? '#d97706' : '#059669', border: 'none'}}>
+                      {getErmGrade(item.Z_GRADE)}
                     </span>
                   </td>
                   <td style={{textAlign: 'right'}}>
@@ -350,7 +333,7 @@ export default function BranchDashboard({ branch = 'VB001', baseYm = '202402' }:
                     <span className="font-bold" style={{color: item.KIS_GRADE_CUR < item.KIS_GRADE_PREV ? 'var(--danger)' : 'var(--text-main)'}}>{item.KIS_GRADE_CUR}</span>
                   </td>
                   <td style={{textAlign: 'center'}}>
-                    <Link to={`/borrower/${item.V_BZNO}`} style={{textDecoration: 'none'}}>
+                    <Link to={`/borrower/${item.V_BZNO}?base_ym=${baseYm}`} style={{textDecoration: 'none'}}>
                       <button className="btn btn-ghost" style={{minWidth: 'auto', padding: '8px 12px'}}>
                         <ChevronRight size={20} />
                       </button>
@@ -361,7 +344,7 @@ export default function BranchDashboard({ branch = 'VB001', baseYm = '202402' }:
             })}
             {!loading && filteredData.length === 0 && (
               <tr>
-                <td colSpan={9} style={{textAlign: 'center', padding: '40px', color: 'var(--text-muted)'}}>데이터 없음</td>
+                <td colSpan={8} style={{textAlign: 'center', padding: '40px', color: 'var(--text-muted)'}}>데이터 없음</td>
               </tr>
             )}
           </tbody>

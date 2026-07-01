@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { AlertOctagon, ArrowLeft, Bot, Info, Calculator, TrendingUp, CheckCircle, Activity, AlertTriangle, BarChart2, List } from 'lucide-react';
 import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer, Tooltip as RechartsTooltip, AreaChart, Area, CartesianGrid, XAxis, YAxis, Legend, BarChart, Bar, Cell } from 'recharts';
 import { borrowerDetailMock, shapMockData, featureContributions } from '../utils/mockData';
@@ -22,6 +22,8 @@ const tsMockData = [
 
 export default function BorrowerDetail() {
   const { id } = useParams();
+  const [searchParams] = useSearchParams();
+  const baseYm = searchParams.get('base_ym');
   const navigate = useNavigate();
   const [data, setData] = useState<any>(null);
   const [useRealData, setUseRealData] = useState(true);
@@ -30,7 +32,10 @@ export default function BorrowerDetail() {
   useEffect(() => {
     setData(null);
     if (useRealData && id) {
-      fetch(`${API_BASE_URL}/api/borrowers/${id}`)
+      const url = baseYm
+        ? `${API_BASE_URL}/api/borrowers/${id}?base_ym=${baseYm}`
+        : `${API_BASE_URL}/api/borrowers/${id}`;
+      fetch(url)
         .then(res => res.ok ? res.json() : Promise.reject(res))
         .then(real => {
           if (real && !real.error) {
@@ -42,9 +47,6 @@ export default function BorrowerDetail() {
               PROB_FULL: real.PROB_FULL || 0.05,
               Z_GRADE: real.Z_GRADE || 'G2',
               industry: getIndustryName(real.STD_INDS_CFC) || "제조업",
-              old_prob: Number((real.PROB_FULL * 0.15).toFixed(4)),
-              credit_grade_prev: real.PROB_FULL > 0.3 ? 'BBB0' : real.PROB_FULL > 0.1 ? 'A0' : 'AA+',
-              credit_grade_cur: real.PROB_FULL > 0.3 ? 'BB0' : real.PROB_FULL > 0.1 ? 'BBB0' : 'AA0'
             };
             setData(merged);
           } else {
@@ -59,7 +61,7 @@ export default function BorrowerDetail() {
         setData({ ...borrowerDetailMock, V_BZNO: id || borrowerDetailMock.V_BZNO });
       }, 200);
     }
-  }, [id, useRealData]);
+  }, [id, useRealData, baseYm]);
 
   useEffect(() => {
     if (!data) return;
@@ -86,32 +88,22 @@ export default function BorrowerDetail() {
   const isAiHighRisk = data.PROB_FULL > 0.5;
   const isExistingHighRisk = ['G4', 'G5'].includes(data.Z_GRADE);
   
-  const getLegacyGrade = (grade: string) => {
-    const map: Record<string, string> = {
-      'G1': '2등급 (AA+)',
-      'G2': '5등급 (A0)',
-      'G3': '8등급 (BBB0)',
-      'G4': '12등급 (BB-)',
-      'G5': '16등급 (C)'
-    };
-    return map[grade] || `${grade}등급`;
+  // 기존신용평가 등급(NICE_GRADE_CUR)과 OLD_PROB은 백엔드가 실측 PROB_FULL 분포
+  // 기반 grade_mapping.py로 산출해 내려주므로 그대로 사용한다.
+  const getLegacyGrade = (_grade: string) => data.NICE_GRADE_CUR || _grade;
+
+  const getLegacyPd = (_prob: number, _grade: string) => (data.OLD_PROB * 100).toFixed(2);
+
+  const ERM_GRADE_LABELS: Record<string, string> = {
+    'G1': 'G1 (최우량)',
+    'G2': 'G2 (안정권)',
+    'G3': 'G3 (주의요망)',
+    'G4': 'G4 (고위험)',
+    'G5': 'G5 (부실우려)',
   };
 
-  const getLegacyPd = (prob: number, grade: string) => {
-    if (grade === 'G1') return 0.45;
-    if (grade === 'G2') return 1.20;
-    if (grade === 'G3') return 4.80;
-    if (grade === 'G4') return 12.50;
-    if (grade === 'G5') return 25.00;
-    return (prob * 0.15 * 100).toFixed(2);
-  };
-
-  const getErmGrade = (prob: number) => {
-    if (prob >= 0.6) return 'G5 (부실우려)';
-    if (prob >= 0.3) return 'G4 (고위험)';
-    if (prob >= 0.1) return 'G3 (주의요망)';
-    if (prob >= 0.02) return 'G2 (안정권)';
-    return 'G1 (최우량)';
+  const getErmGrade = (_prob: number) => {
+    return ERM_GRADE_LABELS[data.Z_GRADE] || data.Z_GRADE;
   };
 
   const getAnalysisStatus = () => {
@@ -290,11 +282,11 @@ export default function BorrowerDetail() {
             </div>
             <div className="flex-row" style={{justifyContent: 'space-between', borderBottom: '1px dashed var(--border)', paddingBottom: '12px'}}>
               <span className="font-regular" style={{color: 'var(--text-muted)'}}>KIS 점수</span>
-              <span className="font-bold">{data['KIS 점수'] === -1 ? '등급 없음 (초고위험)' : data['KIS 점수']}</span>
+              <span className="font-bold">{data['CG01_KIS_SCORE'] === -1 ? '등급 없음 (초고위험)' : data['CG01_KIS_SCORE']}</span>
             </div>
             <div className="flex-row" style={{justifyContent: 'space-between'}}>
               <span className="font-regular" style={{color: 'var(--text-muted)'}}>NICE 등급</span>
-              <span className="font-bold">{data['NICE등급코드']}</span>
+              <span className="font-bold">{data['NICE_GRADE_CUR']}</span>
             </div>
           </div>
         </div>

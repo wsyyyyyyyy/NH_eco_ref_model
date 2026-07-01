@@ -2,7 +2,7 @@ import duckdb
 import lightgbm as lgb
 import pandas as pd
 
-from backend.database import DB_PATH
+from backend.database import DB_PATH, dedup_panel_sql
 
 MODEL_PATH = 'eda_pipeline/output/lgbm_12m_model.txt'
 
@@ -26,10 +26,10 @@ def get_baseline() -> pd.DataFrame:
         features = model.feature_name()
         conn = duckdb.connect(DB_PATH, read_only=True)
         cols = ', '.join(f'"{c}"' for c in features)
+        panel = dedup_panel_sql("WHERE BASE_YM = (SELECT MAX(BASE_YM) FROM corporate_panel)")
         df = conn.execute(f"""
             SELECT {cols}, BASE_YM
-            FROM corporate_panel
-            WHERE BASE_YM = (SELECT MAX(BASE_YM) FROM corporate_panel)
+            FROM {panel}
         """).df()
         conn.close()
 

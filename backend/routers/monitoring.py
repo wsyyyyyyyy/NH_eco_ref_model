@@ -3,7 +3,7 @@ import re
 import duckdb
 from fastapi import APIRouter, HTTPException
 
-from backend.database import DB_PATH
+from backend.database import DB_PATH, dedup_panel_sql
 from backend.grade_mapping import prob_to_grade
 
 router = APIRouter()
@@ -57,13 +57,13 @@ def get_pd_distribution():
     case_old = ' '.join(
         f"WHEN PROB_FULL * 0.15 >= {lo} AND PROB_FULL * 0.15 < {hi} THEN '{label}'" for label, lo, hi in PD_BINS
     )
+    panel = dedup_panel_sql("WHERE PROB_FULL IS NOT NULL")
     df = conn.execute(f"""
         SELECT
             CASE {case_new} END AS new_bin,
             CASE {case_old} END AS old_bin,
             COUNT(*) AS cnt
-        FROM corporate_panel
-        WHERE PROB_FULL IS NOT NULL
+        FROM {panel}
         GROUP BY new_bin, old_bin
     """).df()
     conn.close()
@@ -98,7 +98,7 @@ def get_drift():
     ref_month = months[0]
     breakpoints = conn.execute(f"""
         SELECT quantile_cont(PROB_FULL, [0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9])
-        FROM corporate_panel WHERE BASE_YM = '{ref_month}'
+        FROM {dedup_panel_sql(f"WHERE BASE_YM = '{ref_month}'")}
     """).fetchone()[0]
 
     edges = [0.0] + list(breakpoints) + [1.0001]
@@ -108,9 +108,10 @@ def get_drift():
             f"WHEN PROB_FULL >= {edges[i]} AND PROB_FULL < {edges[i+1]} THEN {i}"
             for i in range(len(edges) - 1)
         )
+        panel = dedup_panel_sql(f"WHERE BASE_YM = '{month}' AND PROB_FULL IS NOT NULL")
         df = conn.execute(f"""
             SELECT CASE {case_expr} END AS bucket, COUNT(*) AS cnt
-            FROM corporate_panel WHERE BASE_YM = '{month}' AND PROB_FULL IS NOT NULL
+            FROM {panel}
             GROUP BY bucket
         """).df()
         total = df['cnt'].sum()
@@ -149,10 +150,11 @@ def get_borrowers_by_bin(bin: str):
     _, lo, hi = matching[0]
 
     conn = duckdb.connect(DB_PATH, read_only=True)
-    df = conn.execute("""
+    panel = dedup_panel_sql("WHERE BASE_YM = (SELECT MAX(BASE_YM) FROM corporate_panel)")
+    df = conn.execute(f"""
         SELECT V_BZNO, STD_INDS_CFC, PROB_FULL, Z_GRADE
-        FROM corporate_panel
-        WHERE PROB_FULL >= ? AND PROB_FULL < ? AND BASE_YM = (SELECT MAX(BASE_YM) FROM corporate_panel)
+        FROM {panel}
+        WHERE PROB_FULL >= ? AND PROB_FULL < ?
         ORDER BY PROB_FULL DESC
         LIMIT 20
     """, [lo, hi]).df()

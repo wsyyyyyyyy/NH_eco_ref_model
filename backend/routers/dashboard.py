@@ -1,36 +1,37 @@
 from fastapi import APIRouter, Depends
-from backend.database import get_db
+from backend.database import get_db, dedup_panel_sql
 
 router = APIRouter()
 
 @router.get("/summary")
 def get_dashboard_summary(base_ym: str = "202402", db=Depends(get_db)):
+    panel = dedup_panel_sql("WHERE BASE_YM = ?")
+
     # 1. Total and Risk
-    q_total = """
-        SELECT COUNT(*) as total_companies, 
-               SUM(CASE WHEN Z_GRADE IN ('G4', 'G5') THEN 1 ELSE 0 END) as risk_companies 
-        FROM corporate_panel 
-        WHERE BASE_YM = ?
+    q_total = f"""
+        SELECT COUNT(*) as total_companies,
+               SUM(CASE WHEN Z_GRADE IN ('G4', 'G5') THEN 1 ELSE 0 END) as risk_companies
+        FROM {panel}
     """
     res_total = db.execute(q_total, [base_ym]).fetchone()
-    
+
     # 2. Grade Distribution
-    q_grade = """
-        SELECT Z_GRADE, COUNT(*) as cnt 
-        FROM corporate_panel 
-        WHERE BASE_YM = ? AND Z_GRADE IS NOT NULL
-        GROUP BY Z_GRADE 
+    q_grade = f"""
+        SELECT Z_GRADE, COUNT(*) as cnt
+        FROM {panel}
+        WHERE Z_GRADE IS NOT NULL
+        GROUP BY Z_GRADE
         ORDER BY Z_GRADE
     """
     res_grade = db.execute(q_grade, [base_ym]).df().to_dict(orient="records")
-    
+
     # 3. Top Risky Industries
-    q_ind = """
-        SELECT SUBSTRING(LPAD(CAST(CAST(STD_INDS_CFC AS BIGINT) AS VARCHAR), 5, '0'), 1, 2) as industry, 
-               COUNT(*) as total, 
+    q_ind = f"""
+        SELECT SUBSTRING(LPAD(CAST(CAST(STD_INDS_CFC AS BIGINT) AS VARCHAR), 5, '0'), 1, 2) as industry,
+               COUNT(*) as total,
                SUM(CASE WHEN Z_GRADE IN ('G4', 'G5') THEN 1 ELSE 0 END) as risk_cnt
-        FROM corporate_panel
-        WHERE BASE_YM = ? AND STD_INDS_CFC IS NOT NULL
+        FROM {panel}
+        WHERE STD_INDS_CFC IS NOT NULL
         GROUP BY SUBSTRING(LPAD(CAST(CAST(STD_INDS_CFC AS BIGINT) AS VARCHAR), 5, '0'), 1, 2)
         HAVING COUNT(*) > 100
     """
