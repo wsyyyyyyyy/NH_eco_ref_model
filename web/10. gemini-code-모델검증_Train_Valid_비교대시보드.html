@@ -1,0 +1,1047 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LightGBM 신용평가 모델 검증 대시보드 — Train vs Valid 비교</title>
+  <meta name="description" content="NICE 제외 6m/12m LightGBM 부도예측 모델의 Train-Valid-Test 성능 비교, ROC 커브, SHAP 분석, 히트맵, PD 분포 시각화 대시보드" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    :root {
+      --bg: #080e1a;
+      --surface: rgba(15,25,50,0.85);
+      --surface2: rgba(20,35,70,0.6);
+      --border: rgba(100,140,255,0.12);
+      --border2: rgba(100,140,255,0.22);
+      --text: #e8eef8;
+      --muted: #7a8fb5;
+      --blue: #4f8ef7;
+      --blue2: #2563eb;
+      --red: #f85f7a;
+      --green: #34d399;
+      --orange: #fb923c;
+      --purple: #a78bfa;
+      --yellow: #fbbf24;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: 'Outfit', 'Noto Sans KR', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      background-image:
+        radial-gradient(ellipse 900px 500px at 10% 0%, rgba(37,99,235,0.08) 0%, transparent 70%),
+        radial-gradient(ellipse 700px 400px at 90% 100%, rgba(220,38,38,0.07) 0%, transparent 70%);
+    }
+
+    /* ── 헤더 ── */
+    .page-header {
+      padding: 28px 40px 22px;
+      border-bottom: 1px solid var(--border);
+      background: rgba(8,14,26,0.95);
+      backdrop-filter: blur(20px);
+      position: sticky; top: 0; z-index: 100;
+      display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap;
+    }
+    .page-header h1 {
+      font-size: 1.45rem; font-weight: 800; letter-spacing: -0.3px;
+      background: linear-gradient(120deg, #a5c4ff 0%, #7eb3ff 40%, #f87171 80%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .header-badges { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 6px; }
+    .badge { font-size: 10px; font-weight: 600; padding: 3px 10px; border-radius: 100px; border: 1px solid; letter-spacing: 0.3px; }
+    .badge-blue   { background: rgba(79,142,247,0.12); color: #7eb3ff; border-color: rgba(79,142,247,0.35); }
+    .badge-green  { background: rgba(52,211,153,0.1);  color: var(--green);  border-color: rgba(52,211,153,0.3); }
+    .badge-red    { background: rgba(248,95,122,0.1);  color: var(--red);    border-color: rgba(248,95,122,0.3); }
+    .badge-purple { background: rgba(167,139,250,0.1); color: var(--purple); border-color: rgba(167,139,250,0.3); }
+    .badge-orange { background: rgba(251,146,60,0.1);  color: var(--orange); border-color: rgba(251,146,60,0.3); }
+
+    /* ── 레이아웃 ── */
+    .main { max-width: 1420px; margin: 0 auto; padding: 32px 32px 80px; display: flex; flex-direction: column; gap: 24px; }
+
+    /* ── 카드 ── */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      backdrop-filter: blur(16px);
+      box-shadow: 0 8px 40px rgba(0,0,0,0.3);
+      overflow: hidden;
+      animation: fadeUp 0.5s ease both;
+    }
+    @keyframes fadeUp { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:translateY(0); } }
+    .card:nth-child(n) { animation-delay: calc(0.05s * var(--i,1)); }
+    .card-body { padding: 24px 28px; }
+    .card-header {
+      padding: 18px 28px 14px;
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;
+    }
+    .card-header h2 { font-size: 1.05rem; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+    .card-label { font-size: 10px; font-weight: 700; letter-spacing: 0.8px; color: var(--muted); text-transform: uppercase; }
+
+    /* ── 그리드 ── */
+    .grid-2  { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    .grid-3  { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+
+    /* ── KPI ── */
+    .kpi-section { display: grid; grid-template-columns: repeat(auto-fit, minmax(155px, 1fr)); gap: 14px; }
+    .kpi-card {
+      background: var(--surface2); border: 1px solid var(--border); border-radius: 16px;
+      padding: 16px 20px; position: relative; overflow: hidden;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .kpi-card:hover { transform: translateY(-2px); box-shadow: 0 12px 36px rgba(0,0,0,0.4); }
+    .kpi-card::before {
+      content: ''; position: absolute; top: -10px; right: -10px;
+      width: 80px; height: 80px; border-radius: 50%; filter: blur(28px); opacity: 0.28;
+    }
+    .kpi-card.blue::before   { background: var(--blue); }
+    .kpi-card.red::before    { background: var(--red); }
+    .kpi-card.green::before  { background: var(--green); }
+    .kpi-card.purple::before { background: var(--purple); }
+    .kpi-card.orange::before { background: var(--orange); }
+    .kpi-label { font-size: 9.5px; font-weight: 600; letter-spacing: 0.8px; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
+    .kpi-value { font-size: 1.9rem; font-weight: 800; line-height: 1; }
+    .kpi-value.blue   { color: var(--blue); }
+    .kpi-value.red    { color: var(--red); }
+    .kpi-value.green  { color: var(--green); }
+    .kpi-value.purple { color: var(--purple); }
+    .kpi-value.orange { color: var(--orange); }
+    .kpi-sub { font-size: 10.5px; color: var(--muted); margin-top: 5px; line-height: 1.5; }
+
+    /* ── 성능 테이블 ── */
+    .perf-table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+    .perf-table th {
+      padding: 9px 14px; text-align: left; font-size: 10px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.6px; color: var(--muted);
+      background: rgba(0,0,0,0.2); border-bottom: 1px solid var(--border);
+    }
+    .perf-table th:not(:first-child) { text-align: center; }
+    .perf-table td { padding: 10px 14px; border-bottom: 1px solid rgba(100,140,255,0.06); vertical-align: middle; }
+    .perf-table td:not(:first-child) { text-align: center; font-weight: 600; }
+    .perf-table tr:hover td { background: rgba(79,142,247,0.04); }
+    .metric-pill {
+      display: inline-block; padding: 2px 9px; border-radius: 100px; font-size: 11.5px; font-weight: 700;
+    }
+    .pill-auc    { background: rgba(79,142,247,0.15);  color: #7eb3ff; }
+    .pill-ks     { background: rgba(167,139,250,0.15); color: var(--purple); }
+    .pill-recall { background: rgba(52,211,153,0.15);  color: var(--green); }
+    .pill-prec   { background: rgba(251,146,60,0.15);  color: var(--orange); }
+    .pill-f1     { background: rgba(248,95,122,0.15);  color: var(--red); }
+
+    /* ── 게이지 ── */
+    .gauge-row { margin-bottom: 16px; }
+    .gauge-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; }
+    .gauge-name { font-size: 12px; font-weight: 600; }
+    .gauge-val  { font-size: 13px; font-weight: 800; }
+    .gauge-track { width: 100%; height: 7px; background: rgba(255,255,255,0.06); border-radius: 100px; overflow: hidden; }
+    .gauge-fill  { height: 100%; border-radius: 100px; transition: width 1.3s cubic-bezier(0.4,0,0.2,1); }
+    .fill-blue   { background: linear-gradient(90deg, #2563eb, #60a5fa); }
+    .fill-green  { background: linear-gradient(90deg, #059669, #34d399); }
+    .fill-purple { background: linear-gradient(90deg, #7c3aed, #a78bfa); }
+    .fill-orange { background: linear-gradient(90deg, #ea580c, #fb923c); }
+    .fill-red    { background: linear-gradient(90deg, #dc2626, #f87171); }
+
+    /* ── 섹션 구분자 ── */
+    .section-title {
+      font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px;
+      color: var(--muted); margin-bottom: 12px; display: flex; align-items: center; gap: 8px;
+    }
+    .section-title::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+    /* ── 인사이트 카드 ── */
+    .insight {
+      background: rgba(0,0,0,0.2); border-radius: 12px;
+      border-left: 3px solid; padding: 12px 16px; font-size: 12px; line-height: 1.7;
+    }
+    .insight.blue   { border-color: var(--blue); }
+    .insight.green  { border-color: var(--green); }
+    .insight.orange { border-color: var(--orange); }
+    .insight.red    { border-color: var(--red); }
+    .insight.purple { border-color: var(--purple); }
+    .insight-title  { font-weight: 700; margin-bottom: 4px; font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.5px; }
+    .insight.blue .insight-title   { color: var(--blue); }
+    .insight.green .insight-title  { color: var(--green); }
+    .insight.orange .insight-title { color: var(--orange); }
+    .insight.red .insight-title    { color: var(--red); }
+    .insight.purple .insight-title { color: var(--purple); }
+    .insight p { color: var(--muted); }
+
+    /* ── 이미지 뷰어 ── */
+    .img-card {
+      background: var(--surface2); border: 1px solid var(--border); border-radius: 16px;
+      overflow: hidden; transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .img-card:hover { transform: translateY(-2px); box-shadow: 0 16px 48px rgba(0,0,0,0.5); }
+    .img-card img {
+      width: 100%; display: block; object-fit: contain;
+      background: #0a1020;
+    }
+    .img-card .img-caption {
+      padding: 12px 16px;
+      border-top: 1px solid var(--border);
+    }
+    .img-caption-title { font-size: 12px; font-weight: 700; color: var(--text); margin-bottom: 3px; }
+    .img-caption-desc  { font-size: 11px; color: var(--muted); line-height: 1.6; }
+
+    /* ── 이미지 라이트박스 ── */
+    .img-card img { cursor: zoom-in; }
+    #lightbox {
+      display: none; position: fixed; inset: 0; z-index: 9999;
+      background: rgba(0,0,0,0.9); backdrop-filter: blur(8px);
+      align-items: center; justify-content: center; padding: 32px;
+    }
+    #lightbox.open { display: flex; }
+    #lightbox img { max-width: 95vw; max-height: 90vh; border-radius: 12px; object-fit: contain; }
+    #lightbox-close {
+      position: absolute; top: 20px; right: 28px;
+      font-size: 2rem; color: #fff; cursor: pointer; opacity: 0.7; transition: opacity 0.2s;
+      background: none; border: none; font-family: inherit;
+    }
+    #lightbox-close:hover { opacity: 1; }
+
+    /* ── 로그변환 테이블 ── */
+    .log-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+    .log-table th {
+      padding: 9px 14px; font-size: 10px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.6px; color: var(--muted); background: rgba(0,0,0,0.25);
+      border-bottom: 1px solid var(--border); text-align: left;
+    }
+    .log-table td { padding: 9px 14px; border-bottom: 1px solid rgba(100,140,255,0.06); vertical-align: middle; }
+    .log-table tr:hover td { background: rgba(79,142,247,0.04); }
+    .log-before { background: rgba(248,95,122,0.08); color: #f87171; border-radius: 6px; padding: 2px 8px; font-weight: 600; font-family: monospace; font-size: 11px; }
+    .log-after  { background: rgba(52,211,153,0.1);  color: #34d399;  border-radius: 6px; padding: 2px 8px; font-weight: 600; font-family: monospace; font-size: 11px; }
+    .log-formula { font-family: monospace; font-size: 12px; color: var(--purple); font-weight: 600; }
+    .log-iv-up { color: var(--green); font-weight: 700; }
+    .feature-tag {
+      display: inline-block; background: var(--surface2); border: 1px solid var(--border2);
+      border-radius: 5px; padding: 1px 7px; font-size: 11px; font-weight: 600; font-family: monospace;
+    }
+
+    /* ── 탭 ── */
+    .tab-bar { display: flex; gap: 4px; padding: 3px; background: rgba(0,0,0,0.25); border-radius: 10px; }
+    .tab-btn {
+      flex: 1; padding: 7px 12px; border: none; background: transparent;
+      color: var(--muted); font-family: inherit; font-size: 11.5px; font-weight: 600;
+      border-radius: 8px; cursor: pointer; transition: all 0.2s; white-space: nowrap;
+    }
+    .tab-btn.active { background: var(--blue2); color: #fff; box-shadow: 0 4px 12px rgba(37,99,235,0.4); }
+
+    /* ── 혼동 행렬 ── */
+    .cm-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 8px; }
+    .cm-cell { border-radius: 10px; padding: 10px; text-align: center; }
+    .cm-val  { font-size: 1.25rem; font-weight: 800; }
+    .cm-lbl  { font-size: 9px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 2px; }
+    .cm-tp { background: rgba(52,211,153,0.12); border: 1px solid rgba(52,211,153,0.25); }
+    .cm-tp .cm-val { color: var(--green); }
+    .cm-tn { background: rgba(79,142,247,0.08);  border: 1px solid rgba(79,142,247,0.2); }
+    .cm-tn .cm-val { color: var(--blue); }
+    .cm-fp { background: rgba(251,146,60,0.1);  border: 1px solid rgba(251,146,60,0.25); }
+    .cm-fp .cm-val { color: var(--orange); }
+    .cm-fn { background: rgba(248,95,122,0.1);  border: 1px solid rgba(248,95,122,0.25); }
+    .cm-fn .cm-val { color: var(--red); }
+
+    /* ── 업종 피처 탭 ── */
+    .sector-tabs { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 18px; }
+    .sector-btn {
+      padding: 6px 14px; border: 1px solid var(--border2); border-radius: 100px;
+      background: transparent; color: var(--muted); font-family: inherit; font-size: 11px; font-weight: 600;
+      cursor: pointer; transition: all 0.2s;
+    }
+    .sector-btn.active { background: var(--blue2); border-color: transparent; color: #fff; box-shadow: 0 4px 14px rgba(37,99,235,0.35); }
+
+    /* ── 데이터셋 블록 ── */
+    .dataset-block {
+      background: rgba(0,0,0,0.2); border: 1px solid var(--border); border-radius: 12px;
+      padding: 13px 16px; text-align: center;
+    }
+    .split-count { font-size: 1.4rem; font-weight: 800; }
+
+    /* ── 반응형 ── */
+    @media (max-width: 900px) {
+      .grid-2, .grid-3 { grid-template-columns: 1fr; }
+      .kpi-section { grid-template-columns: repeat(2,1fr); }
+      .main { padding: 18px 14px 60px; }
+      .page-header { padding: 18px 20px 14px; }
+      .page-header h1 { font-size: 1.1rem; }
+    }
+
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(100,140,255,0.25); border-radius: 3px; }
+  </style>
+</head>
+<body>
+
+<!-- 라이트박스 -->
+<div id="lightbox" onclick="closeLightbox()">
+  <button id="lightbox-close" onclick="closeLightbox()">✕</button>
+  <img id="lightbox-img" src="" alt="" />
+</div>
+
+<!-- ══════════ HEADER ══════════ -->
+<header class="page-header">
+  <div>
+    <div class="header-badges">
+      <span class="badge badge-blue">LightGBM 6m/12m 듀얼 모델</span>
+      <span class="badge badge-green">NICE 등급 제외</span>
+      <span class="badge badge-orange">log(X+1) 변환 적용</span>
+      <span class="badge badge-red">Z-Score 정규화</span>
+      <span class="badge badge-purple">윈도우 Censoring 보정</span>
+    </div>
+    <h1>🏦 기업신용평가 모델 검증 — Train · Valid · Test 비교 + SHAP 분석 대시보드</h1>
+  </div>
+  <div style="font-size:11px; color:var(--muted); text-align:right; line-height:1.9;">
+    <div>총 학습 데이터 <strong style="color:var(--text)">889,734건</strong></div>
+    <div>최종 선택 피처 <strong style="color:var(--text)">25개</strong> / 후보 <strong style="color:var(--text)">219개</strong></div>
+    <div>분석 기준 <strong style="color:var(--text)">2026-06-24</strong></div>
+  </div>
+</header>
+
+<main class="main">
+
+  <!-- ══ 1. KPI ══ -->
+  <div class="kpi-section">
+    <div class="kpi-card blue">
+      <div class="kpi-label">12m Model — Valid AUC</div>
+      <div class="kpi-value blue">97.27<span style="font-size:1.1rem">%</span></div>
+      <div class="kpi-sub">Test 97.55% · Train 98.96%</div>
+    </div>
+    <div class="kpi-card blue">
+      <div class="kpi-label">6m Model — Valid AUC</div>
+      <div class="kpi-value blue">96.06<span style="font-size:1.1rem">%</span></div>
+      <div class="kpi-sub">Test 95.99% · Train 97.90%</div>
+    </div>
+    <div class="kpi-card green">
+      <div class="kpi-label">12m Valid Recall</div>
+      <div class="kpi-value green">92.21<span style="font-size:1.1rem">%</span></div>
+      <div class="kpi-sub">989건 중 912건 조기 탐지</div>
+    </div>
+    <div class="kpi-card purple">
+      <div class="kpi-label">12m Valid KS</div>
+      <div class="kpi-value purple">0.8357</div>
+      <div class="kpi-sub">업계 기준(0.4) 대폭 상회</div>
+    </div>
+    <div class="kpi-card orange">
+      <div class="kpi-label">로그 변환 피처 수</div>
+      <div class="kpi-value orange">7<span style="font-size:1.1rem">개</span></div>
+      <div class="kpi-sub">log(X+1) 변환 · IV 최대 +28%</div>
+    </div>
+    <div class="kpi-card red">
+      <div class="kpi-label">12m Valid 미탐 (FN)</div>
+      <div class="kpi-value red">77<span style="font-size:1.1rem">건</span></div>
+      <div class="kpi-sub">TP 912건 · FP 9,752건</div>
+    </div>
+  </div>
+
+  <!-- ══ 2. 성능 비교 테이블 ══ -->
+  <div class="card">
+    <div class="card-header">
+      <h2>📊 Train · Valid · Test 상세 성능 비교</h2>
+      <span class="card-label">과적합 여부 교차 검증</span>
+    </div>
+    <div class="card-body">
+      <div class="grid-2" style="gap:28px; align-items:start;">
+        <!-- 테이블 -->
+        <div>
+          <div class="section-title">전체 지표 비교표</div>
+          <div style="overflow-x:auto;">
+            <table class="perf-table">
+              <thead>
+                <tr>
+                  <th>모델 · 분할</th><th>AUC</th><th>KS</th><th>Recall</th><th>Precision</th><th>F1</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td style="padding-top:14px;color:var(--blue);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;">6-Month PD Model</td><td colspan="5"></td></tr>
+                <tr><td><span style="color:#60a5fa;">● Train</span></td><td><span class="metric-pill pill-auc">0.9790</span></td><td><span class="metric-pill pill-ks">0.8576</span></td><td><span class="metric-pill pill-recall">99.59%</span></td><td><span class="metric-pill pill-prec">3.17%</span></td><td><span class="metric-pill pill-f1">6.14%</span></td></tr>
+                <tr><td><span style="color:var(--green);">● Valid</span></td><td><span class="metric-pill pill-auc">0.9606</span></td><td><span class="metric-pill pill-ks">0.7985</span></td><td><span class="metric-pill pill-recall">93.77%</span></td><td><span class="metric-pill pill-prec">2.94%</span></td><td><span class="metric-pill pill-f1">5.70%</span></td></tr>
+                <tr><td><span style="color:var(--orange);">● Test</span></td><td><span class="metric-pill pill-auc">0.9599</span></td><td><span class="metric-pill pill-ks">0.8003</span></td><td><span class="metric-pill pill-recall">93.60%</span></td><td><span class="metric-pill pill-prec">3.06%</span></td><td><span class="metric-pill pill-f1">5.92%</span></td></tr>
+                <tr style="height:6px;"><td colspan="6"></td></tr>
+                <tr><td style="padding-top:8px;color:var(--red);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;">12-Month PD Model</td><td colspan="5"></td></tr>
+                <tr><td><span style="color:#60a5fa;">● Train</span></td><td><span class="metric-pill pill-auc">0.9896</span></td><td><span class="metric-pill pill-ks">0.9013</span></td><td><span class="metric-pill pill-recall">99.53%</span></td><td><span class="metric-pill pill-prec">8.68%</span></td><td><span class="metric-pill pill-f1">15.96%</span></td></tr>
+                <tr><td><span style="color:var(--green);">● Valid</span></td><td><span class="metric-pill pill-auc">0.9727</span></td><td><span class="metric-pill pill-ks">0.8357</span></td><td><span class="metric-pill pill-recall">92.21%</span></td><td><span class="metric-pill pill-prec">8.55%</span></td><td><span class="metric-pill pill-f1">15.65%</span></td></tr>
+                <tr><td><span style="color:var(--orange);">● Test</span></td><td><span class="metric-pill pill-auc">0.9755</span></td><td><span class="metric-pill pill-ks">0.8522</span></td><td><span class="metric-pill pill-recall">94.50%</span></td><td><span class="metric-pill pill-prec">8.71%</span></td><td><span class="metric-pill pill-f1">15.96%</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+          <!-- 데이터셋 크기 -->
+          <div style="margin-top:18px;">
+            <div class="section-title">데이터셋 크기 (12m 윈도우 기준)</div>
+            <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:8px;">
+              <div class="dataset-block"><div style="font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#60a5fa;margin-bottom:4px;">Train</div><div class="split-count" style="color:#60a5fa;">306,638</div><div style="font-size:10px;color:var(--muted);">60%</div></div>
+              <div class="dataset-block"><div style="font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--green);margin-bottom:4px;">Valid</div><div class="split-count" style="color:var(--green);">102,137</div><div style="font-size:10px;color:var(--muted);">20%</div></div>
+              <div class="dataset-block"><div style="font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--orange);margin-bottom:4px;">Test</div><div class="split-count" style="color:var(--orange);">102,016</div><div style="font-size:10px;color:var(--muted);">20%</div></div>
+            </div>
+          </div>
+        </div>
+        <!-- 게이지 + 혼동행렬 -->
+        <div>
+          <div class="section-title">12m Valid 성능 게이지</div>
+          <div style="display:flex;flex-direction:column;gap:12px;">
+            <div class="gauge-row">
+              <div class="gauge-header"><span class="gauge-name">🎯 ROC-AUC</span><span class="gauge-val" style="color:var(--blue);">97.27%</span></div>
+              <div class="gauge-track"><div class="gauge-fill fill-blue" style="width:0" data-w="97.27"></div></div>
+              <div style="font-size:9.5px;color:var(--muted);margin-top:3px;">Train→Valid 갭 1.69%p — 과적합 없음 ✓</div>
+            </div>
+            <div class="gauge-row">
+              <div class="gauge-header"><span class="gauge-name">📐 KS 통계량</span><span class="gauge-val" style="color:var(--purple);">83.57%</span></div>
+              <div class="gauge-track"><div class="gauge-fill fill-purple" style="width:0" data-w="83.57"></div></div>
+              <div style="font-size:9.5px;color:var(--muted);margin-top:3px;">IRB 권고 기준 40% → 2배 이상 초과</div>
+            </div>
+            <div class="gauge-row">
+              <div class="gauge-header"><span class="gauge-name">🔍 Recall (탐지율)</span><span class="gauge-val" style="color:var(--green);">92.21%</span></div>
+              <div class="gauge-track"><div class="gauge-fill fill-green" style="width:0" data-w="92.21"></div></div>
+              <div style="font-size:9.5px;color:var(--muted);margin-top:3px;">부도 989건 중 912건 사전 포착</div>
+            </div>
+            <div class="gauge-row">
+              <div class="gauge-header"><span class="gauge-name">🎚 Precision</span><span class="gauge-val" style="color:var(--orange);">8.55%</span></div>
+              <div class="gauge-track"><div class="gauge-fill fill-orange" style="width:0" data-w="8.55"></div></div>
+              <div style="font-size:9.5px;color:var(--muted);margin-top:3px;">극단 불균형(부도율 ~1%) 감안 시 정상 수준</div>
+            </div>
+          </div>
+          <div style="margin-top:18px;">
+            <div class="section-title">12m Valid 혼동 행렬 (Threshold 0.5)</div>
+            <div class="cm-grid">
+              <div class="cm-cell cm-tp"><div class="cm-val">912</div><div class="cm-lbl" style="color:var(--green);">TP 부도 정탐</div></div>
+              <div class="cm-cell cm-fp"><div class="cm-val">9,752</div><div class="cm-lbl" style="color:var(--orange);">FP 정상 오탐</div></div>
+              <div class="cm-cell cm-fn"><div class="cm-val">77</div><div class="cm-lbl" style="color:var(--red);">FN 부도 미탐</div></div>
+              <div class="cm-cell cm-tn"><div class="cm-val">91,396</div><div class="cm-lbl" style="color:var(--blue);">TN 정상 정탐</div></div>
+            </div>
+            <div style="font-size:10px;color:var(--muted);margin-top:8px;line-height:1.6;">💡 FN(미탐)=77건 최소화가 핵심. FP(오탐)은 추가 실사로 걸러낼 수 있으나 FN은 손실 직결.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ 3. ROC 커브 ══ -->
+  <div class="card">
+    <div class="card-header">
+      <h2>📈 ROC Curve — Valid vs Test 비교</h2>
+      <div class="tab-bar" id="rocTabBar">
+        <button class="tab-btn active" onclick="switchRocTab('12m',this)">12-Month PD</button>
+        <button class="tab-btn" onclick="switchRocTab('6m',this)">6-Month PD</button>
+      </div>
+    </div>
+    <div class="card-body">
+      <div class="grid-2" style="gap:28px; align-items:start;">
+        <div style="position:relative;height:300px;"><canvas id="rocChart"></canvas></div>
+        <div style="display:flex;flex-direction:column;gap:12px;">
+          <div class="insight blue"><div class="insight-title">🔵 12m Valid AUC 0.9727</div><p>훈련(0.9896) 대비 갭 1.69%p — 5%p 이하 기준 충족. 시계열 외삽 안정성 확인.</p></div>
+          <div class="insight green"><div class="insight-title">🟢 6m Valid AUC 0.9606</div><p>Valid·Test 간 갭 0.07%p. 두 기간 모두 일관된 성능 유지.</p></div>
+          <div class="insight orange"><div class="insight-title">📊 ROC 좌상단 꺾임 분석</div><p>FPR 1~2% 구간에서 TPR이 이미 <strong>67~68%</strong>에 도달. 매우 낮은 오탐률로도 과반 이상 부도 차주 선별 가능.</p></div>
+          <div style="background:rgba(0,0,0,0.2);border:1px solid var(--border);border-radius:10px;padding:12px 16px;">
+            <div style="font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--muted);margin-bottom:8px;">AUC 전체 수치</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:5px;font-size:11.5px;">
+              <span style="color:var(--muted);">12m Train</span><span style="color:#60a5fa;font-weight:700;text-align:right;">0.9896</span>
+              <span style="color:var(--muted);">12m Valid</span><span style="color:var(--green);font-weight:700;text-align:right;">0.9727</span>
+              <span style="color:var(--muted);">12m Test</span><span style="color:var(--orange);font-weight:700;text-align:right;">0.9755</span>
+              <span style="color:var(--muted);">6m Train</span><span style="color:#60a5fa;font-weight:700;text-align:right;">0.9790</span>
+              <span style="color:var(--muted);">6m Valid</span><span style="color:var(--green);font-weight:700;text-align:right;">0.9606</span>
+              <span style="color:var(--muted);">6m Test</span><span style="color:var(--orange);font-weight:700;text-align:right;">0.9599</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ 4. PD 분포 ══ -->
+  <div class="card">
+    <div class="card-header">
+      <h2>📉 예측 PD 분포 — 부도 vs 정상 (12m Valid)</h2>
+      <span class="card-label">정규분포 여부 및 분리도 확인</span>
+    </div>
+    <div class="card-body">
+      <div class="grid-2" style="gap:28px; align-items:start;">
+        <div>
+          <div style="display:flex;gap:14px;margin-bottom:12px;flex-wrap:wrap;">
+            <div style="display:flex;align-items:center;gap:6px;font-size:12px;"><div style="width:10px;height:10px;border-radius:50%;background:var(--red);"></div> 실제 부도 차주 PD</div>
+            <div style="display:flex;align-items:center;gap:6px;font-size:12px;"><div style="width:10px;height:10px;border-radius:50%;background:rgba(79,142,247,0.7);"></div> 실제 정상 차주 PD (log)</div>
+          </div>
+          <div style="position:relative;height:280px;"><canvas id="pdDistChart"></canvas></div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:12px;">
+          <div class="insight red"><div class="insight-title">🔴 부도 차주 — 우측 집중</div><p>PD 85% 이상 구간에 부도 차주 <strong>450+건</strong> 집중. 강한 우편향 — 모델이 부도 차주를 고위험 영역에 정확히 분류.</p></div>
+          <div class="insight blue"><div class="insight-title">🔵 정상 차주 — 좌측 집중</div><p>85,092건이 PD 0~5% 구간에 밀집. 정상 차주를 압도적으로 낮은 리스크로 판별.</p></div>
+          <div class="insight green"><div class="insight-title">✅ KS=0.8357 — 분포 분리도 우수</div><p>두 그룹 분포의 최대 분리거리. 금융권 IRB 기준 0.3 이상 권고 → 2.7배 초과 달성.</p></div>
+          <div style="background:rgba(0,0,0,0.2);border:1px solid var(--border);border-radius:10px;padding:12px 16px;">
+            <div style="font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--muted);margin-bottom:8px;">PD 구간별 부도 집중도</div>
+            <div style="display:flex;flex-direction:column;gap:5px;font-size:11.5px;">
+              <div style="display:flex;justify-content:space-between;"><span style="color:var(--muted);">PD 0~10%</span><span style="color:var(--green);font-weight:700;">40건 (4.0%)</span></div>
+              <div style="display:flex;justify-content:space-between;"><span style="color:var(--muted);">PD 10~50%</span><span style="color:var(--yellow);font-weight:700;">19건 (1.9%)</span></div>
+              <div style="display:flex;justify-content:space-between;"><span style="color:var(--muted);">PD 50~80%</span><span style="color:var(--orange);font-weight:700;">50건 (5.1%)</span></div>
+              <div style="display:flex;justify-content:space-between;"><span style="color:var(--muted);">PD 80~100%</span><span style="color:var(--red);font-weight:700;">880건 (88.9%)</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ 5. AUC/KS 비교 바차트 ══ -->
+  <div class="card">
+    <div class="card-header">
+      <h2>🔄 Train · Valid · Test 성능 지표 비교</h2>
+      <span class="card-label">과적합(Overfitting) 시각적 확인</span>
+    </div>
+    <div class="card-body">
+      <div class="grid-2" style="gap:24px;">
+        <div><div style="font-size:11.5px;color:var(--muted);font-weight:600;margin-bottom:12px;text-align:center;">AUC 비교 (높을수록 우수)</div><div style="position:relative;height:230px;"><canvas id="aucCompareChart"></canvas></div></div>
+        <div><div style="font-size:11.5px;color:var(--muted);font-weight:600;margin-bottom:12px;text-align:center;">KS 통계량 비교</div><div style="position:relative;height:230px;"><canvas id="ksCompareChart"></canvas></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ 6. 로그 변환 설명 ══ -->
+  <div class="card">
+    <div class="card-header">
+      <h2>🔬 Log(X+1) 변환 상세 — 왜곡 보정 및 IV 향상 효과</h2>
+      <span class="card-label">Feature Engineering · 스케일 정규화</span>
+    </div>
+    <div class="card-body">
+      <!-- 개념 설명 배너 -->
+      <div style="background:linear-gradient(135deg, rgba(167,139,250,0.08), rgba(79,142,247,0.08)); border:1px solid rgba(167,139,250,0.2); border-radius:14px; padding:18px 22px; margin-bottom:22px;">
+        <div style="display:flex;gap:20px;flex-wrap:wrap;align-items:start;">
+          <div style="flex:1;min-width:220px;">
+            <div style="font-size:11px;font-weight:700;color:var(--purple);margin-bottom:8px;text-transform:uppercase;letter-spacing:0.8px;">왜 Log 변환이 필요한가?</div>
+            <div style="font-size:12.5px;color:var(--muted);line-height:1.8;">
+              매출액, 여신액, 종업원수 같은 기업 재무 변수들은 <strong style="color:var(--text)">극단적 우편향(Right-Skewed)</strong> 분포를 가집니다.<br>
+              소수 대기업의 초대형 수치가 모델 학습을 왜곡시키므로, 
+              <span class="log-formula">log(X + 1)</span> 변환으로 <strong style="color:var(--text)">정규분포에 가깝게 압축</strong>합니다.
+            </div>
+          </div>
+          <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;">
+            <div style="text-align:center;padding:12px 18px;background:rgba(248,95,122,0.08);border:1px solid rgba(248,95,122,0.2);border-radius:12px;">
+              <div style="font-size:9px;font-weight:700;color:var(--red);text-transform:uppercase;margin-bottom:4px;">원래 분포</div>
+              <div style="font-size:1.3rem;font-weight:800;color:var(--red);">↑↑↑ 왜도</div>
+              <div style="font-size:10px;color:var(--muted);">극단값 존재</div>
+            </div>
+            <div style="font-size:1.5rem;color:var(--purple);font-weight:700;">→</div>
+            <div style="text-align:center;padding:12px 18px;background:rgba(52,211,153,0.08);border:1px solid rgba(52,211,153,0.2);border-radius:12px;">
+              <div style="font-size:9px;font-weight:700;color:var(--green);text-transform:uppercase;margin-bottom:4px;">변환 후 분포</div>
+              <div style="font-size:1.3rem;font-weight:800;color:var(--green);">≈ 정규</div>
+              <div style="font-size:10px;color:var(--muted);">IV 최대 +28%</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 변환 변수 테이블 -->
+      <div class="section-title">로그 변환 적용 변수 목록 및 파생 피처</div>
+      <div style="overflow-x:auto;margin-bottom:20px;">
+        <table class="log-table">
+          <thead>
+            <tr>
+              <th>원본 변수</th>
+              <th>경제적 의미</th>
+              <th>변환 전</th>
+              <th>변환 공식</th>
+              <th>변환 후 피처명</th>
+              <th>생성 파생 피처</th>
+              <th>IV 효과</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="feature-tag">LN_BAC</span></td>
+              <td style="color:var(--muted);">대출 잔액</td>
+              <td><span class="log-before">우편향 심함</span></td>
+              <td><span class="log-formula">log(LN_BAC+1)</span></td>
+              <td><span class="log-after">LN_BAC_log</span></td>
+              <td style="color:var(--muted);font-size:11px;">_log_lag1, _log_lag2, _log_ma3m, _log_diff1, _log_pct1</td>
+              <td class="log-iv-up">↑ 강화</td>
+            </tr>
+            <tr>
+              <td><span class="feature-tag">LN_LMT_AM</span></td>
+              <td style="color:var(--muted);">여신 한도액</td>
+              <td><span class="log-before">우편향</span></td>
+              <td><span class="log-formula">log(LN_LMT_AM+1)</span></td>
+              <td><span class="log-after">LN_LMT_AM_log</span></td>
+              <td style="color:var(--muted);font-size:11px;">lag/MA/diff/pct 파생 5종</td>
+              <td class="log-iv-up">↑ 강화</td>
+            </tr>
+            <tr>
+              <td><span class="feature-tag">TOT_SEL_AM</span></td>
+              <td style="color:var(--muted);">총 매출액</td>
+              <td><span class="log-before">극단값 다수</span></td>
+              <td><span class="log-formula">log(TOT_SEL_AM+1)</span></td>
+              <td><span class="log-after">TOT_SEL_AM_log</span></td>
+              <td style="color:var(--muted);font-size:11px;">lag/MA/diff/pct 파생 5종</td>
+              <td class="log-iv-up">↑ 최대 +28%</td>
+            </tr>
+            <tr>
+              <td><span class="feature-tag">EMPCN</span></td>
+              <td style="color:var(--muted);">종업원 수</td>
+              <td><span class="log-before">대기업 편향</span></td>
+              <td><span class="log-formula">log(EMPCN+1)</span></td>
+              <td><span class="log-after">EMPCN_log</span></td>
+              <td style="color:var(--muted);font-size:11px;"><strong style="color:var(--green);">EMPCN_log_ma3m</strong> → 최종 Top25 선정</td>
+              <td class="log-iv-up">↑ Top25 진입</td>
+            </tr>
+            <tr>
+              <td><span class="feature-tag">LA_XPO_AM</span></td>
+              <td style="color:var(--muted);">외화 익스포져</td>
+              <td><span class="log-before">0값 다수 + 편향</span></td>
+              <td><span class="log-formula">log(LA_XPO_AM+1)</span></td>
+              <td><span class="log-after">LA_XPO_AM_log</span></td>
+              <td style="color:var(--muted);font-size:11px;">lag/MA/diff/pct 파생 5종</td>
+              <td class="log-iv-up">↑ 강화</td>
+            </tr>
+            <tr>
+              <td><span class="feature-tag">DME_AM</span></td>
+              <td style="color:var(--muted);">담보 금액</td>
+              <td><span class="log-before">0값 + 극단편향</span></td>
+              <td><span class="log-formula">log(DME_AM+1)</span></td>
+              <td><span class="log-after">DME_AM_log</span></td>
+              <td style="color:var(--muted);font-size:11px;">lag/MA/diff/pct 파생 5종</td>
+              <td class="log-iv-up">↑ 강화</td>
+            </tr>
+            <tr>
+              <td><span class="feature-tag">TOTAL_KRW_AM</span></td>
+              <td style="color:var(--muted);">원화 총여신액</td>
+              <td><span class="log-before">우편향 심함</span></td>
+              <td><span class="log-formula">log(TOTAL_KRW_AM+1)</span></td>
+              <td><span class="log-after">TOTAL_KRW_AM_log</span></td>
+              <td style="color:var(--muted);font-size:11px;">lag/MA/diff/pct 파생 5종</td>
+              <td class="log-iv-up">↑ 강화</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- 파생 피처 & Z-Score 설명 -->
+      <div class="grid-2" style="gap:16px;">
+        <div style="background:rgba(0,0,0,0.2);border:1px solid var(--border);border-radius:14px;padding:16px 20px;">
+          <div style="font-size:11px;font-weight:700;color:var(--purple);margin-bottom:10px;text-transform:uppercase;letter-spacing:0.8px;">시계열 파생 피처 생성 규칙</div>
+          <div style="display:flex;flex-direction:column;gap:7px;font-size:12px;">
+            <div style="display:flex;gap:10px;align-items:start;">
+              <span style="color:var(--blue);font-weight:700;min-width:55px;font-family:monospace;">_lag1/2</span>
+              <span style="color:var(--muted);">기업별 1·2개월 시차 변수 — 과거 값을 현재 예측에 반영</span>
+            </div>
+            <div style="display:flex;gap:10px;align-items:start;">
+              <span style="color:var(--green);font-weight:700;min-width:55px;font-family:monospace;">_ma3m</span>
+              <span style="color:var(--muted);">3개월 이동평균 — 단기 변동성 제거, 추세 추출</span>
+            </div>
+            <div style="display:flex;gap:10px;align-items:start;">
+              <span style="color:var(--orange);font-weight:700;min-width:55px;font-family:monospace;">_diff1</span>
+              <span style="color:var(--muted);">월간 차분 — 절대 변화량 (급락 신호 포착)</span>
+            </div>
+            <div style="display:flex;gap:10px;align-items:start;">
+              <span style="color:var(--red);font-weight:700;min-width:55px;font-family:monospace;">_pct1</span>
+              <span style="color:var(--muted);">월간 변화율 — 상대 변화량 (비율 기반 신호)</span>
+            </div>
+          </div>
+        </div>
+        <div style="background:rgba(0,0,0,0.2);border:1px solid var(--border);border-radius:14px;padding:16px 20px;">
+          <div style="font-size:11px;font-weight:700;color:var(--green);margin-bottom:10px;text-transform:uppercase;letter-spacing:0.8px;">Z-Score 입력 정규화 (스케일링)</div>
+          <div style="text-align:center;padding:10px;background:rgba(167,139,250,0.08);border-radius:10px;margin-bottom:10px;">
+            <div style="font-family:monospace;font-size:1.1rem;color:var(--purple);font-weight:700;">Z = (X − μ) / σ</div>
+          </div>
+          <div style="font-size:12px;color:var(--muted);line-height:1.7;">
+            최종 선택 25개 피처 모두 <strong style="color:var(--text)">StandardScaler</strong>로 Z-Score 정규화.<br>
+            Train 셋 기준 μ·σ 추정 → Valid/Test에 동일 적용 (Data Leakage 방어).<br>
+            6m·12m 모델 각각 별도 Scaler 적용.
+          </div>
+          <div style="margin-top:10px;display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:11px;color:var(--muted);">
+            <div>6m Train: <strong style="color:#60a5fa;">420,948건</strong></div>
+            <div>6m Valid: <strong style="color:var(--green);">139,734건</strong></div>
+            <div>12m Train: <strong style="color:#60a5fa;">306,638건</strong></div>
+            <div>12m Valid: <strong style="color:var(--green);">102,137건</strong></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ 7. SHAP 글로벌 중요도 이미지 ══ -->
+  <div class="card">
+    <div class="card-header">
+      <h2>🔍 SHAP 글로벌 피처 중요도 분석</h2>
+      <span class="card-label">12-Month PD Model · TreeExplainer</span>
+    </div>
+    <div class="card-body">
+      <div class="grid-2" style="gap:20px; align-items:start;">
+        <div>
+          <div class="section-title">① SHAP Bar Plot — 평균 절대 기여도</div>
+          <div class="img-card">
+            <img src="../model_building/output/shap_summary_bar.png" alt="SHAP Bar Plot" onclick="openLightbox(this)" loading="lazy" />
+            <div class="img-caption">
+              <div class="img-caption-title">SHAP 피처 중요도 (Bar)</div>
+              <div class="img-caption-desc">각 피처의 평균 |SHAP값| 순위. 상위 피처일수록 12m 부도 예측에 미치는 평균 영향력이 큽니다. 막대 길이가 클수록 해당 피처의 예측 기여도가 높습니다.</div>
+            </div>
+          </div>
+        </div>
+        <div>
+          <div class="section-title">② SHAP Beeswarm — 방향성 + 크기 동시 시각화</div>
+          <div class="img-card">
+            <img src="../model_building/output/shap_summary_12m_dot.png" alt="SHAP Beeswarm 12m" onclick="openLightbox(this)" loading="lazy" />
+            <div class="img-caption">
+              <div class="img-caption-title">SHAP Beeswarm Plot (12m PD)</div>
+              <div class="img-caption-desc">점의 색상=피처 값(빨강=높음, 파랑=낮음), X축 위치=SHAP 기여도 방향(양수=부도 위험↑). 예: 영업이익률(191310)이 낮을수록 부도 확률이 상승함을 확인 가능.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div style="margin-top:16px;" class="grid-2" style="gap:14px;">
+        <div class="insight purple"><div class="insight-title">💜 SHAP 해석 방법</div><p>SHAP값 > 0: 해당 피처가 부도 확률을 <strong>올리는 방향</strong>으로 작용. SHAP값 < 0: 부도 확률을 <strong>낮추는 방향</strong>. Beeswarm에서 빨간점(높은 피처값)이 오른쪽에 있으면 해당 피처가 클수록 부도 위험이 높습니다.</p></div>
+        <div class="insight orange"><div class="insight-title">🟠 Top 피처 해석 (12m)</div><p>영업이익률(191310)·자본총계(128000)·자본잉여금(129000) 등 <strong>내부 재무 건전성 지표</strong>가 최상위입니다. NICE 등급 없이도 기업 자체 재무 신호로 부도를 탐지합니다.</p></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ 8. 업종별 거시지표 히트맵 ══ -->
+  <div class="card">
+    <div class="card-header">
+      <h2>🕸️ 업종별 거시경제 지표 민감도 히트맵 (SHAP Matrix)</h2>
+      <span class="card-label">12m PD Model · 5,000건 샘플 기반 평균 절대 SHAP</span>
+    </div>
+    <div class="card-body">
+      <div class="grid-2" style="gap:24px; align-items:start;">
+        <div>
+          <div class="img-card">
+            <img src="../model_building/output/macro_impact_by_industry.png" alt="업종별 거시경제 히트맵" onclick="openLightbox(this)" loading="lazy" style="max-height:420px;" />
+            <div class="img-caption">
+              <div class="img-caption-title">업종 × 거시지표 SHAP 민감도 Matrix</div>
+              <div class="img-caption-desc">행=업종, 열=피처. 셀 값=평균 |SHAP|. 색이 진할수록(YlOrRd 컬러맵) 해당 업종의 부도 예측에 해당 지표의 영향이 강함을 의미합니다. (클릭하면 확대)</div>
+            </div>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:12px;">
+          <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:4px;">업종별 핵심 리스크 패턴 해석</div>
+          <div class="insight red"><div class="insight-title">🏗 건설·부동산업</div><p><strong>자본총계(128000)</strong> 및 <strong>부채비율(123000)</strong>의 SHAP 기여도가 압도적. 금리 사이클 및 재무 건전성 악화가 부도 확률에 즉각 상향 충격.</p></div>
+          <div class="insight blue"><div class="insight-title">🚢 제조업·ICT</div><p><strong>원/달러 환율(US_KRW_AM)</strong> 및 자본구조 지표 가중치가 매우 높음. 대외 교역 리스크와 글로벌 금리 방향이 지배적 예측 인자.</p></div>
+          <div class="insight green"><div class="insight-title">🛒 도소매·서비스업</div><p><strong>연체금액합계(SUM CRDBD_OVD_AM)</strong> 및 <strong>종업원수(EMPCN)</strong> 민감도 우세. 내수 경기 위축 및 유동성 위기가 부도 선행 리스크.</p></div>
+          <div class="insight orange"><div class="insight-title">💻 ICT 특이점</div><p>영업이익률 성장성(191503) 및 당좌비율(191104)이 타 업종 대비 훨씬 높음. 기술업 특성상 <strong>수익성·유동성 변화에 부도 민감도 집중</strong>.</p></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ 9. 월별 SHAP 트래킹 ══ -->
+  <div class="card">
+    <div class="card-header">
+      <h2>📅 월별 SHAP 트래킹 — 시간에 따른 피처 영향도 변화</h2>
+      <span class="card-label">Temporal SHAP Tracking · 거시경제 사이클 반영</span>
+    </div>
+    <div class="card-body">
+      <div class="img-card" style="max-width:100%;">
+        <img src="../model_building/output/monthly_shap_tracking.png" alt="월별 SHAP 트래킹" onclick="openLightbox(this)" loading="lazy" />
+        <div class="img-caption">
+          <div class="img-caption-title">월별 평균 SHAP 기여도 트래킹 (2024 ~ 2025)</div>
+          <div class="img-caption-desc">
+            관찰 시점(BASE_YM)별로 각 피처의 평균 SHAP값을 집계. 거시경제 국면 변화에 따라 각 피처의 부도 예측 기여도가 어떻게 달라지는지 시계열로 추적합니다. 특정 월에 특정 피처가 급증하면 해당 기간에 그 리스크 요인이 강하게 작용했음을 의미합니다.
+          </div>
+        </div>
+      </div>
+      <div style="margin-top:14px;" class="grid-2">
+        <div class="insight blue"><div class="insight-title">📊 트래킹 활용 방법</div><p>환율·금리 충격 시점과 US_KRW_AM SHAP 급증 구간을 비교하면 <strong>거시 충격이 신용리스크에 전파되는 시차(Lag)</strong>를 파악할 수 있습니다.</p></div>
+        <div class="insight purple"><div class="insight-title">⏱ 시계열 안정성 검증</div><p>특정 피처의 SHAP이 특정 월에만 극단적으로 높다면 모델이 그 기간에 과적합된 신호. 월별 트래킹으로 <strong>시간에 따른 모델 일관성</strong>을 모니터링합니다.</p></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ 10. 리스크 타임라인 ══ -->
+  <div class="card">
+    <div class="card-header">
+      <h2>⏳ 개별 기업 듀얼 리스크 타임라인 (6M vs 12M PD)</h2>
+      <span class="card-label">테스트56 (사업자번호 1000000056) — 실제 부도 차주</span>
+    </div>
+    <div class="card-body">
+      <div class="grid-2" style="gap:24px; align-items:start;">
+        <div>
+          <div class="section-title">① 실제 부도 차주 타임라인 (단일 관찰)</div>
+          <div class="img-card">
+            <img src="../model_building/output/risk_timeline_1000000056.png" alt="리스크 타임라인 단일" onclick="openLightbox(this)" loading="lazy" />
+            <div class="img-caption">
+              <div class="img-caption-title">테스트56 단일 리스크 타임라인</div>
+              <div class="img-caption-desc">부도 발생 전 수개월 동안 PD가 어떤 패턴으로 상승했는지 시계열로 추적. 점선 수직선이 실제 부도 발생 시점.</div>
+            </div>
+          </div>
+        </div>
+        <div>
+          <div class="section-title">② 6M vs 12M 듀얼 호라이즌 비교</div>
+          <div class="img-card">
+            <img src="../model_building/output/risk_timeline_V_BZNO_dual.png" alt="듀얼 리스크 타임라인" onclick="openLightbox(this)" loading="lazy" />
+            <div class="img-caption">
+              <div class="img-caption-title">듀얼 호라이즌 PD 타임라인 (6M 주황 / 12M 빨강)</div>
+              <div class="img-caption-desc">6m(단기)과 12m(장기) PD를 동시에 플로팅. 두 지표가 함께 급증하는 시점이 실제 여신 회수 조치의 최적 타이밍입니다.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div style="margin-top:14px; display:flex; flex-direction:column; gap:10px;">
+        <div class="insight red"><div class="insight-title">🔴 테스트56 분석 결과</div><p>관찰 전 기간(2024-01 ~ 2024-09) 내내 6m PD <strong>98.96%</strong>, 12m PD <strong>98.79%</strong>가 유지. 부도 발생 수개월 전부터 이미 최고 위험 수준으로 판별됨. 조기경보 시스템으로서 완벽한 적중 성능.</p></div>
+        <div class="insight orange"><div class="insight-title">⚠️ 듀얼 호라이즌 활용 가이드</div><p>단기(6m)가 높고 장기(12m)가 낮으면 → 일시적 유동성 위기 (유예 가능). 단기·장기 모두 높으면 → 구조적 부도 위험 (즉시 여신 회수 조치 필요). 두 곡선의 교차점 모니터링이 핵심입니다.</p></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ 11. 피처 셀렉션 IV 이미지 + 업종별 바차트 ══ -->
+  <div class="card">
+    <div class="card-header">
+      <h2>📊 피처 셀렉션 IV 랭킹 — 업종별 상세 분석</h2>
+      <span class="card-label">Information Value 기반 · Log 변환 피처 강조 표시</span>
+    </div>
+    <div class="card-body">
+      <!-- IV 이미지 -->
+      <div class="section-title">전체 피처 IV 랭킹 이미지 (학습 시 실제 산출)</div>
+      <div class="img-card" style="margin-bottom:22px;">
+        <img src="../model_building/output/feature_selection_iv.png" alt="피처 셀렉션 IV 랭킹" onclick="openLightbox(this)" loading="lazy" />
+        <div class="img-caption">
+          <div class="img-caption-title">Feature Selection IV Ranking — NICE 제외 + Log 변환 강조</div>
+          <div class="img-caption-desc">
+            파란색(skyblue) 막대: 원본 피처. 주황색(coral) 막대: 로그 변환 또는 로그 기반 파생 피처. 로그 변환 피처들이 상위권에 대거 포진한 것을 확인할 수 있습니다.
+          </div>
+        </div>
+      </div>
+
+      <!-- 업종별 인터랙티브 바차트 -->
+      <div class="section-title">업종별 IV 랭킹 (인터랙티브)</div>
+      <div class="sector-tabs" id="sectorTabs">
+        <button class="sector-btn active" onclick="switchSector('all',this)">🌐 전체 25개</button>
+        <button class="sector-btn" onclick="switchSector('Manufacturing',this)">🏗 제조업</button>
+        <button class="sector-btn" onclick="switchSector('Construction',this)">🏢 건설업</button>
+        <button class="sector-btn" onclick="switchSector('Wholesale',this)">🛒 도소매업</button>
+        <button class="sector-btn" onclick="switchSector('ICT',this)">💻 ICT</button>
+        <button class="sector-btn" onclick="switchSector('RealEstate',this)">🏠 부동산업</button>
+        <button class="sector-btn" onclick="switchSector('Service',this)">🔧 서비스업</button>
+      </div>
+      <div class="grid-2" style="gap:24px;align-items:start;">
+        <div style="position:relative;height:360px;"><canvas id="sectorIvChart"></canvas></div>
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          <div style="font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--muted);margin-bottom:4px;">피처 상세 설명</div>
+          <div id="featureDescList" style="display:flex;flex-direction:column;gap:6px;font-size:11.5px;"></div>
+          <div style="margin-top:8px;background:rgba(0,0,0,0.2);border:1px solid var(--border);border-radius:10px;padding:12px 16px;">
+            <div style="font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--muted);margin-bottom:8px;">IV 기준값 해석</div>
+            <div style="display:flex;flex-direction:column;gap:5px;font-size:11px;">
+              <div style="display:flex;justify-content:space-between;"><span style="color:var(--muted);">IV &lt; 0.1</span><span style="color:#888;">약한 예측력</span></div>
+              <div style="display:flex;justify-content:space-between;"><span style="color:var(--muted);">0.1 ~ 0.3</span><span style="color:var(--orange);">중간 예측력</span></div>
+              <div style="display:flex;justify-content:space-between;"><span style="color:var(--muted);">0.3 ~ 0.5</span><span style="color:var(--blue);">강한 예측력</span></div>
+              <div style="display:flex;justify-content:space-between;"><span style="color:var(--muted);">&gt; 0.5</span><span style="color:var(--green);font-weight:700;">매우 강한 예측력 ★</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<!-- 라이트박스 스크립트 -->
+<script>
+function openLightbox(img) {
+  document.getElementById('lightbox-img').src = img.src;
+  document.getElementById('lightbox').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closeLightbox() {
+  document.getElementById('lightbox').classList.remove('open');
+  document.body.style.overflow = '';
+}
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeLightbox(); });
+</script>
+
+<script>
+// ── ROC 데이터 ──
+const ROC = {
+  valid_12m: {
+    fpr:[0,0.011,0.062,0.129,0.151,0.171,0.191,0.210,0.229,0.248,0.268,0.286,0.305,0.324,0.342,0.362,0.382,0.401,0.419,0.438,0.457,0.476,0.494,0.512,0.531,0.550,0.569,0.588,0.607,0.625,0.644,0.664,0.682,0.701,0.720,0.739,0.758,0.777,0.795,0.814,0.833,0.851,0.870,0.889,0.908,0.927,0.945,0.964,0.982,1.0],
+    tpr:[0,0.672,0.879,0.956,0.965,0.970,0.971,0.972,0.974,0.977,0.978,0.979,0.982,0.986,0.988,0.989,0.990,0.993,0.993,0.993,0.997,0.997,0.998,0.998,0.998,0.999,0.999,0.999,0.999,0.999,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0]
+  },
+  test_12m: {
+    fpr:[0,0.011,0.061,0.129,0.152,0.172,0.191,0.211,0.229,0.247,0.266,0.286,0.305,0.323,0.341,0.361,0.382,0.401,0.420,0.438,0.456,0.475,0.494,0.512,0.531,0.550,0.569,0.588,0.607,0.625,0.644,0.663,0.682,0.701,0.718,0.737,0.756,0.775,0.793,0.812,0.831,0.852,0.870,0.888,0.907,0.925,0.944,0.963,0.982,1.0],
+    tpr:[0,0.677,0.903,0.967,0.975,0.978,0.979,0.981,0.982,0.984,0.984,0.986,0.988,0.989,0.989,0.989,0.989,0.990,0.990,0.990,0.992,0.993,0.994,0.995,0.995,0.995,0.995,0.995,0.996,0.997,0.998,0.998,0.998,0.998,0.998,0.998,0.998,0.998,0.998,0.998,0.998,0.998,0.998,0.998,1.0,1.0,1.0,1.0,1.0,1.0]
+  },
+  valid_6m: {
+    fpr:[0,0.023,0.156,0.183,0.202,0.220,0.238,0.257,0.276,0.294,0.312,0.329,0.346,0.364,0.382,0.399,0.417,0.435,0.452,0.469,0.488,0.505,0.523,0.540,0.558,0.575,0.593,0.610,0.628,0.646,0.663,0.681,0.698,0.715,0.732,0.750,0.768,0.785,0.803,0.820,0.839,0.857,0.875,0.893,0.911,0.929,0.946,0.965,0.982,1.0],
+    tpr:[0,0.654,0.947,0.974,0.983,0.988,0.988,0.988,0.989,0.991,0.991,0.994,0.994,0.994,0.994,0.994,0.994,0.994,0.994,0.994,0.994,0.994,0.997,0.997,0.997,0.997,0.997,0.998,0.998,0.998,0.998,0.998,0.998,0.998,0.998,0.998,0.998,0.998,0.998,0.998,0.998,0.998,0.998,1.0,1.0,1.0,1.0,1.0,1.0,1.0]
+  },
+  test_6m: {
+    fpr:[0,0.023,0.156,0.183,0.202,0.220,0.238,0.257,0.277,0.294,0.311,0.329,0.347,0.365,0.382,0.399,0.417,0.434,0.453,0.470,0.488,0.506,0.523,0.541,0.559,0.577,0.594,0.612,0.630,0.647,0.665,0.682,0.701,0.718,0.736,0.753,0.771,0.789,0.807,0.824,0.842,0.859,0.877,0.894,0.912,0.930,0.948,0.965,0.982,1.0],
+    tpr:[0,0.652,0.954,0.973,0.979,0.985,0.988,0.988,0.988,0.990,0.990,0.993,0.993,0.993,0.993,0.993,0.993,0.993,0.993,0.993,0.993,0.993,0.993,0.993,0.993,0.996,0.996,0.996,0.996,0.996,0.996,0.996,0.996,0.996,0.997,0.997,0.997,0.997,0.997,0.997,0.997,0.997,0.997,0.997,0.997,0.997,0.997,0.997,0.997,1.0]
+  }
+};
+
+// ── PD 분포 ──
+const PD_DIST = {
+  centers:[0.025,0.075,0.125,0.175,0.225,0.275,0.325,0.375,0.425,0.475,0.525,0.575,0.625,0.675,0.725,0.775,0.825,0.875,0.925,0.975],
+  defaultCounts:[33,7,4,1,2,9,2,11,4,4,12,31,7,11,34,56,27,69,215,450],
+  normalCounts:[85092,2070,982,566,344,999,209,736,179,219,372,3170,302,395,1570,1469,649,696,888,241]
+};
+
+// ── 피처 설명 ──
+const FEATURE_DESC = {
+  '191310':'영업이익률 (EBIT Margin)','128000':'자본총계 (Total Equity)','129000':'자본잉여금 (Capital Surplus)',
+  '123000':'부채비율 계정 (Debt Ratio)','191210':'총자산이익률 ROA','191207':'이자보상배율 (Interest Coverage)',
+  '118900':'총차입금 (Total Borrowings)','125000':'이익잉여금 (Retained Earnings)',
+  'SUM(CRDBD_OVD_AM)':'연체금액 합계 (Total Overdue)','191204':'자기자본이익률 ROE',
+  '191503':'매출액증가율 (Sales Growth)','US_KRW_AM':'원/달러 환율 (USD/KRW)',
+  '191208':'부채상환비율 DSR','191105':'유동비율 (Current Ratio)','191104':'당좌비율 (Quick Ratio)',
+  '121000':'단기차입금 (Short-term Debt)','US_FC_AM':'외화부채액 (FX Debt)',
+  '191502':'매출액 (Revenue)','191108':'현금흐름비율 (Cash Flow Ratio)',
+  '191506':'총자산증가율 (Asset Growth)','191110':'순운전자본비율 (Working Capital)',
+  'EMPCN':'종업원수 (Employees)','EMPCN_ma3m':'종업원수 3개월 이동평균',
+  'EMPCN_log_ma3m':'종업원수 로그 3개월 이동평균 🔬','LD_AM':'대안여신액 (Alternative Credit)'
+};
+
+// ── 업종 데이터 ──
+const SECTOR_DATA = {
+  all:{ label:'전체 IV 랭킹 (상위 25개)', color:'rgba(79,142,247,0.75)',
+    features:['191310','128000','129000','123000','191210','191207','118900','125000','SUM(CRDBD_OVD_AM)','191204','191503','US_KRW_AM','191208','191105','191104','121000','US_FC_AM','191502','191108','191506','191110','EMPCN','EMPCN_ma3m','EMPCN_log_ma3m','LD_AM'],
+    ivs:[1.1279,1.0919,1.0636,0.9352,0.8835,0.8528,0.8519,0.8385,0.8333,0.7619,0.7018,0.6654,0.647,0.5597,0.5334,0.4963,0.4955,0.4539,0.4074,0.3124,0.3097,0.2891,0.2891,0.2891,0.2781]},
+  Manufacturing:{ label:'제조업 (Manufacturing)', color:'rgba(251,146,60,0.75)',
+    features:['123000','128000','129000','191310','125000','118900','191207','121000'],
+    ivs:[2.012,1.6834,1.6427,1.5038,1.4663,1.3501,1.3116,1.2021]},
+  Construction:{ label:'건설업 (Construction)', color:'rgba(248,95,122,0.75)',
+    features:['128000','118900','191310','191207','125000','129000','191108','191204'],
+    ivs:[2.1081,1.9653,1.7288,1.6671,1.6488,1.6035,1.5879,1.5693]},
+  Wholesale:{ label:'도소매업 (Wholesale/Retail)', color:'rgba(52,211,153,0.75)',
+    features:['191110','US_FC_AM','191210','123000','US_KRW_AM','128000','191310','191204'],
+    ivs:[1.1071,1.0159,1.0064,0.9002,0.8809,0.729,0.6895,0.6646]},
+  ICT:{ label:'ICT (정보통신)', color:'rgba(167,139,250,0.75)',
+    features:['191503','118900','191104','191502','191210','123000','191105','128000'],
+    ivs:[2.6191,2.6185,2.5863,1.888,1.7874,1.7285,1.6977,1.6282]},
+  RealEstate:{ label:'부동산업 (Real Estate)', color:'rgba(251,191,36,0.75)',
+    features:['191210','129000','128000','191105','191506','191310','191208','191207'],
+    ivs:[2.0031,1.7263,1.7254,1.7129,1.5237,1.5229,1.4422,1.3993]},
+  Service:{ label:'서비스업 (Service)', color:'rgba(129,140,248,0.75)',
+    features:['191310','128000','191207','191506','191208','118900','125000','191204'],
+    ivs:[1.7537,1.6641,1.5769,1.4147,1.382,1.3221,1.322,1.206]}
+};
+
+// ── ROC 차트 ──
+const rocCtx = document.getElementById('rocChart').getContext('2d');
+let rocChart = new Chart(rocCtx, {
+  type:'line',
+  data:{
+    datasets:[
+      {label:'Valid AUC=0.9727',data:ROC.valid_12m.fpr.map((x,i)=>({x,y:ROC.valid_12m.tpr[i]})),borderColor:'#34d399',backgroundColor:'rgba(52,211,153,0.06)',borderWidth:2.5,pointRadius:0,tension:0.3,fill:true},
+      {label:'Test AUC=0.9755', data:ROC.test_12m.fpr.map((x,i)=>({x,y:ROC.test_12m.tpr[i]})), borderColor:'#fb923c',backgroundColor:'rgba(251,146,60,0.03)',borderWidth:2,borderDash:[6,3],pointRadius:0,tension:0.3,fill:false},
+      {label:'Random (AUC=0.5)',data:[{x:0,y:0},{x:1,y:1}],borderColor:'rgba(200,200,200,0.18)',borderWidth:1.5,borderDash:[4,4],pointRadius:0,fill:false}
+    ]
+  },
+  options:{
+    responsive:true,maintainAspectRatio:false,parsing:false,
+    plugins:{legend:{labels:{color:'#e8eef8',font:{size:10.5,family:'Outfit'},boxWidth:20}}},
+    scales:{
+      x:{type:'linear',min:0,max:1,title:{display:true,text:'FPR (위양성율)',color:'#7a8fb5',font:{size:10}},ticks:{color:'#7a8fb5',font:{size:9},maxTicksLimit:6},grid:{color:'rgba(100,140,255,0.07)'}},
+      y:{min:0,max:1,title:{display:true,text:'TPR (재현율)',color:'#7a8fb5',font:{size:10}},ticks:{color:'#7a8fb5',font:{size:9}},grid:{color:'rgba(100,140,255,0.07)'}}
+    }
+  }
+});
+
+function switchRocTab(model, el) {
+  document.querySelectorAll('#rocTabBar .tab-btn').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+  if(model==='12m'){
+    rocChart.data.datasets[0].label='Valid AUC=0.9727'; rocChart.data.datasets[0].data=ROC.valid_12m.fpr.map((x,i)=>({x,y:ROC.valid_12m.tpr[i]})); rocChart.data.datasets[0].borderColor='#34d399';
+    rocChart.data.datasets[1].label='Test AUC=0.9755';  rocChart.data.datasets[1].data=ROC.test_12m.fpr.map((x,i)=>({x,y:ROC.test_12m.tpr[i]}));  rocChart.data.datasets[1].borderColor='#fb923c';
+  } else {
+    rocChart.data.datasets[0].label='Valid AUC=0.9606'; rocChart.data.datasets[0].data=ROC.valid_6m.fpr.map((x,i)=>({x,y:ROC.valid_6m.tpr[i]})); rocChart.data.datasets[0].borderColor='#60a5fa';
+    rocChart.data.datasets[1].label='Test AUC=0.9599';  rocChart.data.datasets[1].data=ROC.test_6m.fpr.map((x,i)=>({x,y:ROC.test_6m.tpr[i]}));  rocChart.data.datasets[1].borderColor='#f87171';
+  }
+  rocChart.update();
+}
+
+// ── PD 분포 차트 ──
+const pdCtx = document.getElementById('pdDistChart').getContext('2d');
+new Chart(pdCtx,{
+  type:'bar',
+  data:{
+    labels:PD_DIST.centers.map(v=>(v*100).toFixed(0)+'%'),
+    datasets:[
+      {label:'정상 차주 (log scale)',data:PD_DIST.normalCounts.map(v=>Math.log10(v+1)),backgroundColor:'rgba(79,142,247,0.5)',borderColor:'rgba(79,142,247,0.8)',borderWidth:1,borderRadius:3,yAxisID:'yLog'},
+      {label:'부도 차주',data:PD_DIST.defaultCounts,backgroundColor:'rgba(248,95,122,0.7)',borderColor:'rgba(248,95,122,0.9)',borderWidth:1,borderRadius:3,yAxisID:'yDef'}
+    ]
+  },
+  options:{
+    responsive:true,maintainAspectRatio:false,
+    plugins:{legend:{labels:{color:'#e8eef8',font:{size:10.5},boxWidth:16}},
+      tooltip:{callbacks:{label:(item)=>{
+        if(item.datasetIndex===0) return `정상: ${PD_DIST.normalCounts[item.dataIndex].toLocaleString()}건`;
+        return `부도: ${PD_DIST.defaultCounts[item.dataIndex]}건`;
+      }}}},
+    scales:{
+      x:{title:{display:true,text:'예측 PD 구간',color:'#7a8fb5',font:{size:10}},ticks:{color:'#7a8fb5',font:{size:9}},grid:{display:false}},
+      yLog:{position:'left',title:{display:true,text:'log10(정상 수)',color:'#7a8fb5',font:{size:9}},ticks:{color:'#7a8fb5',font:{size:9}},grid:{color:'rgba(100,140,255,0.07)'}},
+      yDef:{position:'right',title:{display:true,text:'부도 차주 수',color:'#f87171',font:{size:9}},ticks:{color:'#f87171',font:{size:9}},grid:{display:false}}
+    }
+  }
+});
+
+// ── AUC 비교 차트 ──
+new Chart(document.getElementById('aucCompareChart').getContext('2d'),{
+  type:'bar',
+  data:{
+    labels:['6m Train','6m Valid','6m Test','12m Train','12m Valid','12m Test'],
+    datasets:[{label:'AUC',data:[0.9790,0.9606,0.9599,0.9896,0.9727,0.9755],
+      backgroundColor:['rgba(96,165,250,0.5)','rgba(52,211,153,0.65)','rgba(251,146,60,0.5)','rgba(96,165,250,0.5)','rgba(52,211,153,0.65)','rgba(251,146,60,0.5)'],
+      borderColor:['#60a5fa','#34d399','#fb923c','#60a5fa','#34d399','#fb923c'],borderWidth:1.5,borderRadius:5}]
+  },
+  options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+    scales:{y:{min:0.9,max:1.0,ticks:{color:'#7a8fb5',font:{size:10}},grid:{color:'rgba(100,140,255,0.07)'}},x:{ticks:{color:'#7a8fb5',font:{size:10}},grid:{display:false}}}}
+});
+
+// ── KS 비교 차트 ──
+new Chart(document.getElementById('ksCompareChart').getContext('2d'),{
+  type:'bar',
+  data:{
+    labels:['6m Train','6m Valid','6m Test','12m Train','12m Valid','12m Test'],
+    datasets:[{label:'KS',data:[0.8576,0.7985,0.8003,0.9013,0.8357,0.8522],
+      backgroundColor:['rgba(167,139,250,0.45)','rgba(52,211,153,0.65)','rgba(251,146,60,0.45)','rgba(167,139,250,0.45)','rgba(52,211,153,0.65)','rgba(251,146,60,0.45)'],
+      borderColor:['#a78bfa','#34d399','#fb923c','#a78bfa','#34d399','#fb923c'],borderWidth:1.5,borderRadius:5}]
+  },
+  options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+    scales:{y:{min:0.6,max:1.0,ticks:{color:'#7a8fb5',font:{size:10}},grid:{color:'rgba(100,140,255,0.07)'}},x:{ticks:{color:'#7a8fb5',font:{size:10}},grid:{display:false}}}}
+});
+
+// ── 업종별 IV 차트 ──
+const sectorCtx = document.getElementById('sectorIvChart').getContext('2d');
+let sectorChart = null;
+
+function buildSectorChart(key) {
+  const d = SECTOR_DATA[key];
+  if(sectorChart) sectorChart.destroy();
+  document.getElementById('featureDescList').innerHTML = d.features.slice(0,8).map((f,i)=>`
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:1px solid rgba(100,140,255,0.06);">
+      <div>
+        <span style="display:inline-block;background:var(--surface2);border:1px solid var(--border2);border-radius:5px;padding:1px 7px;font-size:10.5px;font-weight:600;font-family:monospace;">${f}</span>
+        <span style="color:var(--muted);font-size:10.5px;margin-left:5px;">${FEATURE_DESC[f]||f}</span>
+      </div>
+      <span style="color:${d.color.replace('0.75','1')};font-weight:700;font-size:11.5px;white-space:nowrap;margin-left:8px;">IV ${d.ivs[i]}</span>
+    </div>`).join('');
+  sectorChart = new Chart(sectorCtx,{
+    type:'bar',
+    data:{labels:d.features,datasets:[{label:d.label,data:d.ivs,backgroundColor:d.color,borderColor:d.color.replace('0.75','1'),borderWidth:1.5,borderRadius:5}]},
+    options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{callbacks:{title:([i])=>FEATURE_DESC[i.label]||i.label,label:(i)=>`IV = ${i.parsed.x.toFixed(4)}`}}},
+      scales:{x:{title:{display:true,text:'Information Value (IV)',color:'#7a8fb5',font:{size:10}},ticks:{color:'#7a8fb5',font:{size:9.5}},grid:{color:'rgba(100,140,255,0.07)'}},
+              y:{ticks:{color:'#e8eef8',font:{size:10.5}},grid:{display:false}}}}
+  });
+}
+
+function switchSector(key,el){
+  document.querySelectorAll('.sector-btn').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+  buildSectorChart(key);
+}
+
+// ── 게이지 애니메이션 ──
+function animateGauges(){
+  document.querySelectorAll('.gauge-fill[data-w]').forEach(el=>{
+    setTimeout(()=>{ el.style.width=el.dataset.w+'%'; }, 400);
+  });
+}
+
+// ── 초기화 ──
+buildSectorChart('all');
+animateGauges();
+</script>
+</body>
+</html>

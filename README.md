@@ -81,9 +81,13 @@
 ## 📂 리포지토리 파일 구조 (File Structure)
 
 ```text
-eco_ref_model-main/
 ├── README.md                          # 프로젝트 오버뷰 및 요약 (현재 파일)
 ├── docs/                              # 기획, 설계, 분석 결과 등 산출물 관리 (Walkthrough, Task 등)
+│   ├── step14_portal_api_setup.md     # Step 14 DuckDB+FastAPI 웹 포털 구축 명세
+│   └── step15_integrated_portal_development_report.md # Step 15 AI 조기경보 웹 포털 UI/UX 종합 보고서
+├── frontend/                          # React 18 + Vite + Recharts 기반 실사용자 ERM 조기경보 웹 포털
+├── backend/                           # FastAPI 기반 실시간 DuckDB OLAP 조회 및 AI 조기경보 분석 API
+├── database/                          # portal.duckdb 기업 시계열 패널 데이터 저장소
 ├── eda_pipeline/
 │   ├── step1_load.py                  # 원천 데이터 로드
 │   ├── step2_integrate.py             # 차주 기본정보 통합

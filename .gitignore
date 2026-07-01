@@ -11,8 +11,17 @@ env/
 
 # Database & Logs
 *.db
+*.duckdb
+*.duckdb*
 *.log
 logs/
+
+# Build & Dependencies
+node_modules/
+dist/
+.env.local
+.env.*.local
+
 
 # Model inputs
 model_building/input/*.csv

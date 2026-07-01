@@ -1,0 +1,2421 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ERM AI Credit Risk & Sales Portal</title>
+    <!-- TailwindCSS v3 CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Leaflet Map CSS/JS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;900&family=Pretendard:wght@300;400;600;700;900&display=swap');
+        
+        body {
+            font-family: 'Outfit', 'Pretendard', sans-serif;
+            background-color: #f8fafc;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+
+        /* Glassmorphism effects */
+        .glass-card {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(226, 232, 240, 0.8);
+        }
+
+        /* Slider Custom Style */
+        .premium-slider {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 6px;
+            background: #e2e8f0;
+            border-radius: 9999px;
+            outline: none;
+        }
+        .premium-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            background: #4f46e5;
+            cursor: pointer;
+            border-radius: 50%;
+            border: 2px solid white;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            transition: background-color 0.15s ease;
+        }
+        .premium-slider::-webkit-slider-thumb:hover {
+            background: #4338ca;
+        }
+
+        /* Active Navigation Link */
+        .nav-active {
+            background-color: #312e81;
+            color: #ffffff;
+            font-weight: 600;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+
+        /* Micro-animations */
+        .hover-lift {
+            transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .hover-lift:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+    </style>
+</head>
+<body class="flex h-screen overflow-hidden">
+    <!-- ========================================== -->
+    <!-- AUTH GUARD: Redirect to login if not authenticated -->
+    <!-- ========================================== -->
+    <script>
+        (function() {
+            const AUTH_KEY = 'erm_auth_token';
+            const VALID_HASH = '7c39e9f15d525efc89cf8d8890d1f4ad77079d2ad15ec48ac3b1da0072f43139';
+            const token = sessionStorage.getItem(AUTH_KEY);
+            if (token !== VALID_HASH) {
+                window.location.replace('index.html');
+            }
+        })();
+    </script>
+
+    <!-- ========================================== -->
+    <!-- LEFT SIDEBAR -->
+    <!-- ========================================== -->
+    <aside class="w-64 bg-slate-900 text-slate-300 flex flex-col z-20 shadow-xl flex-shrink-0">
+        <!-- Logo / Brand Header -->
+        <div class="h-16 flex items-center px-6 border-b border-slate-800 bg-slate-950">
+            <div class="flex items-center gap-3">
+                <div class="p-2 bg-indigo-600 text-white rounded-lg font-bold shadow-md shadow-indigo-600/30">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    </svg>
+                </div>
+                <div>
+                    <span class="text-white font-extrabold text-lg tracking-tight">ERM Portal</span>
+                    <span class="text-xs text-indigo-400 font-bold block -mt-1 font-mono">v2.0 (DuckDB)</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Navigation Menu -->
+        <nav class="flex-1 overflow-y-auto px-4 py-6 space-y-1">
+            <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest px-3 mb-2">모니터링 & 분석</p>
+            
+            <a href="#" onclick="switchTab('overview')" id="nav-overview" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium hover:bg-slate-800 hover:text-white transition duration-150 nav-active">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2H6a2 2 0 01-2-2v-4zM14 16a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2h-2a2 2 0 01-2-2v-4z" />
+                </svg>
+                <span>종합 대시보드</span>
+            </a>
+
+            <a href="#" onclick="switchTab('validation')" id="nav-validation" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium hover:bg-slate-800 hover:text-white transition duration-150">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                </svg>
+                <span>모델 건전성 진단</span>
+            </a>
+
+            <a href="#" onclick="switchTab('monitoring')" id="nav-monitoring" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium hover:bg-slate-800 hover:text-white transition duration-150">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 12l3-3 3 3 4-4M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                </svg>
+                <span>리스크 모니터링</span>
+            </a>
+
+            <a href="#" onclick="switchTab('xai')" id="nav-xai" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium hover:bg-slate-800 hover:text-white transition duration-150">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 21h7a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v11m0 5l4.879-4.879m0 0a3 3 0 104.243-4.242 3 3 0 00-4.243 4.242z" />
+                </svg>
+                <span>변동사유 분석 (XAI)</span>
+            </a>
+
+            <a href="#" onclick="switchTab('stress')" id="nav-stress" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium hover:bg-slate-800 hover:text-white transition duration-150">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
+                </svg>
+                <span>스트레스 시뮬레이션</span>
+            </a>
+
+            <div class="pt-6">
+                <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest px-3 mb-2">영업 및 비즈니스</p>
+            </div>
+
+            <a href="#" onclick="switchTab('targeting')" id="nav-targeting" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium hover:bg-slate-800 hover:text-white transition duration-150">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+                <span>영업점 가망고객 발굴</span>
+            </a>
+
+            <a href="#" onclick="switchTab('consulting')" id="nav-consulting" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium hover:bg-slate-800 hover:text-white transition duration-150">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                </svg>
+                <span>AI 영업 컨설팅</span>
+            </a>
+
+            <a href="#" onclick="switchTab('feedback')" id="nav-feedback" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium hover:bg-slate-800 hover:text-white transition duration-150">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                </svg>
+                <span>피드백 및 성공률 관리</span>
+            </a>
+        </nav>
+
+        <!-- Sidebar Footer -->
+        <div class="p-4 border-t border-slate-800 bg-slate-950 text-xs text-slate-500 font-medium">
+            <div class="flex justify-between items-center mb-1">
+                <span>DW Storage (DuckDB)</span>
+                <span class="text-green-500 font-bold">● Connected</span>
+            </div>
+            <p>File Size: <span class="text-slate-400 font-semibold font-mono">184.8 MB</span></p>
+        </div>
+    </aside>
+
+    <!-- ========================================== -->
+    <!-- MAIN WORKSPACE CONTAINER -->
+    <!-- ========================================== -->
+    <main class="flex-1 flex flex-col overflow-hidden">
+        
+        <!-- Top Navigation Header -->
+        <header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-8 z-10">
+            <!-- Left Info -->
+            <div class="flex items-center gap-4">
+                <div id="header-branch-name" class="px-3 py-1 bg-indigo-50 border border-indigo-100 rounded-full text-xs text-indigo-700 font-bold">
+                    🏛️ 광명지점 포털
+                </div>
+                <div class="text-xs text-slate-400 font-medium">
+                    최신 업데이트: <span class="font-mono text-slate-600 font-bold">2026. 06. 20</span>
+                </div>
+            </div>
+
+            <!-- Right Controls -->
+            <div class="flex items-center gap-6">
+                <!-- System Status Indicator -->
+                <div class="flex items-center gap-2">
+                    <span class="relative flex h-2 w-2">
+                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                        <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                    </span>
+                    <span class="text-xs font-bold text-slate-600 uppercase">ERM Status: Stable</span>
+                </div>
+
+                <!-- User Badge -->
+                <div class="flex items-center gap-2.5">
+                    <div class="text-right">
+                        <p id="profile-name-role" class="text-xs font-bold text-slate-800">김지점장 (R.M.)</p>
+                        <p id="profile-dept" class="text-[10px] text-indigo-600 font-bold">기업영업기획본부</p>
+                    </div>
+                    <div id="profile-avatar" class="w-9 h-9 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-600 text-white flex items-center justify-center font-bold text-sm shadow-md">
+                        RM
+                    </div>
+                    <button onclick="handleLogout()" title="로그아웃" class="ml-2 p-2 rounded-lg hover:bg-slate-100 transition text-slate-400 hover:text-red-500">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Dynamic Content Window -->
+        <div id="content-container" class="flex-1 overflow-y-auto p-8">
+            
+            <!-- ========================================== -->
+            <!-- 1. OVERVIEW DASHBOARD VIEW -->
+            <!-- ========================================== -->
+            <section id="view-overview" class="space-y-8">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <h1 class="text-3xl font-extrabold text-slate-900 tracking-tight">종합 대시보드</h1>
+                        <p class="text-slate-500 mt-1">경제참조모델(ERM) 리스크 평가 및 마케팅 실적 종합 현황</p>
+                    </div>
+                </div>
+
+                <!-- Metrics Grid -->
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                    <div class="glass-card p-6 rounded-2xl hover-lift">
+                        <p class="text-xs text-slate-400 font-bold uppercase tracking-wider mb-2">포트폴리오 평균 PD</p>
+                        <div class="flex items-baseline gap-2">
+                            <span class="text-3xl font-extrabold text-slate-800">4.2%</span>
+                            <span class="text-xs font-bold text-red-500 flex items-center gap-0.5">▲ 0.5%p</span>
+                        </div>
+                        <p class="text-[10px] text-slate-400 mt-2">전월 대비 거시 충격 가중치 반영</p>
+                    </div>
+                    <div class="glass-card p-6 rounded-2xl hover-lift">
+                        <p class="text-xs text-slate-400 font-bold uppercase tracking-wider mb-2">조기경보(EWS) 타겟</p>
+                        <div class="flex items-baseline gap-2">
+                            <span class="text-3xl font-extrabold text-red-600">128건</span>
+                            <span class="text-xs font-bold text-slate-400">/ 2,400개사</span>
+                        </div>
+                        <p class="text-[10px] text-slate-400 mt-2">사후관리 대상 주의 차주 필터링</p>
+                    </div>
+                    <div class="glass-card p-6 rounded-2xl hover-lift">
+                        <p class="text-xs text-slate-400 font-bold uppercase tracking-wider mb-2">우량 가망 마케팅 타겟</p>
+                        <div class="flex items-baseline gap-2">
+                            <span class="text-3xl font-extrabold text-emerald-600">842건</span>
+                            <span class="text-xs font-bold text-emerald-500">신규 발굴</span>
+                        </div>
+                        <p class="text-[10px] text-slate-400 mt-2">잠재 참조등급 > 내부등급 차주</p>
+                    </div>
+                    <div class="glass-card p-6 rounded-2xl hover-lift">
+                        <p class="text-xs text-slate-400 font-bold uppercase tracking-wider mb-2">영업 마케팅 전환 성공률</p>
+                        <div class="flex items-baseline gap-2">
+                            <span class="text-3xl font-extrabold text-indigo-600">20.0%</span>
+                            <span class="text-xs font-bold text-indigo-500">24 / 120 시도</span>
+                        </div>
+                        <p class="text-[10px] text-slate-400 mt-2">온라인 피드백 데이터 기반 집계</p>
+                    </div>
+                </div>
+
+                <!-- Core Charts Overview -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    <!-- PD lag chart -->
+                    <div class="lg:col-span-2 glass-card p-6 rounded-2xl">
+                        <h3 class="font-bold text-slate-800 mb-4 text-sm uppercase">거시경제 연동 부도율 예측 추이 (PD-Lag)</h3>
+                        <div class="h-64">
+                            <canvas id="overviewPdTrendChart"></canvas>
+                        </div>
+                    </div>
+                    <!-- Conversion Rate per channel -->
+                    <div class="lg:col-span-1 glass-card p-6 rounded-2xl">
+                        <h3 class="font-bold text-slate-800 mb-4 text-sm uppercase">마케팅 채널별 전환 성공율</h3>
+                        <div class="h-64">
+                            <canvas id="overviewConversionChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ========================================== -->
+            <!-- 2. MODEL VALIDATION & PERFORMANCE VIEW -->
+            <!-- ========================================== -->
+            <section id="view-validation" class="hidden space-y-8">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <h1 class="text-3xl font-extrabold text-slate-900 tracking-tight">모델 건전성 및 적합성 진단 (Model Validation)</h1>
+                        <p class="text-slate-500 mt-1">거시경제 연동 기업 신용평가 모형의 통계적 정밀성 지표</p>
+                    </div>
+                    <div class="px-4 py-1.5 bg-emerald-100 text-emerald-700 rounded-xl font-bold text-xs">
+                        Model Diagnostics: STABLE
+                    </div>
+                </div>
+
+                <!-- Indicators Grid -->
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                    <div class="glass-card p-6 rounded-2xl">
+                        <p class="text-xs text-slate-400 font-bold uppercase tracking-wider mb-2">AUROC (변별력)</p>
+                        <h3 class="text-3xl font-extrabold text-indigo-600">0.86</h3>
+                        <div class="w-full bg-slate-100 h-1.5 rounded-full mt-3 overflow-hidden">
+                            <div class="bg-indigo-600 h-full" style="width: 86%"></div>
+                        </div>
+                        <p class="text-[10px] text-slate-400 mt-2">Excellent (Target > 0.75)</p>
+                    </div>
+                    <div class="glass-card p-6 rounded-2xl">
+                        <p class="text-xs text-slate-400 font-bold uppercase tracking-wider mb-2">Gini Index</p>
+                        <h3 class="text-3xl font-extrabold text-blue-600">72.4</h3>
+                        <div class="w-full bg-slate-100 h-1.5 rounded-full mt-3 overflow-hidden">
+                            <div class="bg-blue-600 h-full" style="width: 72.4%"></div>
+                        </div>
+                        <p class="text-[10px] text-slate-400 mt-2">Gini Consistency Confirmed</p>
+                    </div>
+                    <div class="glass-card p-6 rounded-2xl">
+                        <p class="text-xs text-slate-400 font-bold uppercase tracking-wider mb-2">K-S Statistics</p>
+                        <h3 class="text-3xl font-extrabold text-slate-800">48.2</h3>
+                        <div class="w-full bg-slate-100 h-1.5 rounded-full mt-3 overflow-hidden">
+                            <div class="bg-slate-800 h-full" style="width: 48.2%"></div>
+                        </div>
+                        <p class="text-[10px] text-slate-400 mt-2">Good Separation Power</p>
+                    </div>
+                    <div class="glass-card p-6 rounded-2xl">
+                        <p class="text-xs text-slate-400 font-bold uppercase tracking-wider mb-2">PSI (인구안정성지수)</p>
+                        <h3 class="text-3xl font-extrabold text-emerald-600">0.12</h3>
+                        <div class="w-full bg-slate-100 h-1.5 rounded-full mt-3 overflow-hidden">
+                            <div class="bg-emerald-500 h-full" style="width: 12%"></div>
+                        </div>
+                        <p class="text-[10px] text-slate-400 mt-2">Stable (PSI < 0.20 Target)</p>
+                    </div>
+                </div>
+
+                <!-- Validation Charts -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <!-- ROC Curve -->
+                    <div class="glass-card p-6 rounded-2xl">
+                        <h3 class="font-bold text-slate-800 mb-4 text-sm uppercase">ROC Curve (부도변별성 검증)</h3>
+                        <div class="h-64">
+                            <canvas id="validationRocChart"></canvas>
+                        </div>
+                    </div>
+                    <!-- Distribution Profile (PSI details) -->
+                    <div class="glass-card p-6 rounded-2xl">
+                        <h3 class="font-bold text-slate-800 mb-4 text-sm uppercase">모형 적합성 상세 지표 테이블</h3>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-xs text-left">
+                                <thead>
+                                    <tr class="text-slate-400 border-b">
+                                        <th class="pb-3 font-semibold">지표코드</th>
+                                        <th class="pb-3 font-semibold">진단 지표명</th>
+                                        <th class="pb-3 text-right font-semibold">기준값</th>
+                                        <th class="pb-3 text-right font-semibold">진단결과</th>
+                                        <th class="pb-3 text-center font-semibold">판정</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y text-slate-700">
+                                    <tr>
+                                        <td class="py-3 font-mono">VAL-001</td>
+                                        <td class="py-3">변별력 지수 (AUROC)</td>
+                                        <td class="py-3 text-right">> 0.75</td>
+                                        <td class="py-3 text-right font-bold text-indigo-600">0.86</td>
+                                        <td class="py-3 text-center"><span class="px-2 py-0.5 bg-emerald-100 text-emerald-700 rounded-md font-bold text-[10px]">PASS</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="py-3 font-mono">VAL-002</td>
+                                        <td class="py-3">Gini 변별 계수</td>
+                                        <td class="py-3 text-right">> 60.0</td>
+                                        <td class="py-3 text-right font-bold text-indigo-600">72.4</td>
+                                        <td class="py-3 text-center"><span class="px-2 py-0.5 bg-emerald-100 text-emerald-700 rounded-md font-bold text-[10px]">PASS</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="py-3 font-mono">VAL-003</td>
+                                        <td class="py-3">집단간 이격통계 (K-S)</td>
+                                        <td class="py-3 text-right">> 40.0</td>
+                                        <td class="py-3 text-right font-bold text-indigo-600">48.2</td>
+                                        <td class="py-3 text-center"><span class="px-2 py-0.5 bg-emerald-100 text-emerald-700 rounded-md font-bold text-[10px]">PASS</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="py-3 font-mono">VAL-004</td>
+                                        <td class="py-3">안정성 지표 (PSI)</td>
+                                        <td class="py-3 text-right">< 0.20</td>
+                                        <td class="py-3 text-right font-bold text-emerald-600">0.12</td>
+                                        <td class="py-3 text-center"><span class="px-2 py-0.5 bg-emerald-100 text-emerald-700 rounded-md font-bold text-[10px]">PASS</span></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ========================================== -->
+            <!-- 3. RISK MONITORING VIEW (Enhanced) -->
+            <!-- ========================================== -->
+            <section id="view-monitoring" class="hidden space-y-8">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <h1 class="text-3xl font-extrabold text-slate-900 tracking-tight">리스크 교차 모니터링 대시보드</h1>
+                        <p class="text-slate-500 mt-1">기존 내부등급과 경제참조모델(ERM)의 상호 보완적 다각도 리스크 시그널 분석</p>
+                    </div>
+                    <div class="text-xs text-slate-400 font-medium">
+                        최종 집계일: <span class="text-slate-600 font-bold font-mono">2026. 04. 25</span>
+                    </div>
+                </div>
+
+                <!-- ─── NEW: Grade Gap Summary KPIs ─── -->
+                <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
+                    <div class="glass-card p-5 rounded-2xl hover-lift border-l-4 border-indigo-500">
+                        <p class="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1">전체 포트폴리오</p>
+                        <span class="text-2xl font-extrabold text-slate-800">2,400</span>
+                        <span class="text-xs text-slate-400 font-semibold ml-1">개사</span>
+                    </div>
+                    <div class="glass-card p-5 rounded-2xl hover-lift border-l-4 border-red-500">
+                        <p class="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1">하향 괴리 (추가 위험 검토) <span class="text-red-500">▼</span></p>
+                        <span class="text-2xl font-extrabold text-red-600">342</span>
+                        <span class="text-xs text-slate-400 font-semibold ml-1">개사 (14.3%)</span>
+                        <p class="text-[9px] text-red-400 mt-1 font-semibold">내부모형 대비 거시 리스크가 높은 대상</p>
+                    </div>
+                    <div class="glass-card p-5 rounded-2xl hover-lift border-l-4 border-blue-500">
+                        <p class="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1">상향 괴리 (추가 우량 검토) <span class="text-blue-500">▲</span></p>
+                        <span class="text-2xl font-extrabold text-blue-600">187</span>
+                        <span class="text-xs text-slate-400 font-semibold ml-1">개사 (7.8%)</span>
+                        <p class="text-[9px] text-blue-400 mt-1 font-semibold">내부모형 대비 거시 환경이 우호적인 대상</p>
+                    </div>
+                    <div class="glass-card p-5 rounded-2xl hover-lift border-l-4 border-emerald-500">
+                        <p class="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1">모형 간 등급 일치</p>
+                        <span class="text-2xl font-extrabold text-emerald-600">1,871</span>
+                        <span class="text-xs text-slate-400 font-semibold ml-1">개사 (77.9%)</span>
+                        <p class="text-[9px] text-emerald-400 mt-1 font-semibold">두 모형에서 동일 수준으로 평가 (신뢰도↑)</p>
+                    </div>
+                    <div class="glass-card p-5 rounded-2xl hover-lift" style="background: linear-gradient(135deg, #1e1b4b, #312e81); border: 1px solid rgba(99,102,241,0.3);">
+                        <p class="text-[10px] text-indigo-300 font-bold uppercase tracking-wider mb-1">교차 검토 필요 대상</p>
+                        <span class="text-2xl font-extrabold text-white">22.1%</span>
+                        <span class="text-xs text-indigo-300 font-semibold ml-1">괴리 발생률</span>
+                        <p class="text-[9px] text-indigo-400 mt-1 font-semibold">529건의 차주에 대해 다각적 시각 확보</p>
+                    </div>
+                </div>
+
+                <!-- ─── NEW: Grade Migration Flow (Internal → ERM) ─── -->
+                <div class="glass-card p-6 rounded-2xl">
+                    <div class="flex justify-between items-center mb-6">
+                        <div>
+                            <h3 class="font-bold text-slate-800 text-sm uppercase">내부등급 vs ERM 참조등급 교차 분석 매트릭스</h3>
+                            <p class="text-xs text-slate-400 mt-1">기존 내부모형 등급과 경제참조모형(ERM) 등급 간의 상호 분포 현황 · <span class="text-red-500 font-bold">붉은색</span> = 하향 괴리(위험 검토) · <span class="text-blue-500 font-bold">파란색</span> = 상향 괴리(우량 검토)</p>
+                        </div>
+                        <div class="flex gap-3 text-[10px] font-bold">
+                            <span class="flex items-center gap-1"><span class="w-3 h-3 rounded bg-red-500 inline-block"></span> 하향 괴리</span>
+                            <span class="flex items-center gap-1"><span class="w-3 h-3 rounded bg-emerald-500 inline-block"></span> 등급 일치</span>
+                            <span class="flex items-center gap-1"><span class="w-3 h-3 rounded bg-blue-500 inline-block"></span> 상향 괴리</span>
+                        </div>
+                    </div>
+                    <!-- Migration Matrix Table -->
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-xs text-center" id="migrationMatrix">
+                            <thead>
+                                <tr>
+                                    <th class="p-2 bg-slate-50 rounded-tl-lg text-slate-400 font-semibold text-[10px]" rowspan="2">내부등급<br>↓</th>
+                                    <th class="p-2 bg-slate-800 text-white font-bold text-[10px] rounded-tr-lg" colspan="7">ERM 참조등급 →</th>
+                                </tr>
+                                <tr class="text-slate-600 font-bold">
+                                    <th class="p-2 bg-slate-50">AAA~AA</th>
+                                    <th class="p-2 bg-slate-50">A</th>
+                                    <th class="p-2 bg-slate-50">BBB</th>
+                                    <th class="p-2 bg-slate-50">BB</th>
+                                    <th class="p-2 bg-slate-50">B</th>
+                                    <th class="p-2 bg-slate-50">CCC이하</th>
+                                    <th class="p-2 bg-slate-50 font-bold text-slate-800">합계</th>
+                                </tr>
+                            </thead>
+                            <tbody id="migrationMatrixBody">
+                                <!-- Dynamically rendered -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- ─── Charts Row: Enhanced PD + Grade Gap Butterfly ─── -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <!-- PD Trend: Internal vs ERM Overlay -->
+                    <div class="glass-card p-6 rounded-2xl">
+                        <h3 class="font-bold text-slate-800 mb-1 text-sm uppercase">예측 부도 추이 — 내부모형 vs ERM 참조모형</h3>
+                        <p class="text-[10px] text-slate-400 mb-4">실선(ERM)이 점선(내부모형)보다 위에 있을 때 → 거시 지표상 위험이 더 높게 나타나는 구간</p>
+                        <div class="h-64">
+                            <canvas id="monitoringPdTrendChart"></canvas>
+                        </div>
+                    </div>
+                    <!-- Grade Gap Butterfly Chart -->
+                    <div class="glass-card p-6 rounded-2xl">
+                        <h3 class="font-bold text-slate-800 mb-1 text-sm uppercase">등급 괴리 분포 (Grade Gap Analysis)</h3>
+                        <p class="text-[10px] text-slate-400 mb-4">내부등급 대비 ERM 참조등급에서 발생한 상향/하향 괴리 규모 한눈에 비교</p>
+                        <div class="h-64">
+                            <canvas id="monitoringGradeGapChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ─── Grade Distribution: Before & After Side-by-Side ─── -->
+                <div class="glass-card p-6 rounded-2xl">
+                    <div class="flex justify-between items-center mb-4">
+                        <div>
+                            <h3 class="font-bold text-slate-800 text-sm uppercase">모형 간 등급별 분포 비교 — 내부등급(회색) vs ERM 참조등급(컬러)</h3>
+                            <p class="text-[10px] text-slate-400 mt-1">두 모형이 포트폴리오 위험 수준을 어떻게 다르게 진단하고 있는지 전반적인 시각차 확인</p>
+                        </div>
+                    </div>
+                    <div class="h-72">
+                        <canvas id="monitoringGradeDistChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- ─── Enhanced Watchlist Table ─── -->
+                <div class="glass-card rounded-2xl overflow-hidden">
+                    <div class="p-5 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
+                        <div class="flex items-center gap-3">
+                            <h3 class="font-bold text-slate-800 text-sm">교차 검토 집중 관리 대상 (등급 괴리 발생 차주)</h3>
+                            <span class="px-2 py-0.5 bg-indigo-100 text-indigo-600 rounded-full text-[10px] font-bold">FOCUS</span>
+                        </div>
+                        <button class="px-3 py-1 text-xs bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-bold transition">가이드라인 확인</button>
+                    </div>
+                    <table class="w-full text-left text-sm">
+                        <thead>
+                            <tr class="text-slate-400 border-b bg-slate-50/30">
+                                <th class="p-4 font-semibold">차주명 (사업자번호)</th>
+                                <th class="p-4 font-semibold text-center">내부등급 ↔ ERM 참조등급</th>
+                                <th class="p-4 font-semibold">예측 부도확률 (PD)</th>
+                                <th class="p-4 font-semibold">주요 괴리 사유</th>
+                                <th class="p-4 font-semibold text-center">검토 방향</th>
+                            </tr>
+                        </thead>
+                        <tbody id="target-customers-body" class="divide-y text-slate-700">
+                            <!-- Dynamically rendered rows will appear here -->
+                        </tbody>
+                    </table>
+                    <!-- Summary bar -->
+                    <div class="p-4 bg-slate-900 flex justify-between items-center text-xs">
+                        <div class="flex gap-6 text-slate-300 font-semibold">
+                            <span>총 교차 검토 대상: <span class="text-white font-bold">529건</span></span>
+                            <span>하향 괴리: <span class="text-red-400 font-bold">342건</span></span>
+                            <span>상향 괴리: <span class="text-blue-400 font-bold">187건</span></span>
+                        </div>
+                        <span class="text-indigo-300 font-bold">💡 내부모형 기준 양호 등급이나 거시환경 리스크가 큰 342건에 대해 추가 심사 권장</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ========================================== -->
+            <!-- 4. SHAP RATING VARIATION (XAI) VIEW -->
+            <!-- ========================================== -->
+            <section id="view-xai" class="hidden space-y-8">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <h1 class="text-3xl font-extrabold text-slate-900 tracking-tight">AI 신용등급 변동 사유 분석 (XAI)</h1>
+                        <p class="text-slate-500 mt-1">SHAP 가치를 활용한 개별 기업 신용 리스크 요인별 부도확률 기여도 분석</p>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <select id="xaiCorpSelector" onchange="updateXaiView(this.value)" class="bg-white border border-slate-300 rounded-xl px-4 py-2 text-sm shadow-sm focus:ring-2 focus:ring-indigo-500 outline-none font-bold text-slate-700">
+                            <!-- 동적 옵션 -->
+                        </select>
+                        <button class="bg-indigo-600 text-white px-4 py-2 rounded-xl text-sm font-semibold hover:bg-indigo-700 transition">보고서 출력</button>
+                    </div>
+                </div>
+
+                <!-- XAI Scorecards -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="glass-card p-6 rounded-2xl">
+                        <p class="text-xs text-slate-400 font-bold uppercase mb-2">예측 부도확률 (PD)</p>
+                        <div class="flex items-baseline gap-2">
+                            <span id="xaiPdDisplay" class="text-3xl font-extrabold text-red-600">8.2%</span>
+                            <span id="xaiPdDiffDisplay" class="text-xs font-bold text-red-500">▲ 3.5%p (전월 대비)</span>
+                        </div>
+                    </div>
+                    <div class="glass-card p-6 rounded-2xl">
+                        <p class="text-xs text-slate-400 font-bold uppercase mb-2">AI 모형 판정 결과</p>
+                        <span id="xaiStatusBadge" class="inline-flex px-3 py-1 bg-red-100 text-red-700 rounded-full text-xs font-bold mt-2">Watchlist (주의 관찰)</span>
+                    </div>
+                    <div class="glass-card p-6 rounded-2xl">
+                        <p class="text-xs text-slate-400 font-bold uppercase mb-2">최대 리스크 가중 요인</p>
+                        <span id="xaiPrimaryFactor" class="text-slate-800 font-bold block text-lg mt-2">기준금리 인상 (Macro)</span>
+                    </div>
+                </div>
+
+                <!-- Detailed SHAP Waterfall Chart & Factors list -->
+                <div class="grid grid-cols-1 lg:grid-cols-5 gap-8">
+                    <!-- Chart -->
+                    <div class="lg:col-span-3 glass-card p-6 rounded-2xl">
+                        <div class="flex justify-between items-center mb-6">
+                            <h3 class="font-bold text-slate-800 text-sm uppercase">요인별 기여도 시각화 (SHAP Waterfall)</h3>
+                            <span id="xaiBaselineDisplay" class="text-xs text-slate-400 font-bold">Baseline PD: 4.7%</span>
+                        </div>
+                        <div class="relative h-80">
+                            <canvas id="xaiShapWaterfallChart"></canvas>
+                        </div>
+                        <p class="mt-4 text-xs text-slate-400 italic text-center">
+                            * 붉은색 막대는 부도 위험 증가 요인, 푸른색 막대는 부도 위험 완화 요인을 나타냅니다.
+                        </p>
+                    </div>
+                    <!-- Detailed values -->
+                    <div class="lg:col-span-2 glass-card p-6 rounded-2xl flex flex-col justify-between">
+                        <div>
+                            <h3 class="font-bold text-slate-800 text-sm uppercase mb-6">변수별 위험 기여량 상세</h3>
+                            <div id="xaiFactorContainer" class="space-y-4">
+                                <!-- Dynamic Factors -->
+                            </div>
+                        </div>
+
+                        <!-- System Audit Advice -->
+                        <div class="p-4 bg-slate-50 border border-slate-100 rounded-xl mt-6">
+                            <h4 class="text-xs font-bold text-indigo-700 mb-1">💡 AI 리스크 심사 의견</h4>
+                            <p id="xaiAuditComment" class="text-xs text-slate-600 leading-relaxed font-medium">
+                                본 차주는 재무 건전성은 보통 수준이나 거시 금리에 대한 민감도가 매우 높습니다. 최근 기준금리 급등과 이자비용 부담이 겹치면서 부도율 상승을 유도했습니다. 고정금리 대환 권고.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ========================================== -->
+            <!-- 5. STRESS TEST SIMULATOR VIEW -->
+            <!-- ========================================== -->
+            <section id="view-stress" class="hidden space-y-8">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <h1 class="text-3xl font-extrabold text-slate-900 tracking-tight">거시경제 시나리오 시뮬레이터 (Stress Test)</h1>
+                        <p class="text-slate-500 mt-1">금리, 환율, 원자재 지표 등의 극단적 변동 시나리오에 따른 기업 신용도 및 포트폴리오 리스크 민감도 예측</p>
+                    </div>
+                </div>
+
+                <!-- Simulation Work Environment -->
+                <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
+                    <!-- Left Slider Controllers -->
+                    <div class="lg:col-span-1 space-y-6">
+                        <div class="glass-card p-6 rounded-2xl">
+                            <h3 class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-6">🕹️ 시나리오 조정 패널</h3>
+                            
+                            <div class="space-y-6">
+                                <div>
+                                    <div class="flex justify-between items-center mb-1">
+                                        <label class="text-xs font-bold text-slate-600">기준금리 변동</label>
+                                        <span id="sliderRateVal" class="text-xs font-bold text-indigo-600">+1.0%p</span>
+                                    </div>
+                                    <input type="range" min="-2" max="5" step="0.25" value="1" class="premium-slider" id="sliderRate">
+                                    <div class="flex justify-between text-[8px] text-slate-400 mt-1">
+                                        <span>-2.0%p</span>
+                                        <span>+5.0%p</span>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <div class="flex justify-between items-center mb-1">
+                                        <label class="text-xs font-bold text-slate-600">원/달러 환율</label>
+                                        <span id="sliderFxVal" class="text-xs font-bold text-indigo-600">1,350원</span>
+                                    </div>
+                                    <input type="range" min="1200" max="1500" step="10" value="1350" class="premium-slider" id="sliderFx">
+                                    <div class="flex justify-between text-[8px] text-slate-400 mt-1">
+                                        <span>1,200원</span>
+                                        <span>1,500원</span>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <div class="flex justify-between items-center mb-1">
+                                        <label class="text-xs font-bold text-slate-600">원자재 가격 지수</label>
+                                        <span id="sliderOilVal" class="text-xs font-bold text-indigo-600">+10%</span>
+                                    </div>
+                                    <input type="range" min="-30" max="50" step="5" value="10" class="premium-slider" id="sliderOil">
+                                    <div class="flex justify-between text-[8px] text-slate-400 mt-1">
+                                        <span>-30%</span>
+                                        <span>+50%</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <button onclick="runStressSimulation()" class="w-full py-3 bg-slate-900 text-white rounded-xl font-bold mt-8 hover:bg-slate-800 transition shadow-lg text-sm">시뮬레이션 가동</button>
+                        </div>
+                    </div>
+
+                    <!-- Right Outcomes -->
+                    <div class="lg:col-span-3 space-y-8">
+                        <!-- Key Simulated Impacts -->
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <div class="glass-card p-5 rounded-2xl">
+                                <p class="text-xs font-bold text-slate-400 uppercase">예상 평균 매출액 영향</p>
+                                <h4 id="simSalesImpact" class="text-xl font-bold text-red-500 mt-2">-4.2% 감소</h4>
+                            </div>
+                            <div class="glass-card p-5 rounded-2xl">
+                                <p class="text-xs font-bold text-slate-400 uppercase">포트폴리오 PD 변동</p>
+                                <h4 id="simPdImpact" class="text-xl font-bold text-orange-500 mt-2">3.1% → 4.8%</h4>
+                            </div>
+                            <div class="glass-card p-5 rounded-2xl">
+                                <p class="text-xs font-bold text-slate-400 uppercase">등급 하향 기업 수</p>
+                                <h4 id="simDowngradeImpact" class="text-xl font-bold text-slate-800 mt-2">42개사 <span class="text-xs text-red-500 font-semibold">(+12)</span></h4>
+                            </div>
+                        </div>
+
+                        <!-- Charts -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div class="glass-card p-6 rounded-2xl">
+                                <h4 class="font-bold text-slate-800 mb-4 text-xs uppercase">신용등급 분포 변화 (Migration)</h4>
+                                <div class="h-60">
+                                    <canvas id="stressMigrationChart"></canvas>
+                                </div>
+                            </div>
+                            <div class="glass-card p-6 rounded-2xl flex flex-col justify-between">
+                                <div>
+                                    <h4 class="font-bold text-slate-800 mb-4 text-xs uppercase">업종별 스트레스 민감도 (Impact)</h4>
+                                    <div class="space-y-4" id="stressSectorImpacts">
+                                        <!-- Dynamic bars -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Financial Ledger Simulated -->
+                        <div class="glass-card p-6 rounded-2xl">
+                            <h4 class="font-bold text-slate-800 mb-4 text-xs uppercase">포트폴리오 가상 손익 영향도 시뮬레이션</h4>
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-xs text-left">
+                                    <thead>
+                                        <tr class="border-b text-slate-400">
+                                            <th class="pb-3 font-semibold">재무 지표 항목</th>
+                                            <th class="pb-3 text-right font-semibold">기존(Baseline)</th>
+                                            <th class="pb-3 text-right font-semibold text-indigo-600">시뮬레이션 적용</th>
+                                            <th class="pb-3 text-right font-semibold">예상 증감율</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="stressTableBody" class="divide-y text-slate-700">
+                                        <!-- Dynamic rows -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ========================================== -->
+            <!-- 6. LOCAL BRANCH TARGET PROSPECTING VIEW -->
+            <!-- ========================================== -->
+            <section id="view-targeting" class="hidden space-y-8">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <h1 class="text-3xl font-extrabold text-slate-900 tracking-tight">영업점 가망고객 발굴 시스템</h1>
+                        <p class="text-slate-500 mt-1">대인 감성 분석 및 거시 리스크가 미반영된 우량 잠재 기업 마케팅 추출</p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    <!-- Map and sector metrics -->
+                    <div class="lg:col-span-1 space-y-6">
+                        <div class="glass-card p-6 rounded-2xl">
+                            <h3 id="widget-branch-name" class="font-bold text-slate-800 text-sm mb-4">📍 광명지점 인근 영업권 가망고객 분포</h3>
+                            <!-- Mock Map Container -->
+                            <div class="bg-slate-900 w-full h-64 rounded-xl flex items-center justify-center border border-slate-800 relative overflow-hidden">
+                                <div class="absolute inset-0 bg-[radial-gradient(#1e293b_1px,transparent_1px)] [background-size:16px_16px] opacity-35"></div>
+                                <div class="text-center z-10">
+                                    <span class="text-xs bg-indigo-500 text-white px-2.5 py-1 rounded-full font-bold shadow-md shadow-indigo-500/25">Map API 연동 중</span>
+                                    <p id="widget-branch-desc" class="text-[10px] text-slate-400 font-bold mt-2">소하동/일직동 우량 제조업 타겟 다수</p>
+                                </div>
+                            </div>
+                            <div class="mt-4 grid grid-cols-2 gap-3 text-center">
+                                <div class="p-3 bg-indigo-50 border border-indigo-100 rounded-xl">
+                                    <p class="text-[10px] text-indigo-500 font-bold uppercase">우량 등급 상향</p>
+                                    <p id="widget-grade-up" class="text-xl font-extrabold text-indigo-700">85개사</p>
+                                </div>
+                                <div class="p-3 bg-emerald-50 border border-emerald-100 rounded-xl">
+                                    <p class="text-[10px] text-emerald-500 font-bold uppercase">성장 잠재 유망</p>
+                                    <p id="widget-growth" class="text-xl font-extrabold text-emerald-700">124개사</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Sector charts -->
+                    <div class="lg:col-span-2 glass-card p-6 rounded-2xl flex flex-col justify-between">
+                        <div>
+                            <h3 class="font-bold text-slate-800 text-sm mb-4">업종별 마케팅 적력 (PD 예측 감소폭 순)</h3>
+                            <div class="h-64">
+                                <canvas id="targetingMarketingChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Prospect Target List Table -->
+                <div class="glass-card rounded-2xl overflow-hidden">
+                    <div class="p-5 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
+                        <h3 class="font-bold text-slate-800 text-sm">실시간 우량 마케팅 추천 대상 리스트</h3>
+                        <div class="flex gap-2 text-xs">
+                            <input type="text" placeholder="검색..." class="border border-slate-200 rounded-lg px-3 py-1 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        </div>
+                    </div>
+                    <table class="w-full text-left text-sm">
+                        <thead>
+                            <tr class="text-slate-400 border-b">
+                                <th class="p-4 font-semibold">기업명</th>
+                                <th class="p-4 font-semibold">업종</th>
+                                <th class="p-4 font-semibold">내부 등급</th>
+                                <th class="p-4 font-semibold text-indigo-600">참조 등급 (ERM)</th>
+                                <th class="p-4 font-semibold">마케팅 적합도</th>
+                                <th class="p-4 text-center font-semibold">추천 영업 상품</th>
+                            </tr>
+                        </thead>
+                        <tbody id="targetingTableBody" class="divide-y text-slate-700">
+                            <!-- 동적 렌더 -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- ========================================== -->
+            <!-- 7. AI CORPORATE CONSULTING & PITCH VIEW -->
+            <!-- ========================================== -->
+            <section id="view-consulting" class="hidden space-y-8">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <h1 class="text-3xl font-extrabold text-slate-900 tracking-tight">AI 종합 금융 영업 비서 (LLM Strategy)</h1>
+                        <p class="text-slate-500 mt-1">기업 기본 정보, 재무 상태 및 종업원 고용 데이터를 분석하여 최적의 영업 제안 스크립트를 자동 생성합니다.</p>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <select id="consultingCorpSelector" onchange="updateConsultingView(this.value)" class="bg-white border border-slate-300 rounded-xl px-4 py-2 text-sm shadow-sm focus:ring-2 focus:ring-indigo-500 outline-none font-bold text-slate-700">
+                            <!-- Dynamic options -->
+                        </select>
+                        <div class="px-3 py-1 bg-indigo-50 border border-indigo-100 rounded-xl text-xs font-bold text-indigo-600 font-mono">
+                            Model: Financial-GPT 4.0
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mb-4 bg-white p-4 rounded-3xl border border-slate-200 shadow-sm">
+                    <h3 class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3 ml-2">📍 관할구역 가망고객 매핑 (Live)</h3>
+                    <div id="sales-map" style="width: 100%; height: 350px; border-radius: 1rem; z-index: 1;"></div>
+                </div>
+
+                <!-- Corp Profile Cards -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    <!-- Core metrics captured -->
+                    <div class="space-y-6">
+                        <div class="glass-card p-6 rounded-3xl">
+                            <h3 class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">🔍 핵심 데이터 캡처</h3>
+                            <div class="space-y-4" id="consultingMetricsContainer">
+                                <!-- Dynamic metrics -->
+                            </div>
+                        </div>
+
+                        <!-- Upgrade box -->
+                        <div class="bg-slate-900 p-6 rounded-3xl text-white shadow-xl relative overflow-hidden">
+                            <div class="absolute right-0 bottom-0 translate-x-1/4 translate-y-1/4 w-32 h-32 bg-indigo-500/10 rounded-full blur-xl"></div>
+                            <div class="relative z-10">
+                                <h3 class="text-indigo-400 font-bold text-xs uppercase mb-4 tracking-tighter">🏆 신용등급 잠재력</h3>
+                                <div class="flex justify-between items-baseline mb-4">
+                                    <span class="text-slate-400 line-through text-sm font-semibold" id="consultingOldGrade">BBB</span>
+                                    <div class="text-right">
+                                        <span class="text-4xl font-extrabold text-indigo-400" id="consultingNewGrade">A+</span>
+                                        <p class="text-[9px] text-indigo-300 font-bold mt-1">2단계 등급 상향 분석</p>
+                                    </div>
+                                </div>
+                                <div class="p-3 bg-white/5 rounded-xl border border-white/10 text-xs text-slate-300 leading-snug">
+                                    <b>R.M. 영업 팁:</b> "대표님, 저희 AI 리스크 모델이 대표님 회사를 숨겨진 우량기업으로 평가해 특별 금리 인하 제안이 가능하여 찾아왔습니다."
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- AI generated strategies -->
+                    <div class="lg:col-span-2 glass-card rounded-3xl overflow-hidden shadow-lg border border-slate-200">
+                        <div class="bg-slate-950 p-5 flex justify-between items-center text-white">
+                            <h3 class="font-bold text-sm uppercase flex items-center gap-2">
+                                <span class="bg-indigo-600 p-1.5 rounded-lg text-white text-xs">🤖</span>
+                                LLM 맞춤형 멀티 금융 전략 (Multi-Product Strategy)
+                            </h3>
+                            <button onclick="regenerateConsultingComments()" class="text-xs bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded-lg font-bold transition">다시 생성</button>
+                        </div>
+                        <div class="p-8 space-y-6" id="consultingStrategiesContainer">
+                            <!-- Dynamic LLM strategies -->
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ========================================== -->
+            <!-- 8. MARKETING CONVERSION & FEEDBACK VIEW -->
+            <!-- ========================================== -->
+            <section id="view-feedback" class="hidden space-y-8">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <h1 class="text-3xl font-extrabold text-slate-900 tracking-tight">AI 영업 전환 피드백 (Feedback Loop)</h1>
+                        <p class="text-slate-500 mt-1">지점 실제 영업 실적을 수집하여 가망고객 예측 모델 및 성공률 모형을 즉각 튜닝하는 피드백 루프</p>
+                    </div>
+                    <div class="px-3 py-1 bg-green-50 border border-green-200 rounded-full text-green-700 font-bold text-xs">
+                        ● Online Learning Active
+                    </div>
+                </div>
+
+                <!-- Feedbacks metric blocks -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="glass-card p-6 rounded-2xl">
+                        <p class="text-xs text-slate-400 font-bold uppercase mb-1">총 영업 시도 (Calls)</p>
+                        <h3 id="feedbackTotalCalls" class="text-3xl font-extrabold text-slate-800">120건</h3>
+                    </div>
+                    <div class="glass-card p-6 rounded-2xl">
+                        <p class="text-xs text-slate-400 font-bold uppercase mb-1">영업 성사 건수 (Success)</p>
+                        <h3 id="feedbackSuccessCalls" class="text-3xl font-extrabold text-emerald-600">24건</h3>
+                    </div>
+                    <div class="glass-card p-6 rounded-2xl">
+                        <p class="text-xs text-slate-400 font-bold uppercase mb-1">성공 예측 정밀도 (MAE)</p>
+                        <h3 class="text-3xl font-extrabold text-indigo-600">3.2%</h3>
+                    </div>
+                </div>
+
+                <!-- Grid with list on left and success stats chart on right -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    <!-- Contact list -->
+                    <div class="lg:col-span-2 glass-card rounded-2xl overflow-hidden">
+                        <div class="p-5 border-b border-slate-100 bg-slate-50/50">
+                            <h3 class="font-bold text-slate-800 text-sm">실시간 접촉 대상 및 피드백 상태 입력</h3>
+                        </div>
+                        <table class="w-full text-left text-sm">
+                            <thead>
+                                <tr class="text-slate-400 border-b">
+                                    <th class="p-4 font-semibold">기업명 / 업종</th>
+                                    <th class="p-4 font-semibold">성공 확률 예측</th>
+                                    <th class="p-4 font-semibold text-center">진행 상태 피드백</th>
+                                    <th class="p-4 text-center font-semibold">피드백 전송</th>
+                                </tr>
+                            </thead>
+                            <tbody id="feedbackTableBody" class="divide-y text-slate-700">
+                                <!-- Dynamic rows -->
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Conversion rate visualizer -->
+                    <div class="lg:col-span-1 glass-card p-6 rounded-2xl flex flex-col justify-between">
+                        <div>
+                            <h3 class="font-bold text-slate-800 text-sm mb-4">현재 채널별 성사 실적 비율</h3>
+                            <div class="h-64">
+                                <canvas id="feedbackConversionChart"></canvas>
+                            </div>
+                        </div>
+                        <div class="p-4 bg-indigo-50 border border-indigo-100 rounded-xl mt-6 text-xs text-indigo-800 leading-relaxed font-semibold">
+                            💡 <b>성공률 요인 분석:</b> '시설자금 우대대출' 영업 포인트의 성사 비중이 평균치보다 24%p 높게 분석됩니다.
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <!-- ========================================== -->
+    <!-- JAVASCRIPT APP STATE & CHART CONTROLLERS -->
+    <!-- ========================================== -->
+    <script>
+        // --- 0. Logout Handler ---
+        function handleLogout() {
+            sessionStorage.removeItem('erm_auth_token');
+            sessionStorage.removeItem('erm_auth_ts');
+            window.location.replace('index.html');
+        }
+
+        // --- 1. Navigation / Global State Controller ---
+        let currentTab = 'overview';
+        let charts = {}; // Holds Chart.js instances
+
+        function switchTab(tabId) {
+            // Hide previous active section
+            document.getElementById(`view-${currentTab}`).classList.add('hidden');
+            document.getElementById(`nav-${currentTab}`).classList.remove('nav-active');
+
+            // Show new active section
+            document.getElementById(`view-${tabId}`).classList.remove('hidden');
+            document.getElementById(`nav-${tabId}`).classList.add('nav-active');
+
+            currentTab = tabId;
+
+            // Trigger chart rendering for that tab to prevent sizing bugs
+            initializeTabCharts(tabId);
+            
+            if (tabId === 'consulting') {
+                setTimeout(() => {
+                    initConsultingMap();
+                }, 100);
+            }
+        }
+
+        // --- Leaflet Map Initialization ---
+        let consultingMap;
+        function initConsultingMap() {
+            if (consultingMap) consultingMap.remove();
+
+            const officeCoords = {
+                '광명지점': [37.451, 126.879],
+                '강남지점': [37.498, 127.027],
+                '여의도지점': [37.521, 126.924],
+                '시장지점': [37.564, 126.981]
+            };
+            const center = officeCoords[branchName] || [37.566, 126.978];
+
+            consultingMap = L.map('sales-map').setView(center, 14);
+            
+            // Dark style tile layer
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+                attribution: '&copy; <a href="https://carto.com/">CARTO</a>'
+            }).addTo(consultingMap);
+
+            // Office Marker
+            const centerIcon = L.divIcon({
+                className: 'office-center-marker-icon',
+                html: `<div style="background:var(--color-primary, #6366f1); width:16px; height:16px; border-radius:50%; border:3px solid white; box-shadow:0 0 10px #6366f1;"></div>`,
+                iconSize: [16, 16],
+                iconAnchor: [8, 8]
+            });
+            L.marker(center, { icon: centerIcon })
+              .addTo(consultingMap)
+              .bindPopup(`<b>${branchName}</b><br/><span style="color:#64748b; font-size:11px">관할 중심 지점</span>`)
+              .openPopup();
+
+            // Prospect Markers
+            const prospectData = PROSPECT_DATA[branchName] || PROSPECT_DATA['광명지점'];
+            prospectData.rows.forEach((r, idx) => {
+                // simple spread for mockup
+                const spreadLat = center[0] + (Math.random() - 0.5) * 0.02;
+                const spreadLng = center[1] + (Math.random() - 0.5) * 0.02;
+
+                const corpIcon = L.divIcon({
+                    className: `corp-marker-icon`,
+                    html: `<div style="background:#10b981; width:14px; height:14px; border-radius:50%; border:2px solid white; box-shadow:0 0 8px #10b981;"></div>`,
+                    iconSize: [14, 14],
+                    iconAnchor: [7, 7]
+                });
+
+                const marker = L.marker([spreadLat, spreadLng], { icon: corpIcon }).addTo(consultingMap);
+                marker.bindPopup(`
+                    <div style="font-weight:bold; color:#1e293b; margin-bottom:4px;">${r.name}</div>
+                    <div style="font-size:11px; color:#64748b">
+                        업종: ${r.sector}<br/>
+                        <b>경제참조등급: <span style="color:#10b981">${r.ermGrade}</span></b>
+                    </div>
+                    <button class="btn btn-primary" style="margin-top:8px; padding:4px 8px; font-size:10px; width:100%; cursor:pointer; background:#6366f1; color:white; border-radius:4px; border:none;" onclick="goToConsulting('${r.name}')">AI 컨설팅 연동</button>
+                `);
+                
+                // Add click listener to marker itself to open popup and select
+                marker.on('click', () => {
+                    goToConsulting(r.name);
+                });
+            });
+        }
+
+        // --- 2. Chart Configurations & Init Functions ---
+        function initializeTabCharts(tabId) {
+            if (tabId === 'overview') {
+                renderOverviewCharts();
+            } else if (tabId === 'validation') {
+                renderValidationCharts();
+            } else if (tabId === 'monitoring') {
+                renderMonitoringCharts();
+            } else if (tabId === 'xai') {
+                renderXaiCharts();
+            } else if (tabId === 'stress') {
+                renderStressCharts();
+            } else if (tabId === 'targeting') {
+                renderTargetingCharts();
+            } else if (tabId === 'feedback') {
+                renderFeedbackCharts();
+            }
+        }
+
+        function renderOverviewCharts() {
+            if (charts['overviewPd']) charts['overviewPd'].destroy();
+            if (charts['overviewConv']) charts['overviewConv'].destroy();
+
+            // PD Trend
+            const ctx1 = document.getElementById('overviewPdTrendChart').getContext('2d');
+            charts['overviewPd'] = new Chart(ctx1, {
+                type: 'line',
+                data: {
+                    labels: ['23.4Q', '24.1Q', '24.2Q', '24.3Q', '24.4Q', '25.1Q(E)'],
+                    datasets: [{
+                        label: '경제참조모델 예측 PD (%)',
+                        data: [3.2, 3.5, 3.4, 3.8, 4.1, 4.2],
+                        borderColor: '#4f46e5',
+                        backgroundColor: 'rgba(79, 70, 229, 0.05)',
+                        tension: 0.4,
+                        fill: true
+                    }, {
+                        label: '시장 실질 부도율 (%)',
+                        data: [3.1, 3.3, 3.2, 3.5, 3.9, null],
+                        borderColor: '#94a3b8',
+                        borderDash: [5, 5],
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { position: 'bottom' } }
+                }
+            });
+
+            // Conversion
+            const ctx2 = document.getElementById('overviewConversionChart').getContext('2d');
+            charts['overviewConv'] = new Chart(ctx2, {
+                type: 'doughnut',
+                data: {
+                    labels: ['성공 (Success)', '진행중 (Active)', '실패 (Failed)'],
+                    datasets: [{
+                        data: [24, 60, 36],
+                        backgroundColor: ['#10b981', '#6366f1', '#ef4444'],
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { position: 'bottom' } }
+                }
+            });
+        }
+
+        function renderValidationCharts() {
+            if (charts['validationRoc']) charts['validationRoc'].destroy();
+
+            const ctx = document.getElementById('validationRocChart').getContext('2d');
+            charts['validationRoc'] = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: ['0.0', '0.2', '0.4', '0.6', '0.8', '1.0'],
+                    datasets: [{
+                        label: 'ERM Model (AUC = 0.86)',
+                        data: [0.0, 0.45, 0.72, 0.88, 0.96, 1.0],
+                        borderColor: '#4f46e5',
+                        borderWidth: 3,
+                        tension: 0.2
+                    }, {
+                        label: 'Random Model (AUC = 0.50)',
+                        data: [0.0, 0.2, 0.4, 0.6, 0.8, 1.0],
+                        borderColor: '#cbd5e1',
+                        borderDash: [4, 4],
+                        borderWidth: 1.5
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { position: 'bottom' } },
+                    scales: {
+                        x: { title: { display: true, text: 'False Positive Rate' } },
+                        y: { title: { display: true, text: 'True Positive Rate' } }
+                    }
+                }
+            });
+        }
+
+        function renderMonitoringCharts() {
+            if (charts['monitoringPd']) charts['monitoringPd'].destroy();
+            if (charts['monitoringGrade']) charts['monitoringGrade'].destroy();
+            if (charts['monitoringGap']) charts['monitoringGap'].destroy();
+
+            // ── 1. PD Trend: Internal Model vs ERM Overlay ──
+            const ctx1 = document.getElementById('monitoringPdTrendChart').getContext('2d');
+            charts['monitoringPd'] = new Chart(ctx1, {
+                type: 'line',
+                data: {
+                    labels: ['23.4Q', '24.1Q', '24.2Q', '24.3Q', '24.4Q', '25.1Q(E)'],
+                    datasets: [{
+                        label: 'ERM 참조모형 PD (%)',
+                        data: [3.2, 3.5, 3.4, 3.8, 4.1, 4.2],
+                        borderColor: '#ef4444',
+                        backgroundColor: 'rgba(239, 68, 68, 0.08)',
+                        borderWidth: 3,
+                        tension: 0.4,
+                        fill: true,
+                        pointBackgroundColor: '#ef4444',
+                        pointRadius: 5,
+                        pointHoverRadius: 7
+                    }, {
+                        label: '내부모형 PD (%)',
+                        data: [3.0, 3.1, 3.1, 3.2, 3.3, 3.3],
+                        borderColor: '#94a3b8',
+                        borderDash: [6, 4],
+                        borderWidth: 2,
+                        tension: 0.4,
+                        pointStyle: 'rectRot',
+                        pointRadius: 4
+                    }, {
+                        label: '시장 실질 부도율 (%)',
+                        data: [3.1, 3.3, 3.2, 3.5, 3.9, null],
+                        borderColor: '#10b981',
+                        borderWidth: 2,
+                        tension: 0.4,
+                        pointStyle: 'triangle',
+                        pointRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom', labels: { usePointStyle: true, font: { size: 11 } } },
+                        tooltip: {
+                            callbacks: {
+                                afterBody: function(context) {
+                                    if (context[0].datasetIndex === 0 && context[0].dataIndex <= 4) {
+                                        const ermPd = context[0].raw;
+                                        const intPd = [3.0, 3.1, 3.1, 3.2, 3.3, 3.3][context[0].dataIndex];
+                                        const gap = (ermPd - intPd).toFixed(1);
+                                        return `\n⚠️ Gap: +${gap}%p (내부모형 과소평가)`;
+                                    }
+                                    return '';
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: false,
+                            title: { display: true, text: 'PD (%)', font: { size: 10 } }
+                        }
+                    }
+                }
+            });
+
+            // ── 2. Grade Gap Butterfly Chart ──
+            const ctx3 = document.getElementById('monitoringGradeGapChart').getContext('2d');
+            charts['monitoringGap'] = new Chart(ctx3, {
+                type: 'bar',
+                data: {
+                    labels: ['AAA~AA', 'A', 'BBB', 'BB', 'B', 'CCC이하'],
+                    datasets: [{
+                        label: '등급 상향 (숨겨진 우량)',
+                        data: [12, 45, 78, 35, 15, 2],
+                        backgroundColor: 'rgba(59, 130, 246, 0.75)',
+                        borderColor: '#3b82f6',
+                        borderWidth: 1,
+                        borderRadius: 4
+                    }, {
+                        label: '등급 하향 (위험 과소평가)',
+                        data: [-5, -18, -65, -120, -95, -39],
+                        backgroundColor: 'rgba(239, 68, 68, 0.75)',
+                        borderColor: '#ef4444',
+                        borderWidth: 1,
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom', labels: { usePointStyle: true, font: { size: 10 } } },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const v = Math.abs(context.raw);
+                                    return `${context.dataset.label}: ${v}개사`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            title: { display: true, text: '← 하향(위험↑)  |  상향(기회) →', font: { size: 10 } },
+                            grid: { color: 'rgba(0,0,0,0.04)' },
+                            ticks: {
+                                callback: function(v) { return Math.abs(v); }
+                            }
+                        },
+                        y: {
+                            grid: { display: false }
+                        }
+                    }
+                }
+            });
+
+            // ── 3. Grade Distribution: Before (Internal) vs After (ERM) ──
+            const ctx2 = document.getElementById('monitoringGradeDistChart').getContext('2d');
+            charts['monitoringGrade'] = new Chart(ctx2, {
+                type: 'bar',
+                data: {
+                    labels: ['AAA~AA', 'A', 'BBB', 'BB', 'B', 'CCC이하'],
+                    datasets: [{
+                        label: '내부모형 등급 분포',
+                        data: [45, 320, 1180, 520, 280, 55],
+                        backgroundColor: 'rgba(148, 163, 184, 0.35)',
+                        borderColor: '#94a3b8',
+                        borderWidth: 1.5,
+                        borderRadius: 4,
+                        borderDash: [4, 2]
+                    }, {
+                        label: 'ERM 참조등급 분포',
+                        data: [52, 347, 1093, 555, 260, 93],
+                        backgroundColor: function(context) {
+                            const colors = ['#1e3a8a', '#3b82f6', '#6366f1', '#f59e0b', '#f87171', '#ef4444'];
+                            return colors[context.dataIndex] || '#6366f1';
+                        },
+                        borderRadius: 6,
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom', labels: { usePointStyle: true, font: { size: 11 } } },
+                        tooltip: {
+                            callbacks: {
+                                afterBody: function(context) {
+                                    const internal = [45, 320, 1180, 520, 280, 55];
+                                    const erm = [52, 347, 1093, 555, 260, 93];
+                                    const idx = context[0].dataIndex;
+                                    const diff = erm[idx] - internal[idx];
+                                    const sign = diff > 0 ? '+' : '';
+                                    return `변동: ${sign}${diff}개사`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: { display: true, text: '기업 수', font: { size: 10 } }
+                        },
+                        x: { grid: { display: false } }
+                    }
+                }
+            });
+
+            // ── 4. Migration Matrix Renderer ──
+            renderMigrationMatrix();
+        }
+
+        function renderMigrationMatrix() {
+            // Matrix data: rows = internal grades, cols = ERM grades
+            // [AAA~AA, A, BBB, BB, B, CCC이하]
+            const matrix = [
+                { grade: 'AAA~AA', data: [38, 5, 2, 0, 0, 0], total: 45 },
+                { grade: 'A',      data: [10, 280, 25, 5, 0, 0], total: 320 },
+                { grade: 'BBB',    data: [4, 55, 1020, 78, 18, 5], total: 1180 },
+                { grade: 'BB',     data: [0, 7, 40, 410, 50, 13], total: 520 },
+                { grade: 'B',      data: [0, 0, 6, 55, 182, 37], total: 280 },
+                { grade: 'CCC이하', data: [0, 0, 0, 7, 10, 38], total: 55 },
+            ];
+
+            const tbody = document.getElementById('migrationMatrixBody');
+            tbody.innerHTML = '';
+
+            matrix.forEach((row, rowIdx) => {
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-slate-50/50 transition';
+
+                // Row header (internal grade)
+                const thCell = document.createElement('td');
+                thCell.className = 'p-2 font-bold text-slate-700 bg-slate-50 text-left';
+                thCell.textContent = row.grade;
+                tr.appendChild(thCell);
+
+                // Data cells
+                row.data.forEach((val, colIdx) => {
+                    const td = document.createElement('td');
+                    td.className = 'p-2 font-semibold';
+
+                    if (val === 0) {
+                        td.textContent = '·';
+                        td.className += ' text-slate-200';
+                    } else if (colIdx === rowIdx) {
+                        // Diagonal = no change (green)
+                        td.innerHTML = `<span class="inline-block px-2 py-0.5 rounded bg-emerald-100 text-emerald-700 font-bold">${val}</span>`;
+                    } else if (colIdx > rowIdx) {
+                        // Below diagonal = downgrade (red) — ERM grade is worse
+                        const intensity = val > 50 ? 'bg-red-500 text-white' : val > 15 ? 'bg-red-100 text-red-700' : 'text-red-400';
+                        td.innerHTML = `<span class="inline-block px-2 py-0.5 rounded ${intensity} font-bold">${val}</span>`;
+                    } else {
+                        // Above diagonal = upgrade (blue) — ERM grade is better
+                        const intensity = val > 30 ? 'bg-blue-500 text-white' : val > 10 ? 'bg-blue-100 text-blue-700' : 'text-blue-400';
+                        td.innerHTML = `<span class="inline-block px-2 py-0.5 rounded ${intensity} font-bold">${val}</span>`;
+                    }
+
+                    tr.appendChild(td);
+                });
+
+                // Total column
+                const totalTd = document.createElement('td');
+                totalTd.className = 'p-2 font-extrabold text-slate-800 bg-slate-50';
+                totalTd.textContent = row.total;
+                tr.appendChild(totalTd);
+
+                tbody.appendChild(tr);
+            });
+
+            // Summary row
+            const summaryRow = document.createElement('tr');
+            summaryRow.className = 'bg-slate-800 text-white font-bold';
+            const summaryLabel = document.createElement('td');
+            summaryLabel.className = 'p-2 text-left';
+            summaryLabel.textContent = 'ERM 합계';
+            summaryRow.appendChild(summaryLabel);
+
+            const colTotals = [52, 347, 1093, 555, 260, 93];
+            colTotals.forEach(t => {
+                const td = document.createElement('td');
+                td.className = 'p-2';
+                td.textContent = t;
+                summaryRow.appendChild(td);
+            });
+            const grandTotal = document.createElement('td');
+            grandTotal.className = 'p-2 text-indigo-300';
+            grandTotal.textContent = '2,400';
+            summaryRow.appendChild(grandTotal);
+            tbody.appendChild(summaryRow);
+        }
+
+        // --- 3. Explainable AI (XAI) Controller ---
+        const xaiData = {
+            tech: {
+                pd: '8.2%',
+                pdDiff: '▲ 3.5%p (전월 대비)',
+                badge: 'Watchlist (주의 관찰)',
+                badgeClass: 'bg-red-100 text-red-700',
+                factor: '기준금리 인상 (Macro)',
+                baseline: 'Baseline PD: 4.7%',
+                labels: ['Base (4.7%)', '기준금리', '매출채권', '업황지수', '영업이익', 'Final (8.2%)'],
+                data: [4.7, 2.1, 1.2, 0.7, -0.5, 8.2],
+                colors: ['#94a3b8', '#ef4444', '#f87171', '#fca5a5', '#3b82f6', '#1e293b'],
+                list: [
+                    { name: '기준금리 (Macro)', diff: '+2.1%p', percent: 70, color: 'bg-red-500' },
+                    { name: '매출채권회전율', diff: '+1.2%p', percent: 45, color: 'bg-red-400' },
+                    { name: '업종 경기 지수', diff: '+0.7%p', percent: 30, color: 'bg-red-300' },
+                    { name: '영업이익률', diff: '-0.5%p', percent: 20, color: 'bg-blue-500', isNegative: true }
+                ],
+                comment: '본 차주는 기본적인 재무 구조는 건실한 편이나, 변동금리 차입금 비중이 매우 높아 <b>거시 기준금리 충격</b>에 매우 취약한 구조입니다. 이자비용 상승과 매출채권 지연에 따라 부도율이 급증하여 위험 단계가 관찰 단계로 상향되었습니다.'
+            },
+            dist: {
+                pd: '0.4%',
+                pdDiff: '▼ 0.2%p (전월 대비)',
+                badge: 'Investment Grade (우량)',
+                badgeClass: 'bg-emerald-100 text-emerald-700',
+                factor: '매출액 급증 (Micro)',
+                baseline: 'Baseline PD: 0.6%',
+                labels: ['Base (0.6%)', '매출증가율', '유동비율', '금리상승', '원자재', 'Final (0.4%)'],
+                data: [0.6, -0.3, -0.1, 0.15, 0.05, 0.4],
+                colors: ['#94a3b8', '#3b82f6', '#60a5fa', '#ef4444', '#f87171', '#1e293b'],
+                list: [
+                    { name: '매출증가율 (Micro)', diff: '-0.3%p', percent: 50, color: 'bg-blue-500', isNegative: true },
+                    { name: '유동비율 향상', diff: '-0.1%p', percent: 25, color: 'bg-blue-400', isNegative: true },
+                    { name: '금리충격 리스크', diff: '+0.15%p', percent: 35, color: 'bg-red-400' },
+                    { name: '원자재 원가 상승', diff: '+0.05%p', percent: 15, color: 'bg-red-300' }
+                ],
+                comment: '최근 E-커머스 유통 물량 확대로 매출증가율이 전년동기 대비 40% 이상 개선되었습니다. 이에 따라 금리 상승에 따른 부정적 충격을 완벽하게 오버레이하고 남을 수준의 <b>안정적인 유동 비율</b>을 확보한 것으로 평가됩니다.'
+            },
+            startup: {
+                pd: '15.5%',
+                pdDiff: '▲ 7.1%p (전월 대비)',
+                badge: 'Default Risk (부실 위험)',
+                badgeClass: 'bg-rose-100 text-rose-700',
+                factor: '영업손실 누적 (Micro)',
+                baseline: 'Baseline PD: 8.4%',
+                labels: ['Base (8.4%)', '영업적자', '부채비율', '금리충격', '뉴스심리', 'Final (15.5%)'],
+                data: [8.4, 3.8, 2.2, 0.9, 0.2, 15.5],
+                colors: ['#94a3b8', '#ef4444', '#ef4444', '#f87171', '#fca5a5', '#1e293b'],
+                list: [
+                    { name: '영업적자 지속', diff: '+3.8%p', percent: 85, color: 'bg-red-500' },
+                    { name: '부채비율 상승', diff: '+2.2%p', percent: 65, color: 'bg-red-500' },
+                    { name: '금리 이자부담', diff: '+0.9%p', percent: 40, color: 'bg-red-400' },
+                    { name: '대안 뉴스 감성 지수', diff: '+0.2%p', percent: 15, color: 'bg-red-300' }
+                ],
+                comment: '신작 출시 지연에 따른 투자 유치 중단 및 현금성 자산 고갈 위험이 발생했습니다. <b>영업적자가 지속</b>되는 상황에서 차입금 만기 상환 압력이 가중되어, 긴급 자금 지원 혹은 경영 정상화 조치가 필요합니다.'
+            },
+            // ── 강남지점 XAI 데이터 ──
+            gangnam_tech: {
+                pd: '5.8%',
+                pdDiff: '▲ 2.1%p (전월 대비)',
+                badge: 'Watchlist (주의 관찰)',
+                badgeClass: 'bg-red-100 text-red-700',
+                factor: '매출채권 회전 지연 (Micro)',
+                baseline: 'Baseline PD: 3.7%',
+                labels: ['Base (3.7%)', '매출채권', '부채비율', '금리충격', '수주잔고', 'Final (5.8%)'],
+                data: [3.7, 1.4, 0.8, 0.4, -0.5, 5.8],
+                colors: ['#94a3b8', '#ef4444', '#f87171', '#fca5a5', '#3b82f6', '#1e293b'],
+                list: [
+                    { name: '매출채권회전율 저하', diff: '+1.4%p', percent: 65, color: 'bg-red-500' },
+                    { name: '부채비율 상승', diff: '+0.8%p', percent: 40, color: 'bg-red-400' },
+                    { name: '금리 이자부담', diff: '+0.4%p', percent: 25, color: 'bg-red-300' },
+                    { name: '수주잔고 증가', diff: '-0.5%p', percent: 30, color: 'bg-blue-500', isNegative: true }
+                ],
+                comment: '대형 IT 프로젝트 수주 증가로 수주잔고는 양호하나, <b>매출채권 회수 지연</b>으로 단기 유동성 압박이 심화되고 있습니다. 부채비율 관리 및 매출채권 담보 대출 활용을 권고합니다.'
+            },
+            gangnam_fashion: {
+                pd: '3.2%',
+                pdDiff: '▲ 0.8%p (전월 대비)',
+                badge: 'Watch (모니터링)',
+                badgeClass: 'bg-amber-100 text-amber-700',
+                factor: '재고 증가 및 내수 부진 (Macro)',
+                baseline: 'Baseline PD: 2.4%',
+                labels: ['Base (2.4%)', '재고회전율', '내수경기', '영업이익', '단기차입', 'Final (3.2%)'],
+                data: [2.4, 0.6, 0.5, 0.3, -0.6, 3.2],
+                colors: ['#94a3b8', '#f59e0b', '#fbbf24', '#fcd34d', '#3b82f6', '#1e293b'],
+                list: [
+                    { name: '재고회전율 하락', diff: '+0.6%p', percent: 50, color: 'bg-amber-500' },
+                    { name: '내수 경기 침체', diff: '+0.5%p', percent: 40, color: 'bg-amber-400' },
+                    { name: '영업이익률 감소', diff: '+0.3%p', percent: 25, color: 'bg-amber-300' },
+                    { name: '단기차입금 증가', diff: '-0.6%p', percent: 35, color: 'bg-blue-500', isNegative: true }
+                ],
+                comment: '내수 소비 위축으로 재고가 누적되고 있으나, <b>단기차입금 활용으로 유동성을 방어</b>하고 있습니다. 재고 자산 담보 대출(ABL) 연계 지원 시 현금흐름 안정화가 가능합니다.'
+            },
+            // ── 여의도지점 XAI 데이터 ──
+            yeouido_cap: {
+                pd: '0.3%',
+                pdDiff: '▼ 0.1%p (전월 대비)',
+                badge: 'Investment Grade (우량)',
+                badgeClass: 'bg-emerald-100 text-emerald-700',
+                factor: '자기자본비율 개선 (Micro)',
+                baseline: 'Baseline PD: 0.4%',
+                labels: ['Base (0.4%)', '자기자본', 'NPL비율', '조달금리', '수익성', 'Final (0.3%)'],
+                data: [0.4, -0.15, -0.08, 0.05, -0.02, 0.3],
+                colors: ['#94a3b8', '#3b82f6', '#60a5fa', '#ef4444', '#3b82f6', '#1e293b'],
+                list: [
+                    { name: '자기자본비율 개선', diff: '-0.15%p', percent: 55, color: 'bg-blue-500', isNegative: true },
+                    { name: 'NPL 비율 하락', diff: '-0.08%p', percent: 35, color: 'bg-blue-400', isNegative: true },
+                    { name: '조달금리 부담', diff: '+0.05%p', percent: 20, color: 'bg-red-400' },
+                    { name: '수익성 개선', diff: '-0.02%p', percent: 15, color: 'bg-blue-300', isNegative: true }
+                ],
+                comment: '자기자본비율이 업계 평균을 상회하며 <b>재무 건전성이 탁월</b>합니다. NPL 비율도 안정적으로 관리되고 있어 대규모 프로젝트 파이낸싱(PF) 협업 파트너로 최우선 추천 대상입니다.'
+            },
+            yeouido_fin: {
+                pd: '6.9%',
+                pdDiff: '▲ 1.5%p (전월 대비)',
+                badge: 'Watchlist (주의 관찰)',
+                badgeClass: 'bg-red-100 text-red-700',
+                factor: '연구개발비 급증 (Micro)',
+                baseline: 'Baseline PD: 5.4%',
+                labels: ['Base (5.4%)', 'R&D비용', '영업손실', '투자유치', '사용자수', 'Final (6.9%)'],
+                data: [5.4, 1.8, 0.9, -0.8, -0.4, 6.9],
+                colors: ['#94a3b8', '#ef4444', '#f87171', '#3b82f6', '#60a5fa', '#1e293b'],
+                list: [
+                    { name: 'R&D 비용 증가', diff: '+1.8%p', percent: 75, color: 'bg-red-500' },
+                    { name: '영업손실 지속', diff: '+0.9%p', percent: 50, color: 'bg-red-400' },
+                    { name: '투자유치 완료', diff: '-0.8%p', percent: 45, color: 'bg-blue-500', isNegative: true },
+                    { name: 'MAU 증가', diff: '-0.4%p', percent: 30, color: 'bg-blue-400', isNegative: true }
+                ],
+                comment: 'Series C 투자 유치 성공으로 단기 유동성은 확보되었으나, <b>R&D 투자 집중에 따른 영업손실이 지속</b>되고 있습니다. 오픈뱅킹 API 제휴 조건으로 운전자금 지원 시 우호적 파트너십 구축이 가능합니다.'
+            },
+            // ── 시장지점 XAI 데이터 ──
+            market_gukbap: {
+                pd: '3.2%',
+                pdDiff: '▼ 1.8%p (전월 대비)',
+                badge: 'Investment Grade (우량)',
+                badgeClass: 'bg-emerald-100 text-emerald-700',
+                factor: '장기 영업 안정성 (Micro)',
+                baseline: 'Baseline PD: 5.0%',
+                labels: ['Base (5.0%)', '영업연수', '재방문율', '매출증가', '부채상환', 'Final (3.2%)'],
+                data: [5.0, -0.8, -0.7, -0.6, 0.3, 3.2],
+                colors: ['#94a3b8', '#3b82f6', '#60a5fa', '#34d399', '#ef4444', '#1e293b'],
+                list: [
+                    { name: '20년 이상 영업연수', diff: '-0.8%p', percent: 55, color: 'bg-blue-500', isNegative: true },
+                    { name: '재방문 고객 비율 상승', diff: '-0.7%p', percent: 50, color: 'bg-emerald-500', isNegative: true },
+                    { name: '일평균 매출 증가', diff: '-0.6%p', percent: 45, color: 'bg-emerald-400', isNegative: true },
+                    { name: '부채 상환 부담', diff: '+0.3%p', percent: 20, color: 'bg-red-400' }
+                ],
+                comment: '20년 이상의 단란한 영업으로 <b>재방문 고객 비율이 높아 매출 안정성이 탁월</b>합니다. 소상공인 전용 보증 연계 시 신용등급 개선 가능성이 높습니다.'
+            },
+            market_coffee: {
+                pd: '4.5%',
+                pdDiff: '▼ 2.1%p (전월 대비)',
+                badge: 'Watch (모니터링)',
+                badgeClass: 'bg-amber-100 text-amber-700',
+                factor: '로열티 특수 효과 (Micro)',
+                baseline: 'Baseline PD: 6.6%',
+                labels: ['Base (6.6%)', '로열티', '좌석회전', '매출증가', '보증부담', 'Final (4.5%)'],
+                data: [6.6, -1.2, -0.8, -0.5, 0.4, 4.5],
+                colors: ['#94a3b8', '#3b82f6', '#60a5fa', '#34d399', '#ef4444', '#1e293b'],
+                list: [
+                    { name: '로열티 프로그램 효과', diff: '-1.2%p', percent: 60, color: 'bg-blue-500', isNegative: true },
+                    { name: '좌석 회전율 상승', diff: '-0.8%p', percent: 50, color: 'bg-emerald-500', isNegative: true },
+                    { name: '일평균 매출 증가', diff: '-0.5%p', percent: 40, color: 'bg-emerald-400', isNegative: true },
+                    { name: '보증 부담 잔존', diff: '+0.4%p', percent: 25, color: 'bg-red-400' }
+                ],
+                comment: '로열티 도입 후 재방문 회귀율이 급증하면서 <b>좌석 회전율이 크게 개선</b>되었습니다. 가이드라인 해소 후 다점포 확장을 위한 스맘프 대출을 제안하면 매우 유망합니다.'
+            }
+        };
+
+        function updateXaiView(corpId) {
+            const data = xaiData[corpId];
+            document.getElementById('xaiPdDisplay').innerText = data.pd;
+            document.getElementById('xaiPdDiffDisplay').innerText = data.pdDiff;
+            
+            const badge = document.getElementById('xaiStatusBadge');
+            badge.innerText = data.badge;
+            badge.className = `inline-flex px-3 py-1 rounded-full text-xs font-bold mt-2 ${data.badgeClass}`;
+            
+            document.getElementById('xaiPrimaryFactor').innerText = data.factor;
+            document.getElementById('xaiBaselineDisplay').innerText = data.baseline;
+            document.getElementById('xaiAuditComment').innerHTML = data.comment;
+
+            // Render details
+            const container = document.getElementById('xaiFactorContainer');
+            container.innerHTML = '';
+            data.list.forEach(item => {
+                const alignStyle = item.isNegative ? 'justify-between flex-row' : 'justify-between flex-row';
+                const textColor = item.isNegative ? 'text-blue-600' : 'text-red-600';
+                
+                container.innerHTML += `
+                    <div class="group">
+                        <div class="flex justify-between text-xs mb-1 font-semibold">
+                            <span class="text-slate-700">${item.name}</span>
+                            <span class="${textColor}">${item.diff}</span>
+                        </div>
+                        <div class="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
+                            <div class="${item.color} h-full rounded-full" style="width: ${item.percent}%"></div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            // Re-render chart
+            if (charts['xaiWaterfall']) charts['xaiWaterfall'].destroy();
+
+            const ctx = document.getElementById('xaiShapWaterfallChart').getContext('2d');
+            charts['xaiWaterfall'] = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: data.labels,
+                    datasets: [{
+                        data: data.data,
+                        backgroundColor: data.colors,
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { beginAtZero: true, grid: { display: false } },
+                        y: { grid: { display: false } }
+                    }
+                }
+            });
+        }
+
+        function renderXaiCharts() {
+            const currentSel = document.getElementById('xaiCorpSelector').value;
+            updateXaiView(currentSel);
+        }
+
+        // --- 4. Stress Test Simulator ---
+        // Setup slider sync
+        function initStressSliders() {
+            const sliders = [
+                { id: 'sliderRate', valId: 'sliderRateVal', suffix: '%p', process: (v) => (v > 0 ? "+" : "") + v },
+                { id: 'sliderFx', valId: 'sliderFxVal', suffix: '원', process: (v) => Number(v).toLocaleString() },
+                { id: 'sliderOil', valId: 'sliderOilVal', suffix: '%', process: (v) => (v > 0 ? "+" : "") + v }
+            ];
+
+            sliders.forEach(s => {
+                const el = document.getElementById(s.id);
+                const valEl = document.getElementById(s.valId);
+                el.addEventListener('input', (e) => {
+                    valEl.innerText = s.process(e.target.value) + s.suffix;
+                    runStressSimulation(); // Auto compute on drag
+                });
+            });
+        }
+
+        function runStressSimulation() {
+            // Get values
+            const rate = parseFloat(document.getElementById('sliderRate').value);
+            const fx = parseInt(document.getElementById('sliderFx').value);
+            const oil = parseInt(document.getElementById('sliderOil').value);
+
+            // Compute dynamic multipliers based on stress coefficients
+            // e.g. base average PD is 4.2%
+            let newPd = 3.1 + (rate * 0.8) + ((fx - 1200) / 300 * 1.5) + (oil * 0.05);
+            newPd = Math.max(0.5, Math.min(25.0, newPd)).toFixed(1);
+
+            // Sales impact
+            let salesImpact = -(rate * 1.2) - ((fx - 1300) / 100 * 2.0) - (oil * 0.15);
+            salesImpact = salesImpact.toFixed(1);
+
+            // Downgrade count
+            let downgrades = Math.round(20 + (rate * 10) + ((fx - 1200) / 50 * 3));
+            downgrades = Math.max(0, downgrades);
+
+            // Update UI
+            document.getElementById('simPdImpact').innerHTML = `3.1% → <span class="font-extrabold text-red-600">${newPd}%</span>`;
+            document.getElementById('simSalesImpact').innerText = `${salesImpact}% ${salesImpact < 0 ? '감소' : '증가'} 예상`;
+            document.getElementById('simDowngradeImpact').innerHTML = `${downgrades}개사 <span class="text-xs text-red-500 font-semibold">(+${Math.max(0, downgrades - 30)})</span>`;
+
+            // Update Ledger metrics
+            const interestBase = 1240;
+            const simulatedInterest = Math.round(interestBase * (1 + (rate * 0.15)));
+            
+            const ebitBase = 3500;
+            const simulatedEbit = Math.round(ebitBase * (1 + (salesImpact / 100)));
+            
+            const simulatedIcr = (simulatedEbit / simulatedInterest).toFixed(2);
+
+            const tableBody = document.getElementById('stressTableBody');
+            tableBody.innerHTML = `
+                <tr class="hover:bg-slate-50/50">
+                    <td class="py-3 font-semibold text-slate-800">금융비용 (이자비용)</td>
+                    <td class="py-3 text-right text-slate-500 font-mono">1,240억</td>
+                    <td class="py-3 text-right font-bold text-red-600 font-mono">${simulatedInterest.toLocaleString()}억</td>
+                    <td class="py-3 text-right text-red-500 font-semibold">+${((simulatedInterest - interestBase)/interestBase * 100).toFixed(1)}%</td>
+                </tr>
+                <tr class="hover:bg-slate-50/50">
+                    <td class="py-3 font-semibold text-slate-800">영업이익 (EBIT)</td>
+                    <td class="py-3 text-right text-slate-500 font-mono">3,500억</td>
+                    <td class="py-3 text-right font-bold text-indigo-600 font-mono">${simulatedEbit.toLocaleString()}억</td>
+                    <td class="py-3 text-right text-blue-500 font-semibold">${((simulatedEbit - ebitBase)/ebitBase * 100).toFixed(1)}%</td>
+                </tr>
+                <tr class="hover:bg-slate-50/50">
+                    <td class="py-3 font-semibold text-slate-800">이자보상배율 (ICR)</td>
+                    <td class="py-3 text-right text-slate-500 font-mono">2.82x</td>
+                    <td class="py-3 text-right font-bold text-orange-600 font-mono">${simulatedIcr}x</td>
+                    <td class="py-3 text-right text-orange-500 font-semibold">${((simulatedIcr - 2.82)/2.82 * 100).toFixed(1)}%</td>
+                </tr>
+            `;
+
+            // Calculate migration distribution for chart
+            const baseDist = [120, 310, 150, 60];
+            // High stress moves counts down (A down to B)
+            const stressSeverity = rate * 0.15 + (fx - 1300) / 1000 + oil * 0.005;
+            let aDist = Math.round(baseDist[0] * (1 - stressSeverity));
+            let bDist = Math.round(baseDist[1] * (1 - stressSeverity * 0.5));
+            let bbDist = Math.round(baseDist[2] * (1 + stressSeverity * 0.4));
+            let cDist = Math.round(baseDist[3] * (1 + stressSeverity * 1.5));
+
+            if (charts['stressMigration']) {
+                charts['stressMigration'].data.datasets[1].data = [aDist, bDist, bbDist, cDist];
+                charts['stressMigration'].update();
+            }
+
+            // Update Sector impacts
+            const sectors = [
+                { name: '건설/부동산 (금리 민감)', risk: Math.min(100, Math.round(55 + rate * 10)), color: 'bg-red-500' },
+                { name: '제조/수출 (환율 민감)', risk: Math.min(100, Math.round(40 + (fx - 1200)/10)), color: 'bg-orange-500' },
+                { name: 'IT/서비스 (지식 산업)', risk: Math.min(100, Math.round(15 + rate * 3)), color: 'bg-emerald-500' }
+            ];
+
+            const sectorContainer = document.getElementById('stressSectorImpacts');
+            sectorContainer.innerHTML = '';
+            sectors.forEach(s => {
+                sectorContainer.innerHTML += `
+                    <div>
+                        <div class="flex justify-between text-xs font-semibold mb-1">
+                            <span>${s.name}</span>
+                            <span class="text-slate-700 font-bold">${s.risk}% Risk Impact</span>
+                        </div>
+                        <div class="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
+                            <div class="${s.color} h-full" style="width: ${s.risk}%"></div>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        function renderStressCharts() {
+            if (charts['stressMigration']) charts['stressMigration'].destroy();
+
+            const ctx = document.getElementById('stressMigrationChart').getContext('2d');
+            charts['stressMigration'] = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['AAA~A', 'BBB', 'BB', 'B 이하'],
+                    datasets: [{
+                        label: '현재 분포 (Baseline)',
+                        data: [120, 310, 150, 60],
+                        backgroundColor: '#e2e8f0',
+                        borderRadius: 4
+                    }, {
+                        label: '시나리오 변동 후',
+                        data: [95, 280, 210, 105],
+                        backgroundColor: '#4f46e5',
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: { beginAtZero: true }
+                    }
+                }
+            });
+
+            runStressSimulation();
+        }
+
+        // --- 5. Targeting View Charts ---
+        function renderTargetingCharts() {
+            if (charts['targetingMarketing']) charts['targetingMarketing'].destroy();
+
+            const ctx = document.getElementById('targetingMarketingChart').getContext('2d');
+            charts['targetingMarketing'] = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['친환경에너지', 'IT솔루션', '의료기기', '지식서비스', '정밀제조'],
+                    datasets: [{
+                        data: [95, 88, 75, 72, 65],
+                        backgroundColor: ['#4f46e5', '#6366f1', '#818cf8', '#a5b4fc', '#c7d2fe'],
+                        borderRadius: 8
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: { beginAtZero: true, max: 100 }
+                    }
+                }
+            });
+        }
+
+        // --- 6. AI Consulting & LLM Strategy Generator ---
+        const consultingData = {
+            tech: {
+                company: '(주)광명정밀기계',
+                oldGrade: 'BBB',
+                newGrade: 'A+',
+                metrics: [
+                    { name: '상시 직원 수', value: '42명', diff: '▲ 4명', diffColor: 'text-green-500' },
+                    { name: '현금성 자산', value: '18.5억', diff: '유동비율 185%', diffColor: 'text-slate-500' },
+                    { name: '퇴직급여 부채', value: '7.2억', diff: '사내 적립 80%', diffColor: 'text-slate-500' },
+                    { name: '연간 판관비', value: '45억', diff: '전년 대비 안정', diffColor: 'text-slate-500' }
+                ],
+                strategies: [
+                    {
+                        icon: '👥',
+                        title: 'HR 및 퇴직연금 전환 솔루션',
+                        borderClass: 'border-l-indigo-500 bg-indigo-50/50',
+                        badge: '퇴직연금 추천',
+                        badgeStyle: 'bg-indigo-100 text-indigo-700',
+                        text: '직원수 및 퇴직급여 부담이 가중되는 상황입니다. 현재의 사내 적립금을 <b>확정기여형(DC) 법인 연금</b>으로 이체하여 법인세 감면과 부채 분산 혜택을 제안하십시오. 추가 신설 직원에 대한 복지카드(단체상해 포함) 연계 시 기업 매력도가 향상됩니다.'
+                    },
+                    {
+                        icon: '💰',
+                        title: '기업 유동성 자산 운용 (WM)',
+                        borderClass: 'border-l-emerald-500 bg-emerald-50/50',
+                        badge: '기업 자산운용',
+                        badgeStyle: 'bg-emerald-100 text-emerald-700',
+                        text: '현금성 자산 18억 원의 대부분이 저수익 당좌예금에 집중되어 있습니다. 단기 한도를 확보하면서 1.5%p의 추가 운용수익을 기대할 수 있는 <b>법인용 MMF 및 맞춤형 채권 신탁</b> 제안이 매우 유효합니다.'
+                    }
+                ]
+            },
+            dist: {
+                company: '(주)광명테크노',
+                oldGrade: 'A-',
+                newGrade: 'AAA',
+                metrics: [
+                    { name: '상시 직원 수', value: '142명', diff: '▲ 15명', diffColor: 'text-green-500' },
+                    { name: '현금성 자산', value: '42.5억', diff: '유동성 풍부', diffColor: 'text-green-500' },
+                    { name: '퇴직급여 부채', value: '18.2억', diff: '외부 적립 필요', diffColor: 'text-red-500' },
+                    { name: '연간 판관비', value: '120억', diff: '상승세 유지', diffColor: 'text-slate-500' }
+                ],
+                strategies: [
+                    {
+                        icon: '👥',
+                        title: 'HR 및 퇴직연금 (DB/DC) 설계전략',
+                        borderClass: 'border-l-indigo-500 bg-indigo-50/50',
+                        badge: 'DB/DC 매칭',
+                        badgeStyle: 'bg-indigo-100 text-indigo-700',
+                        text: '직원 수 140명 돌파 및 18억 규모의 퇴직부채 관리를 위해 <b>혼합형(DB+DC) 퇴직연금 구조</b> 설계 제안이 긴급히 요구됩니다. 법인 부담 최소화를 위한 장기 분납 자산 플랜이 핵심 컨설팅 아이템입니다.'
+                    },
+                    {
+                        icon: '💰',
+                        title: '대규모 법인 현금 리포지셔닝 (WM)',
+                        borderClass: 'border-l-emerald-500 bg-emerald-50/50',
+                        badge: '포트폴리오 제안',
+                        badgeStyle: 'bg-emerald-100 text-emerald-700',
+                        text: '유동성 자산 42억 원을 당행 채권 랩 상품 및 단기 유동화증권(ABCP)으로 다각화 운용할 경우, 자금 안정성 확보와 기업 운용수익의 극대화를 이룰 수 있습니다.'
+                    }
+                ]
+            },
+            gangnam_1: {
+                company: '테헤란IT',
+                oldGrade: 'BBB+',
+                newGrade: 'A-',
+                metrics: [
+                    { name: '상시 직원 수', value: '250명', diff: '▲ 30명', diffColor: 'text-green-500' },
+                    { name: '현금성 자산', value: '150억', diff: '풍부', diffColor: 'text-green-500' },
+                    { name: '수주 잔고', value: '450억', diff: '장기계약', diffColor: 'text-slate-500' }
+                ],
+                strategies: [
+                    { icon: '💻', title: '클라우드 인프라 전환 금융', borderClass: 'border-l-indigo-500 bg-indigo-50/50', badge: 'IT 특화대출', badgeStyle: 'bg-indigo-100 text-indigo-700', text: '대기업 장기 계약 확보로 현금흐름 안정성 입증되었습니다. 클라우드 인프라 확장을 위한 시설자금 대출 우대금리를 제안합니다.' },
+                    { icon: '📈', title: '임직원 스톡옵션 연계 자산관리', borderClass: 'border-l-emerald-500 bg-emerald-50/50', badge: 'PB 서비스', badgeStyle: 'bg-emerald-100 text-emerald-700', text: '핵심 개발자 대상 스톡옵션 행사 대비 프라이빗 뱅킹(PB) 서비스를 연계 제공하여 리텐션에 기여합니다.' }
+                ]
+            },
+            gangnam_2: {
+                company: '(주)강남패션',
+                oldGrade: 'A',
+                newGrade: 'A-',
+                metrics: [
+                    { name: '재고 회전율', value: '3.2회', diff: '▼ 0.5회', diffColor: 'text-red-500' },
+                    { name: '단기 차입금', value: '80억', diff: '▲ 15%', diffColor: 'text-red-500' },
+                    { name: '영업 이익률', value: '8.5%', diff: '감소세', diffColor: 'text-orange-500' }
+                ],
+                strategies: [
+                    { icon: '🛡️', title: '재고 자산 담보대출 (ABL)', borderClass: 'border-l-orange-500 bg-orange-50/50', badge: '유동성 지원', badgeStyle: 'bg-orange-100 text-orange-700', text: '내수 부진으로 인한 재고 증가 및 현금 흐름 악화를 방어하기 위해 동산(재고) 담보 대출을 통한 단기 유동성 확보를 제안합니다.' }
+                ]
+            },
+            yeouido_1: {
+                company: '여의도캐피탈',
+                oldGrade: 'AA-',
+                newGrade: 'AA+',
+                metrics: [
+                    { name: '자기자본비율', value: '18.5%', diff: '▲ 1.2%p', diffColor: 'text-green-500' },
+                    { name: '조달 금리', value: '3.8%', diff: '▼ 0.3%p', diffColor: 'text-green-500' },
+                    { name: 'NPL 비율', value: '0.5%', diff: '안정적', diffColor: 'text-slate-500' }
+                ],
+                strategies: [
+                    { icon: '🤝', title: '신디케이트론 공동 주선', borderClass: 'border-l-indigo-500 bg-indigo-50/50', badge: 'IB 협업', badgeStyle: 'bg-indigo-100 text-indigo-700', text: '재무 건전성이 탁월한 캐피탈사로, 대규모 대체투자 프로젝트에 당행 IB 부문과 신디케이트론을 공동 주선하는 파트너십을 제안합니다.' },
+                    { icon: '🏦', title: '자금 관리 시스템(CMS) 고도화', borderClass: 'border-l-blue-500 bg-blue-50/50', badge: '법인솔루션', badgeStyle: 'bg-blue-100 text-blue-700', text: '다수 계좌의 실시간 자금 집금 및 배분을 자동화하는 당행 프리미엄 CMS 도입을 통해 운용 효율성을 극대화합니다.' }
+                ]
+            },
+            yeouido_2: {
+                company: '핀테크인노',
+                oldGrade: 'BB+',
+                newGrade: 'BBB+',
+                metrics: [
+                    { name: '월간 활성 사용자', value: '150만명', diff: '▲ 20%', diffColor: 'text-green-500' },
+                    { name: 'Series C 투자', value: '300억', diff: '완료', diffColor: 'text-green-500' },
+                    { name: '연구개발비', value: '120억', diff: '지속 증가', diffColor: 'text-orange-500' }
+                ],
+                strategies: [
+                    { icon: '🚀', title: '오픈뱅킹 API 제휴 및 펌뱅킹', borderClass: 'border-l-indigo-500 bg-indigo-50/50', badge: '플랫폼 제휴', badgeStyle: 'bg-indigo-100 text-indigo-700', text: '성공적인 투자 유치를 바탕으로, 당행의 오픈뱅킹 API 서비스 및 수수료 우대 펌뱅킹 라인을 제공하여 플랫폼 확장을 지원합니다.' }
+                ]
+            },
+            // ── 시장지점 컨설팅 데이터 ──
+            market_1: {
+                company: '볼마나구이',
+                oldGrade: 'BB',
+                newGrade: 'BBB-',
+                metrics: [
+                    { name: '일평균 매출', value: '85만원', diff: '▲ 15%', diffColor: 'text-green-500' },
+                    { name: '영업 연수', value: '22년', diff: '안정적', diffColor: 'text-slate-500' },
+                    { name: '단기차입금', value: '8억', diff: '▲ 2억', diffColor: 'text-red-500' }
+                ],
+                strategies: [
+                    { icon: '🌽', title: '소상공인 전용 신용보증 (KODIT)', borderClass: 'border-l-indigo-500 bg-indigo-50/50', badge: '보증 대출', badgeStyle: 'bg-indigo-100 text-indigo-700', text: '20년 이상의 안정적 영업 이력을 바탕으로, 신용보증기금(KODIT) 컨설팅을 통해 단기 운전자금보증을 지원합니다. 안정적 현금흐름이 보증 승인율을 높입니다.' },
+                    { icon: '💳', title: '상가리 연계 신용카드 발급', borderClass: 'border-l-emerald-500 bg-emerald-50/50', badge: '비즈니스 카드', badgeStyle: 'bg-emerald-100 text-emerald-700', text: '상가리 주변 매입 처 대금 결제를 위한 비즈니스 카드를 연계 발급하면 운영 효율성과 매출 증가 두 가지 효과를 얻을 수 있습니다.' }
+                ]
+            },
+            market_2: {
+                company: '아침이슬 커피',
+                oldGrade: 'B+',
+                newGrade: 'BB+',
+                metrics: [
+                    { name: '일평균 방문고객', value: '250명', diff: '▲ 30%', diffColor: 'text-green-500' },
+                    { name: '좌석 회전율', value: '85%', diff: '상승세', diffColor: 'text-green-500' },
+                    { name: '보증부채', value: '3억', diff: '감소중', diffColor: 'text-slate-500' }
+                ],
+                strategies: [
+                    { icon: '☕', title: '로열티 프로그램 연계 스맘프 대출', borderClass: 'border-l-indigo-500 bg-indigo-50/50', badge: '소상공인 대출', badgeStyle: 'bg-indigo-100 text-indigo-700', text: '로열티 도입 후 재방문 증가로 안정적 수익 구조가 확인되었습니다. 스맘프 대출 통해 확장 설비 투자를 지원하면 수익성이 더욱 개선될 수 있습니다.' }
+                ]
+            }
+        };
+
+        function updateConsultingView(corpId) {
+            const data = consultingData[corpId];
+
+            document.getElementById('consultingOldGrade').innerText = data.oldGrade;
+            document.getElementById('consultingNewGrade').innerText = data.newGrade;
+
+            // Render Core Metrics
+            const metricsContainer = document.getElementById('consultingMetricsContainer');
+            metricsContainer.innerHTML = '';
+            data.metrics.forEach(m => {
+                metricsContainer.innerHTML += `
+                    <div class="flex justify-between items-center p-3 bg-white rounded-xl border border-slate-100 shadow-sm">
+                        <span class="text-sm text-slate-500 font-semibold">${m.name}</span>
+                        <span class="font-bold text-slate-800 text-sm">${m.value} <span class="text-[10px] font-bold ${m.diffColor} ml-1">${m.diff}</span></span>
+                    </div>
+                `;
+            });
+
+            // Render Strategies
+            const strategiesContainer = document.getElementById('consultingStrategiesContainer');
+            strategiesContainer.innerHTML = '';
+            data.strategies.forEach(s => {
+                strategiesContainer.innerHTML += `
+                    <div>
+                        <div class="flex justify-between items-center mb-3">
+                            <h4 class="text-slate-800 font-bold flex items-center gap-2 text-sm">
+                                <span class="text-lg">${s.icon}</span> ${s.title}
+                            </h4>
+                            <span class="px-2 py-0.5 rounded text-[10px] font-bold ${s.badgeStyle}">${s.badge}</span>
+                        </div>
+                        <div class="p-5 rounded-2xl border-l-4 ${s.borderClass} text-xs leading-relaxed text-slate-700">
+                            ${s.text}
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        function regenerateConsultingComments() {
+            alert("LLM 영업 시나리오가 성공적으로 재조정되었습니다.");
+            const currentSel = document.getElementById('consultingCorpSelector').value;
+            updateConsultingView(currentSel);
+        }
+
+        // --- 7. Feedback & Conversion Loops ---
+        // Mock feedback list
+        let feedbackList = [];
+
+        function renderFeedbackTable() {
+            const tableBody = document.getElementById('feedbackTableBody');
+            tableBody.innerHTML = '';
+
+            feedbackList.forEach(item => {
+                const badgeColor = item.grade === 'AAA' ? 'bg-indigo-100 text-indigo-700' : 
+                                   item.grade.startsWith('A') ? 'bg-blue-100 text-blue-700' : 'bg-slate-100 text-slate-700';
+                
+                const rateColor = item.rate > 80 ? 'text-emerald-600' : 'text-indigo-600';
+                
+                tableBody.innerHTML += `
+                    <tr class="hover:bg-slate-50/50 transition">
+                        <td class="p-4">
+                            <div class="font-bold text-slate-800 text-xs">${item.name}</div>
+                            <div class="text-[10px] text-slate-400 font-medium mt-0.5">${item.sector}</div>
+                        </td>
+                        <td class="p-4 text-center">
+                            <div class="flex flex-col items-center">
+                                <span class="${rateColor} font-black text-sm">${item.rate}%</span>
+                                <div class="w-12 bg-slate-100 h-1 rounded-full mt-1 overflow-hidden">
+                                    <div class="bg-indigo-600 h-full" style="width: ${item.rate}%"></div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="p-4 text-center">
+                            <select onchange="updateFeedbackStatus(${item.id}, this.value)" class="bg-white border border-slate-200 rounded px-2 py-1 text-[11px] font-bold outline-none focus:ring-2 focus:ring-indigo-500">
+                                <option value="Pending" ${item.status === 'Pending' ? 'selected' : ''}>상담 예약</option>
+                                <option value="Active" ${item.status === 'Active' ? 'selected' : ''}>상담 진행중</option>
+                                <option value="Success" ${item.status === 'Success' ? 'selected' : ''}>실행 완료 (Success)</option>
+                                <option value="Failed" ${item.status === 'Failed' ? 'selected' : ''}>거절 (Failed)</option>
+                            </select>
+                        </td>
+                        <td class="p-4 text-center">
+                            <button onclick="submitFeedback(${item.id})" class="px-2.5 py-1 bg-indigo-50 text-indigo-600 border border-indigo-200 hover:bg-indigo-600 hover:text-white rounded text-[10px] font-bold transition">전송</button>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+
+        function updateFeedbackStatus(id, newStatus) {
+            const index = feedbackList.findIndex(x => x.id === id);
+            if (index !== -1) {
+                feedbackList[index].status = newStatus;
+            }
+        }
+
+        function submitFeedback(id) {
+            const item = feedbackList.find(x => x.id === id);
+            alert(`[피드백 전송] ${item.name}의 접촉 상태(${item.status})가 DuckDB 모델 피드백 데이터셋으로 이관되었습니다.`);
+            
+            // Recompute doughnut stats based on list
+            let success = 0, active = 0, failed = 0;
+            feedbackList.forEach(x => {
+                if (x.status === 'Success') success++;
+                else if (x.status === 'Failed') failed++;
+                else active++;
+            });
+
+            // Update chart in real-time
+            if (charts['feedbackConv']) {
+                charts['feedbackConv'].data.datasets[0].data = [success, active, failed];
+                charts['feedbackConv'].update();
+            }
+
+            // Update aggregate text counters
+            document.getElementById('feedbackSuccessCalls').innerText = `${success}건`;
+        }
+
+        function renderFeedbackCharts() {
+            if (charts['feedbackConv']) charts['feedbackConv'].destroy();
+
+            const ctx = document.getElementById('feedbackConversionChart').getContext('2d');
+            charts['feedbackConv'] = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['성공 (Success)', '진행중 (Active)', '실패 (Failed)'],
+                    datasets: [{
+                        data: [1, 2, 0], // Counts based on initial list status
+                        backgroundColor: ['#10b981', '#6366f1', '#ef4444'],
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { position: 'bottom' } }
+                }
+            });
+
+            renderFeedbackTable();
+        }
+
+        // ── Mock Customers Data for Dynamic Rendering ──
+        const MOCK_CUSTOMERS = [
+            // 광명지점
+            { branch: '광명지점', name: '(주)한국테크', bizNo: '100-00-00036', sector: '전자부품 제조', intGrade: 'BBB+', ermGrade: 'BB-', diffStage: '3단계 하향 괴리', pd: '8.2%', pdDiff: '▲ 3.5%p (vs 내부 4.7%)', reasonTitle: '거시 지표 민감', reasonDesc: '변동금리 차입금 78%, 금리 인상 사이클에서 리스크 노출 심화', action: '🚨 심층 리스크 리뷰', actionColor: 'red' },
+            { branch: '광명지점', name: '에이치유통', bizNo: '100-00-00088', sector: 'E-커머스 유통', intGrade: 'A-', ermGrade: 'A+', diffStage: '2단계 상향 괴리', pd: '0.4%', pdDiff: '▼ 0.2%p (vs 내부 0.6%)', reasonTitle: '환경 요인 우호', reasonDesc: 'E-커머스 물량 확대로 유동비율 상승, 대안 데이터 긍정적', action: '📈 여신 확대 검토', actionColor: 'blue' },
+            { branch: '광명지점', name: '스타트업 S', bizNo: '100-00-00124', sector: 'SW 개발', intGrade: 'B+', ermGrade: 'CCC', diffStage: '4단계 하향 괴리', pd: '15.5%', pdDiff: '▲ 7.1%p (vs 내부 8.4%)', reasonTitle: '거시 취약성 부각', reasonDesc: '시장 유동성 축소로 현금 고갈 위험 상승, 뉴스 감성 악화', action: '🔥 부실 징후 모니터링', actionColor: 'rose' },
+            { branch: '광명지점', name: '그린에너지(주)', bizNo: '100-00-00215', sector: '신재생에너지', intGrade: 'BBB', ermGrade: 'A+', diffStage: '3단계 상향 괴리', pd: '0.8%', pdDiff: '▼ 2.1%p (vs 내부 2.9%)', reasonTitle: '산업 전망 우수', reasonDesc: '탄소중립 정책 수혜로 업종 리스크 대폭 감소', action: '💎 마케팅 우선 대상', actionColor: 'emerald' },
+            // 강남지점
+            { branch: '강남지점', name: '(주)강남패션', bizNo: '200-11-22222', sector: '의류 도소매', intGrade: 'A', ermGrade: 'A-', diffStage: '1단계 하향 괴리', pd: '1.2%', pdDiff: '▲ 0.5%p (vs 내부 0.7%)', reasonTitle: '소비 심리 위축', reasonDesc: '내수 부진으로 인한 재고 회전율 하락 우려', action: '👀 모니터링 강화', actionColor: 'orange' },
+            { branch: '강남지점', name: '테헤란IT', bizNo: '200-22-33333', sector: 'IT 컨설팅', intGrade: 'BBB+', ermGrade: 'A-', diffStage: '2단계 상향 괴리', pd: '0.9%', pdDiff: '▼ 1.1%p (vs 내부 2.0%)', reasonTitle: '수주 잔고 탄탄', reasonDesc: '대기업 장기 계약 확보로 현금흐름 안정성 입증', action: '📈 한도 증액 추천', actionColor: 'blue' },
+            { branch: '강남지점', name: '에듀강남', bizNo: '200-33-44444', sector: '교육 서비스', intGrade: 'BB', ermGrade: 'CCC', diffStage: '3단계 하향 괴리', pd: '12.4%', pdDiff: '▲ 5.2%p (vs 내부 7.2%)', reasonTitle: '정책 변화 민감', reasonDesc: '사교육 억제 정책 및 학령인구 감소 여파', action: '🚨 여신 회수 고려', actionColor: 'rose' },
+            // 여의도지점
+            { branch: '여의도지점', name: '여의도캐피탈', bizNo: '300-11-11111', sector: '금융업', intGrade: 'AA-', ermGrade: 'AA+', diffStage: '2단계 상향 괴리', pd: '0.1%', pdDiff: '▼ 0.1%p (vs 내부 0.2%)', reasonTitle: '재무 건전성 우수', reasonDesc: '위험 관리 역량 탁월, 자본 적정성 비율 상승', action: '💎 최우수 고객 유지', actionColor: 'emerald' },
+            { branch: '여의도지점', name: '(주)한강건설', bizNo: '300-22-22222', sector: '종합 건설', intGrade: 'BBB', ermGrade: 'BB+', diffStage: '2단계 하향 괴리', pd: '6.8%', pdDiff: '▲ 2.5%p (vs 내부 4.3%)', reasonTitle: 'PF 리스크 전이', reasonDesc: '우발 채무 현실화 우려 및 원자재 가격 상승 부담', action: '🔥 부실 징후 모니터링', actionColor: 'red' },
+            { branch: '여의도지점', name: '핀테크인노', bizNo: '300-33-33333', sector: '핀테크 솔루션', intGrade: 'BB+', ermGrade: 'BBB+', diffStage: '3단계 상향 괴리', pd: '2.1%', pdDiff: '▼ 3.0%p (vs 내부 5.1%)', reasonTitle: '투자 유치 성공', reasonDesc: '시리즈 C 투자 유치 완료, 규제 샌드박스 통과', action: '📈 여신 확대 검토', actionColor: 'blue' },
+            // 시장지점
+            { branch: '시장지점', name: '볼마나구이', bizNo: '400-11-11111', sector: '한식 음식점', intGrade: 'BB', ermGrade: 'BBB-', diffStage: '2단계 상향 괴리', pd: '3.2%', pdDiff: '▼ 1.8%p (vs 내부 5.0%)', reasonTitle: '장기 영업 안정성', reasonDesc: '20년 이상 단골 고객으로 매출 안정성 탁월, 상권 내 신용도 우수', action: '📈 한도 증액 추천', actionColor: 'blue' },
+            { branch: '시장지점', name: '아침이슬 커피', bizNo: '400-22-22222', sector: '커피전문점', intGrade: 'B+', ermGrade: 'BB+', diffStage: '3단계 상향 괴리', pd: '4.5%', pdDiff: '▼ 2.1%p (vs 내부 6.6%)', reasonTitle: '로열티 특수 효과', reasonDesc: '로열티 프로그램 도입 후 재방문 고객 비율 급증, 좌석 회전율 상승', action: '📈 여신 확대 검토', actionColor: 'blue' },
+            { branch: '시장지점', name: '전통시장 식품', bizNo: '400-33-33333', sector: '식품 도매업', intGrade: 'BB-', ermGrade: 'CCC', diffStage: '4단계 하향 괴리', pd: '14.2%', pdDiff: '▲ 6.8%p (vs 내부 7.4%)', reasonTitle: '대형마트 경쟁 심화', reasonDesc: '대형 마트 입점으로 매출 급감, 부채 보증 가능 범위 초과', action: '🚨 부실 징후 모니터링', actionColor: 'rose' }
+        ];
+
+        function renderTargetCustomers(branchName) {
+            const tbody = document.getElementById('target-customers-body');
+            if (!tbody) return;
+            tbody.innerHTML = '';
+            
+            const filtered = MOCK_CUSTOMERS.filter(c => c.branch === branchName);
+            
+            filtered.forEach(c => {
+                const tr = document.createElement('tr');
+                tr.className = `hover:bg-${c.actionColor}-50/40 transition cursor-pointer`;
+                tr.setAttribute('onclick', `goToXai('${c.name}')`);
+                tr.innerHTML = `
+                    <td class="p-4">
+                        <span class="font-bold text-slate-800">${c.name}</span>
+                        <span class="text-xs text-slate-400 font-mono font-normal block">${c.bizNo} · ${c.sector}</span>
+                    </td>
+                    <td class="p-4">
+                        <div class="flex items-center justify-center gap-2">
+                            <span class="px-2.5 py-1 bg-slate-100 rounded-lg text-xs font-bold text-slate-600 border border-slate-200">${c.intGrade}</span>
+                            <div class="flex flex-col items-center">
+                                <svg class="w-6 h-3 text-${c.actionColor}-500" viewBox="0 0 24 12"><path fill="currentColor" d="M0 6h18l-4-5h3L24 6l-7 5h-3l4-5H0z"/></svg>
+                                <span class="text-[9px] text-${c.actionColor}-500 font-bold">${c.diffStage}</span>
+                            </div>
+                            <span class="px-2.5 py-1 bg-${c.actionColor}-100 rounded-lg text-xs font-bold text-${c.actionColor}-700 border border-${c.actionColor}-200 ${c.actionColor === 'rose' || c.actionColor === 'red' ? 'animate-pulse' : ''}">${c.ermGrade}</span>
+                        </div>
+                    </td>
+                    <td class="p-4">
+                        <span class="font-bold text-${c.actionColor}-600 text-lg">${c.pd}</span>
+                        <span class="text-xs text-${c.actionColor}-500 font-bold block">${c.pdDiff}</span>
+                    </td>
+                    <td class="p-4 text-xs text-slate-500 leading-relaxed max-w-[200px]">
+                        <span class="font-bold text-${c.actionColor}-600">${c.reasonTitle}</span> — ${c.reasonDesc}
+                    </td>
+                    <td class="p-4 text-center"><span class="px-2.5 py-1 bg-${c.actionColor}-50 text-${c.actionColor}-600 border border-${c.actionColor}-200 rounded-full font-bold text-xs shadow-sm ${c.actionColor === 'rose' || c.actionColor === 'red' ? 'animate-pulse' : ''}">${c.action}</span></td>
+                `;
+                tbody.appendChild(tr);
+            });
+            
+            if (filtered.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" class="p-8 text-center text-slate-400">해당 지점의 관리 대상 데이터가 없습니다.</td></tr>';
+            }
+        }
+
+        // --- 8. App Launch Init Trigger ---
+        window.addEventListener('DOMContentLoaded', () => {
+            // Apply User Profile from Session
+            const userStr = sessionStorage.getItem('erm_user_profile');
+            let branchName = '광명지점'; // Default
+            if (userStr) {
+                try {
+                    const user = JSON.parse(userStr);
+                    branchName = user.branch;
+                    
+                    const headerBranch = document.getElementById('header-branch-name');
+                    if (headerBranch) headerBranch.innerHTML = `🏛️ ${user.branch} 포털`;
+                    
+                    const profileNameRole = document.getElementById('profile-name-role');
+                    if (profileNameRole) profileNameRole.innerText = `${user.name} (${user.role})`;
+                    
+                    const profileDept = document.getElementById('profile-dept');
+                    if (profileDept) profileDept.innerText = user.dept;
+                    
+                    const profileAvatar = document.getElementById('profile-avatar');
+                    if (profileAvatar) profileAvatar.innerText = user.role === 'Senior R.M.' ? 'SRM' : 'RM';
+                    
+                    const widgetBranch = document.getElementById('widget-branch-name');
+                    if (widgetBranch) widgetBranch.innerText = `📍 ${user.branch} 인근 영업권 가망고객 분포`;
+                } catch(e) {
+                    console.error("Failed to parse user profile", e);
+                }
+            }
+
+            // Render Dynamic Customers
+            renderTargetCustomers(branchName);
+
+            // Init Dynamic Consulting Options
+            const consultingSelect = document.getElementById('consultingCorpSelector');
+            let initialConsultingKey = 'tech';
+            if (consultingSelect) {
+                if (branchName === '광명지점') {
+                    consultingSelect.innerHTML = `<option value="tech">(주)광명정밀기계</option><option value="dist">(주)광명테크노</option>`;
+                    initialConsultingKey = 'tech';
+                } else if (branchName === '강남지점') {
+                    consultingSelect.innerHTML = `<option value="gangnam_1">테헤란IT</option><option value="gangnam_2">(주)강남패션</option>`;
+                    initialConsultingKey = 'gangnam_1';
+                } else if (branchName === '여의도지점') {
+                    consultingSelect.innerHTML = `<option value="yeouido_1">여의도캐피탈</option><option value="yeouido_2">핀테크인노</option>`;
+                    initialConsultingKey = 'yeouido_1';
+                } else if (branchName === '시장지점') {
+                    consultingSelect.innerHTML = `<option value="market_1">볼마나구이</option><option value="market_2">아침이슬 커피</option>`;
+                    initialConsultingKey = 'market_1';
+                } else {
+                    consultingSelect.innerHTML = `<option value="tech">(주)광명정밀기계</option><option value="dist">(주)광명테크노</option>`;
+                    initialConsultingKey = 'tech';
+                }
+            }
+
+            // ── 가망고객 발굴 테이블 동적 렌더 ──
+            const PROSPECT_DATA = {
+                '광명지점': {
+                    desc: '소하동/일직동 우량 제조업 타겟 다수',
+                    gradeUp: '85개사', growth: '124개사',
+                    rows: [
+                        { name: '(주)미래에너지', sector: '신재생 발전', intGrade: 'BBB+', ermGrade: 'A+', score: '★★★★★ (98점)', product: '시설자금대출' },
+                        { name: '에이치소프트', sector: '소프트웨어 개발', intGrade: 'A-', ermGrade: 'AAA', score: '★★★★☆ (92점)', product: '퇴직연금컨설팅' },
+                        { name: '광명정밀', sector: '정밀기계 제조', intGrade: 'BB+', ermGrade: 'BBB+', score: '★★★★☆ (89점)', product: '운전자금보증' }
+                    ]
+                },
+                '강남지점': {
+                    desc: '테헤란로/강남대로 IT·패션 우량기업 타겟',
+                    gradeUp: '62개사', growth: '98개사',
+                    rows: [
+                        { name: '테헤란IT', sector: 'IT 컨설팅', intGrade: 'BBB+', ermGrade: 'A-', score: '★★★★★ (95점)', product: '시설자금대출' },
+                        { name: '(주)강남패션', sector: '의류 도소매', intGrade: 'A-', ermGrade: 'A', score: '★★★★☆ (88점)', product: '운전자금대출' },
+                        { name: '에듀강남', sector: '교육 서비스', intGrade: 'BBB', ermGrade: 'BBB+', score: '★★★☆☆ (74점)', product: '일반자금보증' }
+                    ]
+                },
+                '여의도지점': {
+                    desc: '여의도/마포 금융·핀테크 우량기업 타겟',
+                    gradeUp: '41개사', growth: '77개사',
+                    rows: [
+                        { name: '여의도캐피탈', sector: '금융업', intGrade: 'AA-', ermGrade: 'AA+', score: '★★★★★ (99점)', product: 'IB 신디케이트론' },
+                        { name: '핀테크인노', sector: '핀테크 솔루션', intGrade: 'BB+', ermGrade: 'BBB+', score: '★★★★☆ (87점)', product: '오픈뱅킹 제휴' },
+                        { name: '(주)한강건설', sector: '종합 건설', intGrade: 'BBB-', ermGrade: 'BBB', score: '★★★☆☆ (71점)', product: 'PF 대출' }
+                    ]
+                },
+                '시장지점': {
+                    desc: '전통시장/상가 음식·커피·식품 소상공인 타겟',
+                    gradeUp: '28개사', growth: '55개사',
+                    rows: [
+                        { name: '볼마나구이', sector: '한식 음식점', intGrade: 'BB', ermGrade: 'BBB-', score: '★★★★★ (93점)', product: '소상공인 보증' },
+                        { name: '아침이슬 커피', sector: '커피전문점', intGrade: 'B+', ermGrade: 'BB+', score: '★★★★☆ (86점)', product: '스맘프 대출' },
+                        { name: '전통시장 식품', sector: '식품 도매업', intGrade: 'BB-', ermGrade: 'BB', score: '★★★☆☆ (68점)', product: '운전자금보증' }
+                    ]
+                }
+            };
+            const prospectData = PROSPECT_DATA[branchName] || PROSPECT_DATA['광명지점'];
+            // 위젯 텍스트 업데이트
+            const widgetDesc = document.getElementById('widget-branch-desc');
+            if (widgetDesc) widgetDesc.textContent = prospectData.desc;
+            const widgetGradeUp = document.getElementById('widget-grade-up');
+            if (widgetGradeUp) widgetGradeUp.textContent = prospectData.gradeUp;
+            const widgetGrowth = document.getElementById('widget-growth');
+            if (widgetGrowth) widgetGrowth.textContent = prospectData.growth;
+            // 테이블 렌더
+            const targetingTbody = document.getElementById('targetingTableBody');
+            if (targetingTbody) {
+                targetingTbody.innerHTML = prospectData.rows.map(r => `
+                    <tr class="hover:bg-slate-50/50 transition cursor-pointer" onclick="goToConsulting('${r.name}')">
+                        <td class="p-4 font-bold text-slate-800">${r.name}</td>
+                        <td class="p-4 text-slate-500">${r.sector}</td>
+                        <td class="p-4"><span class="px-2 py-0.5 bg-slate-100 text-slate-700 rounded text-xs">${r.intGrade}</span></td>
+                        <td class="p-4"><span class="px-2 py-0.5 bg-indigo-100 text-indigo-700 rounded text-xs font-bold">${r.ermGrade}</span></td>
+                        <td class="p-4 text-amber-500 font-bold">${r.score}</td>
+                        <td class="p-4 text-center"><button class="px-3 py-1 bg-indigo-50 text-indigo-600 border border-indigo-200 hover:bg-indigo-600 hover:text-white rounded-lg text-xs font-bold transition">${r.product}</button></td>
+                    </tr>
+                `).join('');
+            }
+
+            // ── XAI 셀렉터 동적 렌더 ──
+            const xaiSelect = document.getElementById('xaiCorpSelector');
+            let initialXaiKey = 'tech';
+            if (xaiSelect) {
+                if (branchName === '광명지점') {
+                    xaiSelect.innerHTML = `<option value="tech">(주)한국테크 [조기경보]</option><option value="dist">에이치유통 [등급상향]</option><option value="startup">스타트업 S [사후관리]</option>`;
+                    initialXaiKey = 'tech';
+                } else if (branchName === '강남지점') {
+                    xaiSelect.innerHTML = `<option value="gangnam_tech">테헤란IT [조기경보]</option><option value="gangnam_fashion">(주)강남패션 [모니터링]</option>`;
+                    initialXaiKey = 'gangnam_tech';
+                } else if (branchName === '여의도지점') {
+                    xaiSelect.innerHTML = `<option value="yeouido_cap">여의도캐피탈 [등급상향]</option><option value="yeouido_fin">핀테크인노 [조기경보]</option>`;
+                    initialXaiKey = 'yeouido_cap';
+                } else if (branchName === '시장지점') {
+                    xaiSelect.innerHTML = `<option value="market_gukbap">볼마나구이 [등급상향]</option><option value="market_coffee">아침이슬 커피 [모니터링]</option>`;
+                    initialXaiKey = 'market_gukbap';
+                } else {
+                    xaiSelect.innerHTML = `<option value="tech">(주)한국테크 [조기경보]</option><option value="dist">에이치유통 [등급상향]</option><option value="startup">스타트업 S [사후관리]</option>`;
+                    initialXaiKey = 'tech';
+                }
+                updateXaiView(initialXaiKey);
+            }
+
+            // Init Feedback List
+            if (branchName === '광명지점') {
+                feedbackList = [
+                    { id: 1, name: '에이치플랫폼', sector: '클라우드 서비스', rate: 94, grade: 'AAA', status: 'Success' },
+                    { id: 2, name: '광명정밀기계', sector: '정밀 부품 제조', rate: 82, grade: 'BBB+', status: 'Active' },
+                    { id: 3, name: '바이오테크K', sector: '의료용 기기', rate: 45, grade: 'A-', status: 'Pending' }
+                ];
+            } else if (branchName === '강남지점') {
+                feedbackList = [
+                    { id: 4, name: '테헤란IT', sector: 'IT 컨설팅', rate: 88, grade: 'A-', status: 'Success' },
+                    { id: 5, name: '(주)강남패션', sector: '의류 도소매', rate: 65, grade: 'A-', status: 'Active' },
+                    { id: 6, name: '에듀강남', sector: '교육 서비스', rate: 30, grade: 'CCC', status: 'Pending' }
+                ];
+            } else if (branchName === '여의도지점') {
+                feedbackList = [
+                    { id: 7, name: '여의도캐피탈', sector: '금융업', rate: 98, grade: 'AA+', status: 'Success' },
+                    { id: 8, name: '핀테크인노', sector: '핀테크 솔루션', rate: 75, grade: 'BBB+', status: 'Active' },
+                    { id: 9, name: '(주)한강건설', sector: '종합 건설', rate: 40, grade: 'BB+', status: 'Failed' }
+                ];
+            } else if (branchName === '시장지점') {
+                feedbackList = [
+                    { id: 10, name: '볼마나구이', sector: '한식 음식점', rate: 88, grade: 'BBB-', status: 'Success' },
+                    { id: 11, name: '아침이슬 커피', sector: '커피전문점', rate: 72, grade: 'BB+', status: 'Active' },
+                    { id: 12, name: '전통시장 식품', sector: '식품 도매업', rate: 25, grade: 'CCC', status: 'Failed' }
+                ];
+            } else {
+                feedbackList = [
+                    { id: 7, name: '여의도캐피탈', sector: '금융업', rate: 98, grade: 'AA+', status: 'Success' },
+                    { id: 8, name: '핀테크인노', sector: '핀테크 솔루션', rate: 75, grade: 'BBB+', status: 'Active' },
+                    { id: 9, name: '(주)한강건설', sector: '종합 건설', rate: 40, grade: 'BB+', status: 'Failed' }
+                ];
+            }
+            renderFeedbackCharts(); // initial render
+
+            // First render overview
+            switchTab('overview');
+            initStressSliders();
+            updateConsultingView(initialConsultingKey);
+        });
+
+        // ── Navigation Handlers ──
+        const nameToXaiKey = {
+            '(주)한국테크': 'tech',
+            '에이치유통': 'dist',
+            '스타트업 S': 'startup',
+            '테헤란IT': 'gangnam_tech',
+            '(주)강남패션': 'gangnam_fashion',
+            '여의도캐피탈': 'yeouido_cap',
+            '핀테크인노': 'yeouido_fin',
+            '볼마나구이': 'market_gukbap',
+            '아침이슬 커피': 'market_coffee'
+        };
+        const nameToConsultingKey = {
+            '(주)광명정밀기계': 'tech',
+            '(주)광명테크노': 'dist',
+            '테헤란IT': 'gangnam_1',
+            '(주)강남패션': 'gangnam_2',
+            '여의도캐피탈': 'yeouido_1',
+            '핀테크인노': 'yeouido_2',
+            '볼마나구이': 'market_1',
+            '아침이슬 커피': 'market_2'
+        };
+
+        window.goToXai = function(name) {
+            const key = nameToXaiKey[name];
+            if (key) {
+                document.getElementById('xaiCorpSelector').value = key;
+                updateXaiView(key);
+                switchTab('xai');
+                window.scrollTo(0, 0);
+            } else {
+                alert('해당 기업의 XAI 데이터가 준비되지 않았습니다.');
+            }
+        };
+
+        window.goToConsulting = function(name) {
+            const key = nameToConsultingKey[name];
+            if (key) {
+                document.getElementById('consultingCorpSelector').value = key;
+                updateConsultingView(key);
+                switchTab('consulting');
+                window.scrollTo(0, 0);
+            } else {
+                alert('해당 기업의 컨설팅 데이터가 준비되지 않았습니다.');
+            }
+        };
+    </script>
+</body>
+</html>

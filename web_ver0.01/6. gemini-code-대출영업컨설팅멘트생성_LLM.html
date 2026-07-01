@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI 가망고객 영업 제안 시스템</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Pretendard:wght@400;600;700&display=swap');
+        body { font-family: 'Pretendard', sans-serif; background-color: #f1f5f9; }
+        .strategy-card { transition: transform 0.2s, box-shadow 0.2s; border: 1px solid #e2e8f0; }
+        .strategy-card:hover { transform: translateY(-5px); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); }
+        .gradient-blue { background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%); }
+    </style>
+</head>
+<body class="p-6 md:p-12">
+
+    <div class="max-w-7xl mx-auto">
+        <div class="flex flex-col md:flex-row justify-between items-center mb-10 gap-6">
+            <div class="flex items-center gap-5">
+                <div class="p-4 gradient-blue rounded-3xl shadow-xl">
+                    <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path></svg>
+                </div>
+                <div>
+                    <h1 class="text-3xl font-black text-slate-900 tracking-tight">AI 영업 마스터 컨설팅</h1>
+                    <p class="text-slate-500 font-medium">경제참조모델(ERM) 기반 고객별 맞춤형 피칭 시나리오</p>
+                </div>
+            </div>
+            <div class="bg-white px-6 py-3 rounded-2xl shadow-sm border border-slate-200 flex items-center gap-4">
+                <div class="text-right">
+                    <p class="text-[10px] text-slate-400 font-bold uppercase">현재 타겟 차주</p>
+                    <p class="text-lg font-bold text-slate-800">(주)광명정밀기계</p>
+                </div>
+                <div class="h-10 w-[1px] bg-slate-200"></div>
+                <div class="text-center">
+                    <p class="text-[10px] text-blue-500 font-bold uppercase">성공확률</p>
+                    <p class="text-lg font-black text-blue-600">92%</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            
+            <div class="space-y-6">
+                <div class="bg-white p-8 rounded-3xl shadow-sm border border-slate-200">
+                    <h3 class="text-sm font-black text-slate-400 uppercase tracking-widest mb-6 italic">AI 분석 요약</h3>
+                    <div class="space-y-6">
+                        <div class="flex justify-between items-end border-b pb-4">
+                            <span class="text-slate-500 text-sm">내부 신용등급</span>
+                            <span class="text-2xl font-bold text-slate-400 line-through">BBB</span>
+                        </div>
+                        <div class="flex justify-between items-end border-b pb-4">
+                            <span class="text-indigo-600 font-bold text-sm">잠재 참조등급</span>
+                            <div class="text-right">
+                                <span class="text-4xl font-black text-indigo-600">A+</span>
+                                <p class="text-[10px] text-indigo-400 font-bold">2단계 상향 분석</p>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-3 pt-2">
+                            <div class="bg-slate-50 p-3 rounded-xl">
+                                <p class="text-[10px] text-slate-400 font-bold">현금유동성</p>
+                                <p class="text-sm font-bold text-emerald-600">상위 5%</p>
+                            </div>
+                            <div class="bg-slate-50 p-3 rounded-xl">
+                                <p class="text-[10px] text-slate-400 font-bold">금리내성</p>
+                                <p class="text-sm font-bold text-blue-600">탁월</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-slate-900 p-8 rounded-3xl shadow-xl text-white">
+                    <h3 class="text-indigo-400 font-black text-xs uppercase mb-4 tracking-tighter">💡 오프닝 스크립트 팁</h3>
+                    <p class="text-lg font-medium leading-snug italic">
+                        "대표님, 예전처럼 재무제표만 보고 등급을 매기는 시대는 지났습니다. 저희 AI 모델이 대표님 회사를 <span class="text-indigo-400 font-bold">'숨겨진 우량 기업'</span>으로 지목해서 제가 한걸음에 달려왔습니다."
+                    </p>
+                </div>
+            </div>
+
+            <div class="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6">
+                
+                <div class="bg-white p-6 rounded-3xl shadow-sm strategy-card border-l-8 border-l-blue-600">
+                    <div class="flex justify-between mb-4">
+                        <span class="bg-blue-100 text-blue-600 text-[10px] font-black px-2 py-1 rounded uppercase">Scenario 01</span>
+                        <span class="text-blue-600">🏆</span>
+                    </div>
+                    <h4 class="text-lg font-black text-slate-800 mb-3">신용등급 컨설팅 제안</h4>
+                    <p class="text-xs text-slate-500 leading-relaxed mb-4">
+                        <b>[제안]</b> 현재 공식 등급은 BBB이지만, AI 참조 모델 분석 결과 <b>A+ 수준</b>의 리스크 관리 능력이 입증되었습니다.
+                    </p>
+                    <div class="bg-blue-50 p-4 rounded-xl">
+                        <p class="text-[11px] font-bold text-blue-700">영업 포인트</p>
+                        <p class="text-[12px] text-blue-900 leading-snug mt-1">잠재력을 바탕으로 <b>금리 우대 혜택</b> 선제적 제안 (대환 또는 시설자금 확보).</p>
+                    </div>
+                </div>
+
+                <div class="bg-white p-6 rounded-3xl shadow-sm strategy-card border-l-8 border-l-indigo-600">
+                    <div class="flex justify-between mb-4">
+                        <span class="bg-indigo-100 text-indigo-600 text-[10px] font-black px-2 py-1 rounded uppercase">Scenario 02</span>
+                        <span class="text-indigo-600">📉</span>
+                    </div>
+                    <h4 class="text-lg font-black text-slate-800 mb-3">스트레스 테스트 제공</h4>
+                    <p class="text-xs text-slate-500 leading-relaxed mb-4">
+                        <b>[제안]</b> 환율 1,400원 도달 시에도 대표님 회사는 원자재 수급 체력이 충분함을 <b>시뮬레이션 데이터</b>로 증명.
+                    </p>
+                    <div class="bg-indigo-50 p-4 rounded-xl">
+                        <p class="text-[11px] font-bold text-indigo-700">영업 포인트</p>
+                        <p class="text-[12px] text-indigo-900 leading-snug mt-1">미래 불확실성 제거를 위해 지금처럼 등급이 좋을 때 <b>장기 고정금리</b> 전환 추천.</p>
+                    </div>
+                </div>
+
+                <div class="bg-white p-6 rounded-3xl shadow-sm strategy-card border-l-8 border-l-emerald-600">
+                    <div class="flex justify-between mb-4">
+                        <span class="bg-emerald-100 text-emerald-600 text-[10px] font-black px-2 py-1 rounded uppercase">Scenario 03</span>
+                        <span class="text-emerald-600">📊</span>
+                    </div>
+                    <h4 class="text-lg font-black text-slate-800 mb-3">AI 벤치마킹 리포트</h4>
+                    <p class="text-xs text-slate-500 leading-relaxed mb-4">
+                        <b>[제안]</b> 광명 지역 내 동일 업종 100여 곳 분석 결과, 현금 유동성 측면 <b>상위 5%</b>에 해당하는 성적표 전달.
+                    </p>
+                    <div class="bg-emerald-50 p-4 rounded-xl">
+                        <p class="text-[11px] font-bold text-emerald-700">영업 포인트</p>
+                        <p class="text-[12px] text-emerald-900 leading-snug mt-1">업종 회복기 신호 포착. 경쟁사 대비 빠른 <b>공장 증설용 전용 대출 라인</b> 승인 안내.</p>
+                    </div>
+                </div>
+
+                <div class="bg-white p-6 rounded-3xl shadow-sm strategy-card border-l-8 border-l-amber-500">
+                    <div class="flex justify-between mb-4">
+                        <span class="bg-amber-100 text-amber-600 text-[10px] font-black px-2 py-1 rounded uppercase">Scenario 04</span>
+                        <span class="text-amber-600">🌱</span>
+                    </div>
+                    <h4 class="text-lg font-black text-slate-800 mb-3">정책 자금 우선 매칭</h4>
+                    <p class="text-xs text-slate-500 leading-relaxed mb-4">
+                        <b>[제안]</b> AI 분석 결과, '친환경 에너지 전환' 정책 자금 수혜 확률 <b>90% 이상</b>으로 판정.
+                    </p>
+                    <div class="bg-amber-50 p-4 rounded-xl">
+                        <p class="text-[11px] font-bold text-amber-700">영업 포인트</p>
+                        <p class="text-[12px] text-amber-900 leading-snug mt-1">은행 일반 자금보다 저렴한 <b>특화 자금 매칭</b>. 복잡한 서류 작업 대행 서비스 제안.</p>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <div class="mt-12 flex justify-center">
+            <div class="px-6 py-2 bg-slate-200 rounded-full text-[10px] font-bold text-slate-500 uppercase tracking-widest">
+                Data Sources: BOK ECOS API, KCB, Public Enterprise Portal | Powered by Financial-LLM 4.0
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>

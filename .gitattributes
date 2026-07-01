@@ -1,0 +1,2 @@
+database/nh_credit_risk.db filter=lfs diff=lfs merge=lfs -text
+nh_data_processing/output/nh_data_monthly.csv filter=lfs diff=lfs merge=lfs -text
