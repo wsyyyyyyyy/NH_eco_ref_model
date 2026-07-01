@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Settings2, RefreshCw, AlertTriangle, TrendingUp, BarChart2, Zap, CheckCircle, Info } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar } from 'recharts';
+import { API_BASE_URL } from '../config';
 
 export default function MacroSimulation() {
   const [params, setParams] = useState({
@@ -30,16 +31,40 @@ export default function MacroSimulation() {
 
   const runSimulation = () => {
     setSimulating(true);
+
+    if (useRealData) {
+      fetch(`${API_BASE_URL}/api/simulation/`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          interest_rate: params.interestRate,
+          exchange_rate: params.exchangeRate,
+          inflation: params.inflation,
+          oil_price: params.oilPrice,
+          gdp_growth: params.gdpGrowth,
+        }),
+      })
+        .then(res => res.json())
+        .then(data => {
+          setResults(data.results || []);
+          setSimulating(false);
+        })
+        .catch(() => {
+          setResults([]);
+          setSimulating(false);
+        });
+      return;
+    }
+
     setTimeout(() => {
-      // 거시경제 지표 민감도에 따른 가중치 산출
-      const intImpact = params.interestRate * 0.055;  
-      const fxImpact = params.exchangeRate * 0.038;   
-      const infImpact = params.inflation * 0.042;     
-      const oilImpact = params.oilPrice * 0.025;      
-      const gdpImpact = params.gdpGrowth * -0.65;     
-      
+      // 목업 모드: 거시경제 지표 민감도에 따른 단순 가중치 산출 (실모형 미연동 시 참고용)
+      const intImpact = params.interestRate * 0.055;
+      const fxImpact = params.exchangeRate * 0.038;
+      const infImpact = params.inflation * 0.042;
+      const oilImpact = params.oilPrice * 0.025;
+      const gdpImpact = params.gdpGrowth * -0.65;
+
       const totalShock = intImpact + fxImpact + infImpact + oilImpact + gdpImpact;
-      const multiplier = useRealData ? 1.05 : 1.0; // 실데이터 연동 시 정밀 가중치
 
       const simResults = [
         { industry: '제조업', name: '제조업', baseRisk: 2.15, base: 2.15, sensitivity: 1.15, oldModelRisk: 1.80 },
@@ -51,13 +76,13 @@ export default function MacroSimulation() {
         { industry: '숙박 및 음식점업', name: '숙박 및 음식점업', baseRisk: 4.10, base: 4.10, sensitivity: 1.55, oldModelRisk: 3.40 },
         { industry: '전문, 과학 및 기술', name: '전문, 과학 및 기술', baseRisk: 1.20, base: 1.20, sensitivity: 0.70, oldModelRisk: 1.10 },
       ].map(item => {
-        const shockEffect = totalShock * item.sensitivity * multiplier;
+        const shockEffect = totalShock * item.sensitivity;
         const newRisk = Math.max(0.1, Number((item.baseRisk + shockEffect).toFixed(2)));
         const diff = Number((newRisk - item.baseRisk).toFixed(2));
-        
+
         const oldShockEffect = totalShock * (item.sensitivity * 0.55);
         const oldNewRisk = Math.max(0.1, Number((item.oldModelRisk + oldShockEffect).toFixed(2)));
-        
+
         return {
           ...item,
           newRisk,

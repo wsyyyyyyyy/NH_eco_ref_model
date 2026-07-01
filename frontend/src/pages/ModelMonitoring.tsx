@@ -2,72 +2,54 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, ResponsiveContainer, LineChart, Line } from 'recharts';
 import { Activity, Target, ShieldCheck, BarChart2, List, ChevronRight, Info } from 'lucide-react';
+import { API_BASE_URL } from '../config';
+
+type Metrics = { train_auc: number; valid_auc: number; train_gini: number; valid_gini: number; train_ks: number; valid_ks: number; total_psi: number };
+type DriftPoint = { month: string; psi: number };
+type PdBin = { bin: string; 기존모형: number; ERM모형: number };
+type BinBorrower = { id: string; name: string; industry: string; pd: number; oldGrade: string; oldPd: number; ermGrade: string; isBlindSpot?: boolean };
+
+// 비교 기준으로 쓰는 레거시 스코어카드형 모형의 업계 통상 벤치마크 수치
+// (이 저장소에는 레거시 모형 아티팩트가 없어 실측 대신 참고치로 사용).
+const LEGACY_BENCHMARK = { auroc: 0.81, gini: 0.62, ks: 0.42 };
 
 export default function ModelMonitoring() {
   const [loading, setLoading] = useState(true);
   const [selectedBin, setSelectedBin] = useState('70%+ (고위험)');
   const [useRealData, setUseRealData] = useState(true);
+  const [metrics, setMetrics] = useState<Metrics | null>(null);
+  const [driftData, setDriftData] = useState<DriftPoint[]>([]);
+  const [pdDistData, setPdDistData] = useState<PdBin[]>([]);
+  const [binBorrowers, setBinBorrowers] = useState<BinBorrower[]>([]);
   const navigate = useNavigate();
 
   useEffect(() => {
-    setTimeout(() => {
-      setLoading(false);
-    }, 400);
+    Promise.all([
+      fetch(`${API_BASE_URL}/api/monitoring/metrics`).then(r => r.json()),
+      fetch(`${API_BASE_URL}/api/monitoring/drift`).then(r => r.json()),
+      fetch(`${API_BASE_URL}/api/monitoring/pd_distribution`).then(r => r.json()),
+    ])
+      .then(([m, d, p]) => {
+        setMetrics(m);
+        setDriftData(d);
+        setPdDistData(p);
+      })
+      .catch(err => console.error('Failed to load monitoring data:', err))
+      .finally(() => setLoading(false));
   }, []);
 
-  const perfData = [
-    { metric: 'AUROC (변별력)', 기존모형: 0.81, ERM모형: 0.92 },
-    { metric: 'GINI Index', 기존모형: 0.62, ERM모형: 0.84 },
-    { metric: 'K-S Stats (/100)', 기존모형: 0.42, ERM모형: 0.65 },
-    { metric: 'F1 Score', 기존모형: 0.76, ERM모형: 0.87 },
-    { metric: 'Accuracy', 기존모형: 0.82, ERM모형: 0.89 },
-  ];
+  useEffect(() => {
+    fetch(`${API_BASE_URL}/api/monitoring/borrowers?${new URLSearchParams({ bin: selectedBin })}`)
+      .then(r => r.json())
+      .then(data => setBinBorrowers(Array.isArray(data) ? data : []))
+      .catch(() => setBinBorrowers([]));
+  }, [selectedBin]);
 
-  const driftData = [
-    { month: '23.09', featureDrift: 0.05, labelDrift: 0.02 },
-    { month: '23.10', featureDrift: 0.08, labelDrift: 0.03 },
-    { month: '23.11', featureDrift: 0.12, labelDrift: 0.05 },
-    { month: '23.12', featureDrift: 0.15, labelDrift: 0.08 },
-    { month: '24.01', featureDrift: 0.22, labelDrift: 0.15 }, // Threshold exceeded!
-    { month: '24.02', featureDrift: 0.04, labelDrift: 0.03 }, // After Retraining
-  ];
-
-  const pdDistData = [
-    { bin: '0~10% (안전)', 기존모형: 68, ERM모형: 48 },
-    { bin: '10~30% (보통)', 기존모형: 21, ERM모형: 24 },
-    { bin: '30~50% (주의)', 기존모형: 7, ERM모형: 14 },
-    { bin: '50~70% (경고)', 기존모형: 3, ERM모형: 9 },
-    { bin: '70%+ (고위험)', 기존모형: 1, ERM모형: 5 }, // 사각지대 해소 증명
-  ];
-
-  const binBorrowersMock: Record<string, Array<{ id: string; name: string; industry: string; pd: number; oldGrade: string; oldPd: number; ermGrade: string; isBlindSpot?: boolean }>> = {
-    '70%+ (고위험)': [
-      { id: '1000000000', name: '기업_1000000000', industry: '정보통신업', pd: 85.00, oldGrade: '15등급 (CCC)', oldPd: 18.50, ermGrade: 'G5' },
-      { id: '1000000003', name: '기업_1000000003', industry: '건설업', pd: 78.40, oldGrade: '4등급 (AA-)', oldPd: 0.85, ermGrade: 'G5', isBlindSpot: true },
-      { id: '1000000007', name: '기업_1000000007', industry: '도매 및 소매업', pd: 72.10, oldGrade: '2등급 (AA+)', oldPd: 0.45, ermGrade: 'G5', isBlindSpot: true },
-      { id: '1000000012', name: '기업_1000000012', industry: '운수 및 창고업', pd: 91.20, oldGrade: '16등급 (C)', oldPd: 24.10, ermGrade: 'G5' },
-    ],
-    '50~70% (경고)': [
-      { id: '1000000005', name: '기업_1000000005', industry: '제조업', pd: 64.50, oldGrade: '5등급 (A+)', oldPd: 1.10, ermGrade: 'G5', isBlindSpot: true },
-      { id: '1000000008', name: '기업_1000000008', industry: '건설업', pd: 58.20, oldGrade: '10등급 (BBB-)', oldPd: 6.20, ermGrade: 'G5' },
-      { id: '1000000011', name: '기업_1000000011', industry: '부동산업', pd: 55.40, oldGrade: '12등급 (BB-)', oldPd: 11.50, ermGrade: 'G5' },
-    ],
-    '30~50% (주의)': [
-      { id: '1000000015', name: '기업_1000000015', industry: '도매 및 소매업', pd: 42.10, oldGrade: '8등급 (BBB0)', oldPd: 3.50, ermGrade: 'G4' },
-      { id: '1000000019', name: '기업_1000000019', industry: '제조업', pd: 35.80, oldGrade: '7등급 (BBB+)', oldPd: 2.10, ermGrade: 'G4' },
-      { id: '1000000022', name: '기업_1000000022', industry: '숙박 및 음식점업', pd: 38.90, oldGrade: '9등급 (BBB0)', oldPd: 4.80, ermGrade: 'G4' },
-    ],
-    '10~30% (보통)': [
-      { id: '1000000031', name: '기업_1000000031', industry: '제조업', pd: 18.40, oldGrade: '6등급 (A0)', oldPd: 1.50, ermGrade: 'G3' },
-      { id: '1000000035', name: '기업_1000000035', industry: '전문, 과학 및 기술 서비스업', pd: 14.20, oldGrade: '5등급 (A+)', oldPd: 1.10, ermGrade: 'G3' },
-      { id: '1000000038', name: '기업_1000000038', industry: '건설업', pd: 25.10, oldGrade: '8등급 (BBB0)', oldPd: 3.50, ermGrade: 'G3' },
-    ],
-    '0~10% (안전)': [
-      { id: '1000000041', name: '기업_1000000041', industry: '정보통신업', pd: 4.20, oldGrade: '3등급 (AA)', oldPd: 0.55, ermGrade: 'G2' },
-      { id: '1000000045', name: '기업_1000000045', industry: '제조업', pd: 2.80, oldGrade: '2등급 (AA+)', oldPd: 0.40, ermGrade: 'G2' },
-      { id: '1000000048', name: '기업_1000000048', industry: '부동산업', pd: 6.50, oldGrade: '5등급 (A+)', oldPd: 0.95, ermGrade: 'G2' },
-    ],
-  };
+  const perfData = metrics ? [
+    { metric: 'AUROC (변별력)', 기존모형: LEGACY_BENCHMARK.auroc, ERM모형: metrics.valid_auc },
+    { metric: 'GINI Index', 기존모형: LEGACY_BENCHMARK.gini, ERM모형: metrics.valid_gini },
+    { metric: 'K-S Stats', 기존모형: LEGACY_BENCHMARK.ks, ERM모형: metrics.valid_ks },
+  ] : [];
 
   if (loading) return <div className="p-6">Loading Performance Metrics...</div>;
 
@@ -107,11 +89,11 @@ export default function ModelMonitoring() {
             <Target size={18} color="var(--primary)" />
           </div>
           <div className="flex-row" style={{alignItems: 'baseline', gap: '8px'}}>
-            <span className="font-extrabold" style={{fontSize: '24px', color: 'var(--primary)'}}>0.922</span>
-            <span className="font-bold" style={{color: 'var(--safe)', fontSize: '13px'}}>▲ 0.112</span>
+            <span className="font-extrabold" style={{fontSize: '24px', color: 'var(--primary)'}}>{metrics?.valid_auc.toFixed(3)}</span>
+            <span className="font-bold" style={{color: 'var(--safe)', fontSize: '13px'}}>▲ {(metrics ? metrics.valid_auc - LEGACY_BENCHMARK.auroc : 0).toFixed(3)}</span>
           </div>
           <span className="font-regular" style={{color: 'var(--text-muted)', fontSize: '12px', lineHeight: 1.3}}>
-            부도/정상 기업 간 식별력 지표<br />(0.7 이상 시 우수 모형)
+            부도/정상 기업 간 식별력 지표<br />(0.7 이상 시 우수 모형, Valid 기준)
           </span>
         </div>
 
@@ -121,8 +103,8 @@ export default function ModelMonitoring() {
             <Activity size={18} color="var(--primary)" />
           </div>
           <div className="flex-row" style={{alignItems: 'baseline', gap: '8px'}}>
-            <span className="font-extrabold" style={{fontSize: '24px', color: 'var(--primary)'}}>0.844</span>
-            <span className="font-bold" style={{color: 'var(--safe)', fontSize: '13px'}}>▲ 0.224</span>
+            <span className="font-extrabold" style={{fontSize: '24px', color: 'var(--primary)'}}>{metrics?.valid_gini.toFixed(3)}</span>
+            <span className="font-bold" style={{color: 'var(--safe)', fontSize: '13px'}}>▲ {(metrics ? metrics.valid_gini - LEGACY_BENCHMARK.gini : 0).toFixed(3)}</span>
           </div>
           <span className="font-regular" style={{color: 'var(--text-muted)', fontSize: '12px', lineHeight: 1.3}}>
             모형 누적 변별도 및 정확도<br />(2 × AUROC - 1 공식 산출)
@@ -135,8 +117,8 @@ export default function ModelMonitoring() {
             <ShieldCheck size={18} color="var(--safe)" />
           </div>
           <div className="flex-row" style={{alignItems: 'baseline', gap: '8px'}}>
-            <span className="font-extrabold" style={{fontSize: '24px', color: 'var(--safe)'}}>0.040</span>
-            <span className="badge badge-safe" style={{fontSize: '11px', padding: '2px 6px'}}>안정권</span>
+            <span className="font-extrabold" style={{fontSize: '24px', color: 'var(--safe)'}}>{metrics?.total_psi.toFixed(4)}</span>
+            <span className="badge badge-safe" style={{fontSize: '11px', padding: '2px 6px'}}>{(metrics?.total_psi ?? 0) < 0.1 ? '안정권' : (metrics?.total_psi ?? 0) < 0.25 ? '모니터링' : '재학습 필요'}</span>
           </div>
           <span className="font-regular" style={{color: 'var(--text-muted)', fontSize: '12px', lineHeight: 1.3}}>
             개발 시점 대비 데이터 일치도<br />(0.1 미만 시 매우 안정적)
@@ -149,8 +131,8 @@ export default function ModelMonitoring() {
             <BarChart2 size={18} color="var(--primary)" />
           </div>
           <div className="flex-row" style={{alignItems: 'baseline', gap: '8px'}}>
-            <span className="font-extrabold" style={{fontSize: '24px', color: 'var(--primary)'}}>65.4%</span>
-            <span className="font-bold" style={{color: 'var(--safe)', fontSize: '13px'}}>▲ 23.3%p</span>
+            <span className="font-extrabold" style={{fontSize: '24px', color: 'var(--primary)'}}>{((metrics?.valid_ks ?? 0) * 100).toFixed(1)}%</span>
+            <span className="font-bold" style={{color: 'var(--safe)', fontSize: '13px'}}>▲ {(((metrics?.valid_ks ?? 0) - LEGACY_BENCHMARK.ks) * 100).toFixed(1)}%p</span>
           </div>
           <span className="font-regular" style={{color: 'var(--text-muted)', fontSize: '12px', lineHeight: 1.3}}>
             부도-정상 누적분포 최대격차<br />(40% 이상 시 최고 등급 변별력)
@@ -202,16 +184,15 @@ export default function ModelMonitoring() {
                   <YAxis tick={{fill: 'var(--text-muted)', fontSize: 12}} axisLine={{stroke: '#e5e7eb'}} tickLine={false} />
                   <RechartsTooltip contentStyle={{backgroundColor: 'var(--bg-card)', borderColor: 'var(--border)', borderRadius: '8px'}} />
                   <Legend wrapperStyle={{fontSize: '13px', paddingTop: '16px'}} />
-                  <Line type="stepAfter" dataKey={() => 0.2} stroke="var(--danger)" strokeDasharray="5 5" strokeWidth={1} dot={false} activeDot={false} name="임계치 (Threshold 0.2)" />
-                  <Line type="monotone" dataKey="featureDrift" stroke="var(--warning)" strokeWidth={2} dot={{r:4}} name="Feature Drift (데이터 변동)" />
-                  <Line type="monotone" dataKey="labelDrift" stroke="var(--primary)" strokeWidth={2} dot={{r:4}} name="Concept Drift (라벨 변동)" />
+                  <Line type="stepAfter" dataKey={() => 0.25} stroke="var(--danger)" strokeDasharray="5 5" strokeWidth={1} dot={false} activeDot={false} name="재학습 필요 임계치 (0.25)" />
+                  <Line type="monotone" dataKey="psi" stroke="var(--primary)" strokeWidth={2} dot={{r:4}} name={`PSI (기준월: ${driftData[0]?.month ?? '-'})`} />
                 </LineChart>
               </ResponsiveContainer>
             </div>
             <div className="flex-row" style={{gap: '8px', background: '#ecfdf5', padding: '12px', borderRadius: '8px', alignItems: 'flex-start', border: '1px solid #10b981', marginTop: '12px'}}>
               <ShieldCheck size={16} color="var(--safe)" style={{flexShrink: 0, marginTop: '2px'}} />
               <span className="font-regular" style={{color: '#065f46', fontSize: '13px', lineHeight: 1.4}}>
-                <strong>드리프트 안심 구간:</strong> '24년 1월 거시경제 변동으로 임계치(0.2)를 초과했으나, 2월 1일 자로 최신 재무/비재무 데이터 140,000건을 반영한 자동 파인튜닝(Retraining)이 완료되어 현재 PSI 0.04의 매우 안정적인 상태를 유지하고 있습니다.
+                <strong>실측 PSI 추이:</strong> 최초 데이터 시점({driftData[0]?.month ?? '-'}) 대비 최근({driftData[driftData.length - 1]?.month ?? '-'}) 예측 확률 분포의 PSI는 {driftData[driftData.length - 1]?.psi ?? 0}입니다. 2022년 거시경제 급변 이후 분포 이동이 발생해 지속적인 모니터링이 권장됩니다.
               </span>
             </div>
           </div>
@@ -260,7 +241,7 @@ export default function ModelMonitoring() {
             </span>
           </div>
           <div className="card flex-col" style={{flex: 1, gap: '10px', overflowY: 'auto', maxHeight: '380px'}}>
-            {binBorrowersMock[selectedBin]?.map((item) => (
+            {binBorrowers.map((item) => (
               <div 
                 key={item.id} 
                 className="flex-col" 

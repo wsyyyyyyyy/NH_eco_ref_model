@@ -3,6 +3,7 @@ import { BarChart, Bar, LineChart, Line, ScatterChart, Scatter, XAxis, YAxis, To
 import { AlertTriangle, CheckCircle, TrendingUp, Users, BarChart as BarChartIcon } from 'lucide-react';
 import { getIndustryName } from '../utils/industry';
 import { globalMock } from '../utils/mockData';
+import { API_BASE_URL } from '../config';
 
 const COLORS = ['#ef4444', '#f97316', '#8b5cf6', '#3b82f6', '#10b981', '#ec4899', '#06b6d4', '#eab308'];
 
@@ -60,7 +61,7 @@ export default function GlobalDashboard({ baseYm = '202402' }: { baseYm?: string
   useEffect(() => {
     setLoading(true);
     if (useRealData) {
-      fetch(`http://localhost:8000/api/dashboard/summary?base_ym=${baseYm}`)
+      fetch(`${API_BASE_URL}/api/dashboard/summary?base_ym=${baseYm}`)
         .then(res => res.json())
         .then(d => {
           if (d.top_risk_industries) {

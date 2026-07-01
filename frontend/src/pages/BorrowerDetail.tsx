@@ -2,8 +2,9 @@ import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { AlertOctagon, ArrowLeft, Bot, Info, Calculator, TrendingUp, CheckCircle, Activity, AlertTriangle, BarChart2, List } from 'lucide-react';
 import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer, Tooltip as RechartsTooltip, AreaChart, Area, CartesianGrid, XAxis, YAxis, Legend, BarChart, Bar, Cell } from 'recharts';
-import { borrowerDetailMock, aiTipsMock, shapMockData, featureContributions } from '../utils/mockData';
+import { borrowerDetailMock, shapMockData, featureContributions } from '../utils/mockData';
 import { getIndustryName } from '../utils/industry';
+import { API_BASE_URL } from '../config';
 
 const radarMockData = {
     target: {"활동성": 30, "수익성": 10, "안정성": 20, "성장성": 25, "규모": 60},
@@ -24,12 +25,13 @@ export default function BorrowerDetail() {
   const navigate = useNavigate();
   const [data, setData] = useState<any>(null);
   const [useRealData, setUseRealData] = useState(true);
+  const [aiTips, setAiTips] = useState<{ text: string; loading: boolean; error: string | null }>({ text: '', loading: false, error: null });
 
   useEffect(() => {
     setData(null);
     if (useRealData && id) {
-      fetch(`http://localhost:8000/api/borrowers/${id}`)
-        .then(res => res.json())
+      fetch(`${API_BASE_URL}/api/borrowers/${id}`)
+        .then(res => res.ok ? res.json() : Promise.reject(res))
         .then(real => {
           if (real && !real.error) {
             const merged = {
@@ -58,6 +60,26 @@ export default function BorrowerDetail() {
       }, 200);
     }
   }, [id, useRealData]);
+
+  useEffect(() => {
+    if (!data) return;
+    setAiTips({ text: '', loading: true, error: null });
+    fetch(`${API_BASE_URL}/api/ai/tips`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        borrower_data: {
+          industry: getIndustryName(data.STD_INDS_CFC),
+          business_age_months: data.BUSINESS_AGE,
+          default_probability: data.PROB_FULL,
+          erm_grade: data.Z_GRADE,
+        },
+      }),
+    })
+      .then(res => res.ok ? res.json() : res.json().then(err => Promise.reject(err)))
+      .then(result => setAiTips({ text: result.tips, loading: false, error: null }))
+      .catch(err => setAiTips({ text: '', loading: false, error: err?.detail || 'AI 팁을 불러오지 못했습니다.' }));
+  }, [data?.V_BZNO]);
 
   if (!data) return <div className="p-6">Loading Details...</div>;
 
@@ -334,17 +356,17 @@ export default function BorrowerDetail() {
             <h2 className="font-semibold" style={{margin: 0}}>핵심 리스크 및 대응 방안</h2>
           </div>
           <div className="card flex-col" style={{flex: 1, gap: '16px', justifyContent: 'center'}}>
-            <p className="font-medium" style={{color: 'var(--text-main)', lineHeight: 1.6, fontSize: '15px'}}>
-              {aiTipsMock.summary}
-            </p>
-            <div className="flex-col" style={{gap: '12px', marginTop: '8px'}}>
-              {aiTipsMock.tips.map((tip, idx) => (
-                <div key={idx} className="flex-row" style={{gap: '12px', alignItems: 'flex-start', background: 'var(--bg-main)', padding: '12px', borderRadius: '8px'}}>
-                  <CheckCircle size={18} color="var(--primary)" style={{flexShrink: 0, marginTop: '1px'}} />
-                  <span className="font-regular" style={{color: 'var(--text-muted)', fontSize: '14px', lineHeight: 1.4}}>{tip}</span>
-                </div>
-              ))}
-            </div>
+            {aiTips.loading && (
+              <p className="font-regular" style={{color: 'var(--text-muted)', fontSize: '14px'}}>Gemini가 분석 의견을 생성 중입니다...</p>
+            )}
+            {aiTips.error && (
+              <p className="font-regular" style={{color: 'var(--danger)', fontSize: '14px'}}>{aiTips.error}</p>
+            )}
+            {!aiTips.loading && !aiTips.error && aiTips.text && (
+              <p className="font-regular" style={{color: 'var(--text-main)', lineHeight: 1.6, fontSize: '14px', whiteSpace: 'pre-wrap'}}>
+                {aiTips.text}
+              </p>
+            )}
           </div>
         </div>
 

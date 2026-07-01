@@ -1,0 +1,9 @@
+fastapi
+uvicorn
+duckdb
+pydantic
+python-dotenv
+google-genai
+lightgbm
+pandas
+numpy

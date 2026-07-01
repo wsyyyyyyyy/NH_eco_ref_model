@@ -3,6 +3,7 @@ import { Search, ChevronRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { branchBorrowersMock } from '../utils/mockData';
 import { getIndustryName } from '../utils/industry';
+import { API_BASE_URL } from '../config';
 
 export default function BranchDashboard({ branch = 'VB001', baseYm = '202402' }: { branch?: string, baseYm?: string }) {
   const [borrowers, setBorrowers] = useState<any[]>([]);
@@ -24,7 +25,7 @@ export default function BranchDashboard({ branch = 'VB001', baseYm = '202402' }:
     setBorrowers([]); // 로딩 시각적 효과
     if (useRealData) {
       setLoading(true);
-      fetch(`http://localhost:8000/api/borrowers/?branch_code=${branch}&base_ym=${baseYm}&limit=1500`)
+      fetch(`${API_BASE_URL}/api/borrowers/?branch_code=${branch}&base_ym=${baseYm}&limit=1500`)
         .then(res => res.json())
         .then(data => {
           if (Array.isArray(data)) {

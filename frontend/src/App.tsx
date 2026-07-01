@@ -6,6 +6,7 @@ import BorrowerDetail from './pages/BorrowerDetail';
 import ModelMonitoring from './pages/ModelMonitoring';
 import MacroSimulation from './pages/MacroSimulation';
 import LoginPage from './pages/LoginPage';
+import { API_BASE_URL } from './config';
 import { Globe, Building2, Activity, Sliders, LogOut } from 'lucide-react';
 
 const menus = [
@@ -31,7 +32,7 @@ function AppLayout() {
   ]);
 
   useEffect(() => {
-    fetch('http://localhost:8000/api/dashboard/months')
+    fetch(`${API_BASE_URL}/api/dashboard/months`)
       .then(res => res.json())
       .then(data => {
         if (data.months && data.months.length > 0) {
