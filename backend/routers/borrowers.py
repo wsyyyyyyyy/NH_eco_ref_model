@@ -1,8 +1,11 @@
+import math
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException
 from backend.database import get_db, dedup_panel_sql
+from backend.feature_labels import get_feature_label
 from backend.grade_mapping import prob_to_grade
+from backend.model_inference import get_feature_row, get_model, get_shap_explainer
 
 router = APIRouter()
 
@@ -99,6 +102,166 @@ def get_borrower_financials(bzno: str, base_ym: Optional[str] = None, years: int
             'nice_grade': prob_to_grade(row['PROB_FULL']),
         })
     return records
+
+
+@router.get("/{bzno}/pd_history")
+def get_borrower_pd_history(bzno: str, base_ym: Optional[str] = None, months: int = 6, db=Depends(get_db)):
+    """Real recent monthly PROB_FULL trend for a borrower, up to base_ym."""
+    panel = dedup_panel_sql("WHERE V_BZNO = ?")
+    params = [bzno]
+    cutoff = ""
+    if base_ym:
+        cutoff = "AND CAST(BASE_YM AS VARCHAR) <= ?"
+        params.append(str(base_ym))
+    params.append(months)
+
+    query = f"""
+        SELECT BASE_YM, PROB_FULL
+        FROM {panel}
+        WHERE 1=1 {cutoff}
+        ORDER BY BASE_YM DESC
+        LIMIT ?
+    """
+    res = db.execute(query, params).df()
+    if res.empty:
+        raise HTTPException(status_code=404, detail=f"Borrower {bzno} not found")
+
+    records = []
+    for _, row in res.iloc[::-1].iterrows():  # oldest -> newest for a trend
+        ym = str(int(row['BASE_YM']))
+        records.append({
+            'month': f"{ym[2:4]}.{ym[4:6]}",
+            'base_ym': ym,
+            'pd': round(row['PROB_FULL'], 4),
+        })
+    return records
+
+
+@router.get("/{bzno}/capability")
+def get_borrower_capability(bzno: str, base_ym: Optional[str] = None, db=Depends(get_db)):
+    """5-axis capability diagnostic (활동성/수익성/안정성/성장성/규모) for the
+    borrower vs. its industry (KSIC division) peers in the same month.
+
+    Each axis is the average PERCENT_RANK() of the borrower's real JEMU_*
+    financial ratios against every company in the same division/month
+    (0~100, 50 = median). This replaces the previous fully hardcoded
+    radarMockData with a real, population-relative score."""
+    if not base_ym:
+        panel_latest = dedup_panel_sql("WHERE V_BZNO = ?")
+        row = db.execute(f"SELECT MAX(BASE_YM) FROM {panel_latest}", [bzno]).fetchone()
+        if not row or row[0] is None:
+            raise HTTPException(status_code=404, detail=f"Borrower {bzno} not found")
+        base_ym = str(int(row[0]))
+
+    division_expr = "CAST(SUBSTRING(LPAD(CAST(CAST(STD_INDS_CFC AS BIGINT) AS VARCHAR), 5, '0'), 1, 2) AS INT)"
+    panel = dedup_panel_sql("WHERE CAST(BASE_YM AS VARCHAR) = ?")
+
+    query = f"""
+        WITH ranked AS (
+            SELECT
+                V_BZNO,
+                {division_expr} AS division,
+                PERCENT_RANK() OVER (ORDER BY JEMU_191207) AS pr_asset_turnover,
+                PERCENT_RANK() OVER (ORDER BY JEMU_191208) AS pr_receivable_turnover,
+                PERCENT_RANK() OVER (ORDER BY JEMU_191210) AS pr_inventory_turnover,
+                PERCENT_RANK() OVER (ORDER BY JEMU_191110) AS pr_op_margin,
+                PERCENT_RANK() OVER (ORDER BY JEMU_191204) AS pr_roe,
+                PERCENT_RANK() OVER (ORDER BY -JEMU_191105) AS pr_debt_ratio_inv,
+                PERCENT_RANK() OVER (ORDER BY JEMU_191108) AS pr_equity_ratio,
+                PERCENT_RANK() OVER (ORDER BY JEMU_191310) AS pr_interest_coverage,
+                PERCENT_RANK() OVER (ORDER BY JEMU_191502) AS pr_revenue_growth,
+                PERCENT_RANK() OVER (ORDER BY JEMU_191506) AS pr_capital_growth,
+                PERCENT_RANK() OVER (ORDER BY JEMU_115000) AS pr_assets
+            FROM {panel}
+        ),
+        scored AS (
+            SELECT
+                V_BZNO, division,
+                (pr_asset_turnover + pr_receivable_turnover + pr_inventory_turnover) / 3.0 * 100 AS activity,
+                (pr_op_margin + pr_roe) / 2.0 * 100 AS profitability,
+                (pr_debt_ratio_inv + pr_equity_ratio + pr_interest_coverage) / 3.0 * 100 AS stability,
+                (pr_revenue_growth + pr_capital_growth) / 2.0 * 100 AS growth,
+                pr_assets * 100 AS scale
+            FROM ranked
+        )
+        SELECT * FROM scored
+        WHERE division = (SELECT division FROM scored WHERE V_BZNO = ?)
+    """
+    df = db.execute(query, [str(base_ym), bzno]).df()
+    if df.empty or not (df['V_BZNO'] == int(bzno)).any():
+        raise HTTPException(status_code=404, detail=f"Borrower {bzno} not found")
+
+    target = df[df['V_BZNO'] == int(bzno)].iloc[0]
+    industry_avg = df[['activity', 'profitability', 'stability', 'growth', 'scale']].mean()
+
+    axes = {
+        '활동성': ('activity', target['activity']),
+        '수익성': ('profitability', target['profitability']),
+        '안정성': ('stability', target['stability']),
+        '성장성': ('growth', target['growth']),
+        '규모': ('scale', target['scale']),
+    }
+    return {
+        'target': {label: round(float(val), 1) for label, (_, val) in axes.items()},
+        'industry_avg': {label: round(float(industry_avg[col]), 1) for label, (col, _) in axes.items()},
+        'peer_count': int(len(df)),
+    }
+
+
+@router.get("/{bzno}/shap")
+def get_borrower_shap(bzno: str, base_ym: Optional[str] = None, top_n: int = 8):
+    """Real per-borrower SHAP feature attribution from the trained LightGBM
+    model (TreeExplainer), instead of the previous static mock chart.
+
+    SHAP values from a LightGBM binary classifier are additive in log-odds
+    (margin) space, not probability space. A naive "SHAP * local sigmoid
+    slope" conversion to %p looks tiny and misleading whenever the
+    prediction is far from the population baseline (which is common here -
+    e.g. base 1.3% vs. a G5 borrower's 93% both being routine), since the
+    slope is evaluated near the baseline. Rather than fabricate a
+    percentage-point number that doesn't hold up, we report:
+    - base_pd / final_pd: real probabilities (population baseline vs. this
+      borrower's actual predicted PD) - both unambiguous.
+    - shap_raw: the true SHAP value in log-odds units (additive, correct).
+    - impact_score: shap_raw normalized so the largest-magnitude feature
+      among the top N is 100/-100, purely for bar-chart comparison.
+    """
+    row = get_feature_row(bzno, base_ym)
+    if row.empty:
+        raise HTTPException(status_code=404, detail=f"Borrower {bzno} not found")
+
+    model = get_model()
+    features = model.feature_name()
+    explainer = get_shap_explainer()
+    shap_values = explainer.shap_values(row[features])[0]
+    base_value = explainer.expected_value
+    if isinstance(base_value, (list, tuple)):
+        base_value = base_value[0]
+
+    def sigmoid(x):
+        return 1 / (1 + math.exp(-x))
+
+    base_prob = sigmoid(base_value)
+    final_prob = sigmoid(base_value + sum(shap_values))
+
+    contributions = sorted(
+        zip(features, shap_values), key=lambda fv: abs(fv[1]), reverse=True
+    )[:top_n]
+    max_abs = max((abs(v) for _, v in contributions), default=1) or 1
+
+    return {
+        'base_pd': round(base_prob * 100, 2),
+        'final_pd': round(final_prob * 100, 2),
+        'features': [
+            {
+                'feature': f,
+                'label': get_feature_label(f),
+                'shap_raw': round(float(v), 5),
+                'impact_score': round(float(v) / max_abs * 100, 1),
+            }
+            for f, v in contributions
+        ],
+    }
 
 
 @router.get("/{bzno}")

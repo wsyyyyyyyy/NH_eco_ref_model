@@ -2,22 +2,20 @@ import { useEffect, useState } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { AlertOctagon, ArrowLeft, Bot, Info, Calculator, TrendingUp, CheckCircle, Activity, AlertTriangle, BarChart2, List, ChevronDown } from 'lucide-react';
 import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer, Tooltip as RechartsTooltip, AreaChart, Area, CartesianGrid, XAxis, YAxis, Legend, BarChart, Bar, Cell } from 'recharts';
-import { borrowerDetailMock, shapMockData, featureContributions } from '../utils/mockData';
+import { borrowerDetailMock } from '../utils/mockData';
 import { getIndustryName } from '../utils/industry';
 import { API_BASE_URL } from '../config';
 
-const radarMockData = {
-    target: {"활동성": 30, "수익성": 10, "안정성": 20, "성장성": 25, "규모": 60},
-    industry_avg: {"활동성": 50, "수익성": 45, "안정성": 55, "성장성": 40, "규모": 50}
-};
-
-const tsMockData = [
-    { month: '23.09', pd: 0.12 },
-    { month: '23.10', pd: 0.15 },
-    { month: '23.11', pd: 0.28 },
-    { month: '23.12', pd: 0.45 },
-    { month: '24.01', pd: 0.72 },
-    { month: '24.02', pd: 0.85 }
+// AI 분석 API 호출 실패 시 등급 기준 일반 관리 가이드로 대체하는 fallback 팁
+const FALLBACK_TIPS_HIGH_RISK = [
+  { title: '신규 여신 취급 전 면밀 검토 및 담보 확보', reason: '고위험 등급(G4/G5) 차주는 추가 익스포저 확대 전 보수적인 심사와 충분한 담보/보증 확보가 필요합니다.' },
+  { title: '현금흐름 및 연체 현황 밀착 모니터링', reason: '부실 징후를 조기에 포착하기 위해 월 단위로 재무 상태와 상환 이력을 점검하는 것이 중요합니다.' },
+  { title: '채권 보전 조치 사전 검토', reason: '리스크가 현실화될 경우를 대비해 담보 설정 현황과 회수 방안을 미리 점검해 두어야 합니다.' },
+];
+const FALLBACK_TIPS_NORMAL = [
+  { title: '정기적인 재무/비재무 현황 점검', reason: '안정권 차주라도 분기별 재무제표 및 영업 현황을 주기적으로 확인해 변화를 조기에 파악해야 합니다.' },
+  { title: '업종 평균 대비 경쟁력 모니터링', reason: '동일 업종 내 상대적 위치를 파악하여 잠재적 리스크 요인을 선제적으로 관리합니다.' },
+  { title: '추가 거래 확대 가능성 검토', reason: '안정적인 차주는 장기적인 관계 강화를 위해 맞춤형 금융 상품 제안을 검토할 수 있습니다.' },
 ];
 
 export default function BorrowerDetail({ baseYm: globalBaseYm }: { baseYm?: string } = {}) {
@@ -29,9 +27,12 @@ export default function BorrowerDetail({ baseYm: globalBaseYm }: { baseYm?: stri
   const navigate = useNavigate();
   const [data, setData] = useState<any>(null);
   const [useRealData, setUseRealData] = useState(true);
-  const [aiTips, setAiTips] = useState<{ summary: string; tips: { title: string; reason: string }[]; loading: boolean; error: string | null }>({ summary: '', tips: [], loading: false, error: null });
+  const [aiTips, setAiTips] = useState<{ summary: string; tips: { title: string; reason: string }[]; loading: boolean; isFallback: boolean }>({ summary: '', tips: [], loading: false, isFallback: false });
   const [expandedTip, setExpandedTip] = useState<number | null>(null);
   const [financials, setFinancials] = useState<any[]>([]);
+  const [pdHistory, setPdHistory] = useState<{ month: string; pd: number }[]>([]);
+  const [shapData, setShapData] = useState<{ base_pd: number; final_pd: number; features: { feature: string; label: string; shap_raw: number; impact_score: number }[] } | null>(null);
+  const [capability, setCapability] = useState<{ target: Record<string, number>; industry_avg: Record<string, number>; peer_count: number } | null>(null);
 
   useEffect(() => {
     setData(null);
@@ -82,13 +83,57 @@ export default function BorrowerDetail({ baseYm: globalBaseYm }: { baseYm?: stri
   }, [id, useRealData, baseYm]);
 
   useEffect(() => {
+    if (!useRealData || !id) {
+      setPdHistory([]);
+      return;
+    }
+    const url = baseYm
+      ? `${API_BASE_URL}/api/borrowers/${id}/pd_history?base_ym=${baseYm}&months=6`
+      : `${API_BASE_URL}/api/borrowers/${id}/pd_history?months=6`;
+    fetch(url)
+      .then(res => res.ok ? res.json() : Promise.reject(res))
+      .then(rows => setPdHistory(Array.isArray(rows) ? rows : []))
+      .catch(() => setPdHistory([]));
+  }, [id, useRealData, baseYm]);
+
+  useEffect(() => {
+    if (!useRealData || !id) {
+      setShapData(null);
+      return;
+    }
+    const url = baseYm
+      ? `${API_BASE_URL}/api/borrowers/${id}/shap?base_ym=${baseYm}`
+      : `${API_BASE_URL}/api/borrowers/${id}/shap`;
+    fetch(url)
+      .then(res => res.ok ? res.json() : Promise.reject(res))
+      .then(result => setShapData(result))
+      .catch(() => setShapData(null));
+  }, [id, useRealData, baseYm]);
+
+  useEffect(() => {
+    if (!useRealData || !id) {
+      setCapability(null);
+      return;
+    }
+    const url = baseYm
+      ? `${API_BASE_URL}/api/borrowers/${id}/capability?base_ym=${baseYm}`
+      : `${API_BASE_URL}/api/borrowers/${id}/capability`;
+    fetch(url)
+      .then(res => res.ok ? res.json() : Promise.reject(res))
+      .then(result => setCapability(result))
+      .catch(() => setCapability(null));
+  }, [id, useRealData, baseYm]);
+
+  useEffect(() => {
     if (!data) return;
     setExpandedTip(null);
-    setAiTips({ summary: '', tips: [], loading: true, error: null });
+    setAiTips({ summary: '', tips: [], loading: true, isFallback: false });
     fetch(`${API_BASE_URL}/api/ai/tips`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
+        bzno: String(data.V_BZNO),
+        base_ym: String(data.BASE_YM),
         borrower_data: {
           industry: getIndustryName(data.STD_INDS_CFC),
           business_age_months: data.BUSINESS_AGE,
@@ -98,9 +143,17 @@ export default function BorrowerDetail({ baseYm: globalBaseYm }: { baseYm?: stri
       }),
     })
       .then(res => res.ok ? res.json() : res.json().then(err => Promise.reject(err)))
-      .then(result => setAiTips({ summary: result.summary, tips: result.tips || [], loading: false, error: null }))
-      .catch(err => setAiTips({ summary: '', tips: [], loading: false, error: err?.detail || 'AI 팁을 불러오지 못했습니다.' }));
-  }, [data?.V_BZNO]);
+      .then(result => setAiTips({ summary: result.summary, tips: result.tips || [], loading: false, isFallback: false }))
+      .catch(() => {
+        const isHighRisk = ['G4', 'G5'].includes(data.Z_GRADE);
+        setAiTips({
+          summary: '⏳ 현재 실시간 AI 분석 요청이 몰려 지연되고 있습니다. 잠시 후 다시 시도해 주세요. 아래는 등급 기준 일반 관리 가이드입니다.',
+          tips: isHighRisk ? FALLBACK_TIPS_HIGH_RISK : FALLBACK_TIPS_NORMAL,
+          loading: false,
+          isFallback: true,
+        });
+      });
+  }, [data?.V_BZNO, data?.BASE_YM]);
 
   if (!data) return <div className="p-6">Loading Details...</div>;
 
@@ -131,11 +184,13 @@ export default function BorrowerDetail({ baseYm: globalBaseYm }: { baseYm?: stri
     return 'SAFE';
   };
   const status = getAnalysisStatus();
-  const radarData = Object.keys(radarMockData.target).map(key => ({
-    subject: key,
-    A: radarMockData.target[key as keyof typeof radarMockData.target],
-    B: radarMockData.industry_avg[key as keyof typeof radarMockData.industry_avg]
-  }));
+  const radarData = capability
+    ? Object.keys(capability.target).map(key => ({
+        subject: key,
+        A: capability.target[key],
+        B: capability.industry_avg[key],
+      }))
+    : [];
 
   return (
     <div className="flex-col" style={{gap: '24px'}}>
@@ -330,11 +385,21 @@ export default function BorrowerDetail({ baseYm: globalBaseYm }: { baseYm?: stri
 
         {/* 5. 기업 역량 진단 (Radar) */}
         <div className="flex-col" style={{gap: '12px', height: '100%'}}>
-          <div className="flex-row" style={{gap: '8px'}}>
-            <TrendingUp size={20} color="var(--primary)" />
-            <h2 className="font-semibold" style={{margin: 0}}>기업 역량 진단 (Radar)</h2>
+          <div className="flex-row" style={{gap: '8px', alignItems: 'center', justifyContent: 'space-between'}}>
+            <div className="flex-row" style={{gap: '8px', alignItems: 'center'}}>
+              <TrendingUp size={20} color="var(--primary)" />
+              <h2 className="font-semibold" style={{margin: 0}}>기업 역량 진단 (Radar)</h2>
+            </div>
+            {capability && (
+              <span className="font-regular" style={{fontSize: '12px', color: 'var(--text-muted)'}}>
+                동일 업종 {capability.peer_count.toLocaleString()}개사 대비 백분위
+              </span>
+            )}
           </div>
           <div className="card" style={{flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
+            {!capability ? (
+              <span className="font-regular" style={{color: 'var(--text-muted)', fontSize: '14px'}}>역량 진단 계산 중입니다...</span>
+            ) : (
             <div style={{width: '100%', height: '260px'}}>
               <ResponsiveContainer width="100%" height="100%">
                 <RadarChart cx="50%" cy="50%" outerRadius="80%" data={radarData}>
@@ -347,6 +412,7 @@ export default function BorrowerDetail({ baseYm: globalBaseYm }: { baseYm?: stri
                 </RadarChart>
               </ResponsiveContainer>
             </div>
+            )}
           </div>
         </div>
 
@@ -354,12 +420,12 @@ export default function BorrowerDetail({ baseYm: globalBaseYm }: { baseYm?: stri
         <div className="flex-col" style={{gap: '12px', height: '100%'}}>
           <div className="flex-row" style={{gap: '8px'}}>
             <Activity size={20} color="var(--primary)" />
-            <h2 className="font-semibold" style={{margin: 0}}>부도 확률 시계열 추이 추정</h2>
+            <h2 className="font-semibold" style={{margin: 0}}>부도 확률 시계열 추이 추정 (최근 {pdHistory.length || 6}개월)</h2>
           </div>
           <div className="card" style={{flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
             <div style={{width: '100%', height: '240px'}}>
               <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={tsMockData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                <AreaChart data={pdHistory} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                   <defs>
                     <linearGradient id="colorPd" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="5%" stopColor={isAiHighRisk ? "var(--danger)" : "var(--primary)"} stopOpacity={0.3}/>
@@ -387,15 +453,20 @@ export default function BorrowerDetail({ baseYm: globalBaseYm }: { baseYm?: stri
             {aiTips.loading && (
               <p className="font-regular" style={{color: 'var(--text-muted)', fontSize: '14px'}}>Gemini가 분석 의견을 생성 중입니다...</p>
             )}
-            {aiTips.error && (
-              <p className="font-regular" style={{color: 'var(--danger)', fontSize: '14px'}}>{aiTips.error}</p>
-            )}
-            {!aiTips.loading && !aiTips.error && aiTips.tips.length > 0 && (
+            {!aiTips.loading && aiTips.tips.length > 0 && (
               <>
                 {aiTips.summary && (
-                  <p className="font-regular" style={{color: 'var(--text-main)', lineHeight: 1.6, fontSize: '14px'}}>
-                    {aiTips.summary}
-                  </p>
+                  aiTips.isFallback ? (
+                    <div style={{backgroundColor: '#fffbeb', border: '1px solid #fde68a', borderRadius: '8px', padding: '12px 14px'}}>
+                      <span className="font-regular" style={{color: '#92400e', lineHeight: 1.6, fontSize: '14px'}}>
+                        {aiTips.summary}
+                      </span>
+                    </div>
+                  ) : (
+                    <p className="font-regular" style={{color: 'var(--text-main)', lineHeight: 1.6, fontSize: '14px'}}>
+                      {aiTips.summary}
+                    </p>
+                  )
                 )}
                 <div className="flex-col" style={{gap: '10px'}}>
                   {aiTips.tips.map((tip, idx) => {
@@ -464,26 +535,37 @@ export default function BorrowerDetail({ baseYm: globalBaseYm }: { baseYm?: stri
         {/* Row 4 */}
         {/* 7. 요인별 기여도 시각화 (SHAP) */}
         <div className="flex-col" style={{gap: '12px', height: '100%'}}>
-          <div className="flex-row" style={{gap: '8px'}}>
-            <BarChart2 size={20} color="var(--primary)" />
-            <h2 className="font-semibold" style={{margin: 0}}>요인별 기여도 시각화 (SHAP)</h2>
+          <div className="flex-row" style={{gap: '8px', alignItems: 'center', justifyContent: 'space-between'}}>
+            <div className="flex-row" style={{gap: '8px', alignItems: 'center'}}>
+              <BarChart2 size={20} color="var(--primary)" />
+              <h2 className="font-semibold" style={{margin: 0}}>요인별 기여도 시각화 (SHAP)</h2>
+            </div>
+            {shapData && (
+              <span className="font-regular" style={{fontSize: '12px', color: 'var(--text-muted)'}}>
+                평균 {shapData.base_pd}% → 이 기업 {shapData.final_pd}%
+              </span>
+            )}
           </div>
           <div className="card" style={{flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
-            <div style={{width: '100%', height: '260px'}}>
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={shapMockData} layout="vertical" margin={{ top: 20, right: 30, left: 10, bottom: 5 }}>
-                  <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke="#e5e7eb" />
-                  <XAxis type="number" tick={{fill: 'var(--text-muted)', fontSize: 12}} domain={[-20, 100]} />
-                  <YAxis dataKey="name" type="category" tick={{fill: 'var(--text-main)', fontSize: 12, fontWeight: 600}} width={90} />
-                  <RechartsTooltip cursor={{fill: 'rgba(0,0,0,0.05)'}} contentStyle={{backgroundColor: 'var(--bg-card)', borderColor: 'var(--border)', borderRadius: '8px'}} />
-                  <Bar dataKey="value" radius={4} barSize={20}>
-                    {shapMockData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.fill} />
-                    ))}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
+            {!shapData ? (
+              <span className="font-regular" style={{color: 'var(--text-muted)', fontSize: '14px'}}>SHAP 분석 계산 중입니다...</span>
+            ) : (
+              <div style={{width: '100%', height: '260px'}}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={shapData.features} layout="vertical" margin={{ top: 20, right: 30, left: 10, bottom: 5 }}>
+                    <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke="#e5e7eb" />
+                    <XAxis type="number" tick={{fill: 'var(--text-muted)', fontSize: 12}} domain={[-100, 100]} />
+                    <YAxis dataKey="label" type="category" tick={{fill: 'var(--text-main)', fontSize: 12, fontWeight: 600}} width={110} />
+                    <RechartsTooltip cursor={{fill: 'rgba(0,0,0,0.05)'}} contentStyle={{backgroundColor: 'var(--bg-card)', borderColor: 'var(--border)', borderRadius: '8px'}} />
+                    <Bar dataKey="impact_score" radius={4} barSize={16}>
+                      {shapData.features.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.impact_score >= 0 ? 'var(--danger)' : 'var(--primary)'} />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            )}
           </div>
         </div>
 
@@ -494,19 +576,22 @@ export default function BorrowerDetail({ baseYm: globalBaseYm }: { baseYm?: stri
             <h2 className="font-semibold" style={{margin: 0}}>변수별 위험 기여량 상세</h2>
           </div>
           <div className="card flex-col" style={{flex: 1, gap: '24px', justifyContent: 'center'}}>
-            {featureContributions.map((feat, idx) => {
-              const percentWidth = Math.abs(feat.value) / 50 * 100;
-              
+            {!shapData ? (
+              <span className="font-regular" style={{color: 'var(--text-muted)', fontSize: '14px'}}>SHAP 분석 계산 중입니다...</span>
+            ) : shapData.features.slice(0, 4).map((feat, idx) => {
+              const percentWidth = Math.abs(feat.impact_score);
+              const color = feat.impact_score >= 0 ? 'var(--danger)' : 'var(--primary)';
+
               return (
                 <div key={idx} className="flex-col" style={{gap: '10px'}}>
                   <div className="flex-row" style={{justifyContent: 'space-between', alignItems: 'flex-end'}}>
                     <span className="font-bold" style={{color: 'var(--text-main)', fontSize: '15px'}}>{feat.label}</span>
-                    <span className="font-extrabold" style={{color: feat.color, fontSize: '16px'}}>
-                      {feat.value > 0 ? '+' : ''}{feat.value.toFixed(1)}%p
+                    <span className="font-extrabold" style={{color, fontSize: '16px'}}>
+                      {feat.impact_score > 0 ? '+' : ''}{feat.impact_score.toFixed(1)}
                     </span>
                   </div>
                   <div style={{width: '100%', height: '8px', backgroundColor: 'var(--bg-main)', borderRadius: '4px', overflow: 'hidden'}}>
-                    <div style={{width: `${Math.min(percentWidth, 100)}%`, height: '100%', backgroundColor: feat.color, borderRadius: '4px'}} />
+                    <div style={{width: `${Math.min(percentWidth, 100)}%`, height: '100%', backgroundColor: color, borderRadius: '4px'}} />
                   </div>
                 </div>
               );

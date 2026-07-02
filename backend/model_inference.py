@@ -8,6 +8,7 @@ MODEL_PATH = 'eda_pipeline/output/lgbm_12m_model.txt'
 
 _model = None
 _baseline_df = None
+_shap_explainer = None
 
 
 def get_model() -> lgb.Booster:
@@ -15,6 +16,17 @@ def get_model() -> lgb.Booster:
     if _model is None:
         _model = lgb.Booster(model_file=MODEL_PATH)
     return _model
+
+
+def _apply_categorical(df: pd.DataFrame, model: lgb.Booster) -> pd.DataFrame:
+    # LightGBM trained with OBV_ELYWRN_OBV_GRD_DSC as the sole categorical
+    # feature (categories '-1'/'A'/'B'); the exact category order must
+    # match model.pandas_categorical for encoding to line up.
+    cat_col = 'OBV_ELYWRN_OBV_GRD_DSC'
+    if cat_col in df.columns and model.pandas_categorical:
+        categories = model.pandas_categorical[0]
+        df[cat_col] = pd.Categorical(df[cat_col].astype(str), categories=categories)
+    return df
 
 
 def get_baseline() -> pd.DataFrame:
@@ -32,17 +44,41 @@ def get_baseline() -> pd.DataFrame:
             FROM {panel}
         """).df()
         conn.close()
-
-        # LightGBM trained with OBV_ELYWRN_OBV_GRD_DSC as the sole categorical
-        # feature (categories '-1'/'A'/'B'); the exact category order must
-        # match model.pandas_categorical for encoding to line up.
-        cat_col = 'OBV_ELYWRN_OBV_GRD_DSC'
-        if cat_col in df.columns and model.pandas_categorical:
-            categories = model.pandas_categorical[0]
-            df[cat_col] = pd.Categorical(df[cat_col].astype(str), categories=categories)
-
-        _baseline_df = df
+        _baseline_df = _apply_categorical(df, model)
     return _baseline_df
+
+
+def get_shap_explainer():
+    """TreeExplainer over the trained LightGBM model, cached at module scope
+    since building it is the expensive part (~3s); per-row shap_values()
+    calls are fast (<0.5s) once built."""
+    global _shap_explainer
+    if _shap_explainer is None:
+        import shap
+        _shap_explainer = shap.TreeExplainer(get_model())
+    return _shap_explainer
+
+
+def get_feature_row(bzno: str, base_ym: str | None) -> pd.DataFrame:
+    """Single borrower's feature row (all model features) for SHAP scoring."""
+    model = get_model()
+    features = model.feature_name()
+    conn = duckdb.connect(DB_PATH, read_only=True)
+    cols = ', '.join(f'"{c}"' for c in features)
+    where = "WHERE V_BZNO = ?"
+    params = [bzno]
+    if base_ym:
+        panel = dedup_panel_sql(f"{where} AND CAST(BASE_YM AS VARCHAR) = ?")
+        params.append(str(base_ym))
+        order = ""
+    else:
+        panel = dedup_panel_sql(where)
+        order = "ORDER BY BASE_YM DESC"
+    df = conn.execute(f"SELECT {cols} FROM {panel} {order} LIMIT 1", params).df()
+    conn.close()
+    if df.empty:
+        return df
+    return _apply_categorical(df, model)
 
 
 def get_industry_name(code) -> str:
