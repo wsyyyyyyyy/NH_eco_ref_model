@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
-import { AlertOctagon, ArrowLeft, Bot, Info, Calculator, TrendingUp, CheckCircle, Activity, AlertTriangle, BarChart2, List } from 'lucide-react';
+import { AlertOctagon, ArrowLeft, Bot, Info, Calculator, TrendingUp, CheckCircle, Activity, AlertTriangle, BarChart2, List, ChevronDown } from 'lucide-react';
 import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer, Tooltip as RechartsTooltip, AreaChart, Area, CartesianGrid, XAxis, YAxis, Legend, BarChart, Bar, Cell } from 'recharts';
 import { borrowerDetailMock, shapMockData, featureContributions } from '../utils/mockData';
 import { getIndustryName } from '../utils/industry';
@@ -20,14 +20,18 @@ const tsMockData = [
     { month: '24.02', pd: 0.85 }
 ];
 
-export default function BorrowerDetail() {
+export default function BorrowerDetail({ baseYm: globalBaseYm }: { baseYm?: string } = {}) {
   const { id } = useParams();
   const [searchParams] = useSearchParams();
-  const baseYm = searchParams.get('base_ym');
+  // 상단 헤더의 기준일 선택(전역 상태)이 이 페이지에도 실시간으로 반영되어야
+  // 하므로, URL의 최초 진입 시점 스냅샷(base_ym)보다 우선한다.
+  const baseYm = globalBaseYm || searchParams.get('base_ym') || undefined;
   const navigate = useNavigate();
   const [data, setData] = useState<any>(null);
   const [useRealData, setUseRealData] = useState(true);
-  const [aiTips, setAiTips] = useState<{ text: string; loading: boolean; error: string | null }>({ text: '', loading: false, error: null });
+  const [aiTips, setAiTips] = useState<{ summary: string; tips: { title: string; reason: string }[]; loading: boolean; error: string | null }>({ summary: '', tips: [], loading: false, error: null });
+  const [expandedTip, setExpandedTip] = useState<number | null>(null);
+  const [financials, setFinancials] = useState<any[]>([]);
 
   useEffect(() => {
     setData(null);
@@ -64,8 +68,23 @@ export default function BorrowerDetail() {
   }, [id, useRealData, baseYm]);
 
   useEffect(() => {
+    if (!useRealData || !id) {
+      setFinancials([]);
+      return;
+    }
+    const url = baseYm
+      ? `${API_BASE_URL}/api/borrowers/${id}/financials?base_ym=${baseYm}`
+      : `${API_BASE_URL}/api/borrowers/${id}/financials`;
+    fetch(url)
+      .then(res => res.ok ? res.json() : Promise.reject(res))
+      .then(rows => setFinancials(Array.isArray(rows) ? rows : []))
+      .catch(() => setFinancials([]));
+  }, [id, useRealData, baseYm]);
+
+  useEffect(() => {
     if (!data) return;
-    setAiTips({ text: '', loading: true, error: null });
+    setExpandedTip(null);
+    setAiTips({ summary: '', tips: [], loading: true, error: null });
     fetch(`${API_BASE_URL}/api/ai/tips`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -79,8 +98,8 @@ export default function BorrowerDetail() {
       }),
     })
       .then(res => res.ok ? res.json() : res.json().then(err => Promise.reject(err)))
-      .then(result => setAiTips({ text: result.tips, loading: false, error: null }))
-      .catch(err => setAiTips({ text: '', loading: false, error: err?.detail || 'AI 팁을 불러오지 못했습니다.' }));
+      .then(result => setAiTips({ summary: result.summary, tips: result.tips || [], loading: false, error: null }))
+      .catch(err => setAiTips({ summary: '', tips: [], loading: false, error: err?.detail || 'AI 팁을 불러오지 못했습니다.' }));
   }, [data?.V_BZNO]);
 
   if (!data) return <div className="p-6">Loading Details...</div>;
@@ -160,15 +179,14 @@ export default function BorrowerDetail() {
         </button>
       </div>
 
-      <div className="grid-2" style={{alignItems: 'stretch', gap: '24px'}}>
-        {/* Row 1 */}
-        {/* 1. 기업 개요 */}
-        <div className="flex-col" style={{gap: '12px', height: '100%'}}>
+      <div className="flex-col" style={{gap: '24px'}}>
+        {/* Row 1 (1열 세로 배치): 1. 기업 개요 */}
+        <div className="flex-col" style={{gap: '12px'}}>
           <div className="flex-row" style={{gap: '8px'}}>
             <Info size={20} color="var(--primary)" />
             <h2 className="font-semibold" style={{margin: 0}}>기업 개요</h2>
           </div>
-          <div className="card grid-2" style={{flex: 1, alignContent: 'center'}}>
+          <div className="card grid-4">
             <div className="flex-col" style={{gap: '8px'}}>
               <span className="font-regular" style={{color: 'var(--text-muted)'}}>업종</span>
               <span className="font-bold" style={{fontSize: '16px'}}>{getIndustryName(data.STD_INDS_CFC)}</span>
@@ -189,7 +207,7 @@ export default function BorrowerDetail() {
         </div>
 
         {/* 2. AI 조기경보 모델 분석 의견 */}
-        <div className="flex-col" style={{gap: '12px', height: '100%'}}>
+        <div className="flex-col" style={{gap: '12px'}}>
           <div className="flex-row" style={{gap: '8px'}}>
             <Bot size={20} color="var(--primary)" />
             <h2 className="font-semibold" style={{margin: 0}}>AI 조기경보 모델 분석 의견</h2>
@@ -260,38 +278,79 @@ export default function BorrowerDetail() {
           </div>
         </div>
 
-        {/* Row 2 */}
-        {/* 3. 주요 재무/비재무 스냅샷 */}
+      </div>
+
+      <div className="grid-2" style={{alignItems: 'stretch', gap: '24px'}}>
+        {/* Row 2: 3. 주요 재무/비재무 (실측 3개년 추이) */}
         <div className="flex-col" style={{gap: '12px', height: '100%'}}>
           <div className="flex-row" style={{gap: '8px'}}>
             <Calculator size={20} color="var(--primary)" />
-            <h2 className="font-semibold" style={{margin: 0}}>주요 재무/비재무 스냅샷</h2>
+            <h2 className="font-semibold" style={{margin: 0}}>주요 재무/비재무 (최근 {financials.length || 3}개년)</h2>
           </div>
-          <div className="card flex-col" style={{gap: '16px', flex: 1, justifyContent: 'center'}}>
-            <div className="flex-row" style={{justifyContent: 'space-between', borderBottom: '1px dashed var(--border)', paddingBottom: '12px'}}>
-              <span className="font-regular" style={{color: 'var(--text-muted)'}}>자본총계</span>
-              <span className="font-bold">{data['자본총계']?.toLocaleString() ?? 'N/A'} 천원</span>
-            </div>
-            <div className="flex-row" style={{justifyContent: 'space-between', borderBottom: '1px dashed var(--border)', paddingBottom: '12px'}}>
-              <span className="font-regular" style={{color: 'var(--text-muted)'}}>총자산</span>
-              <span className="font-bold">{data['총자산']?.toLocaleString() ?? 'N/A'} 천원</span>
-            </div>
-            <div className="flex-row" style={{justifyContent: 'space-between', borderBottom: '1px dashed var(--border)', paddingBottom: '12px'}}>
-              <span className="font-regular" style={{color: 'var(--text-muted)'}}>매출액</span>
-              <span className="font-bold">{data['매출액']?.toLocaleString() ?? 'N/A'} 천원</span>
-            </div>
-            <div className="flex-row" style={{justifyContent: 'space-between', borderBottom: '1px dashed var(--border)', paddingBottom: '12px'}}>
-              <span className="font-regular" style={{color: 'var(--text-muted)'}}>KIS 점수</span>
-              <span className="font-bold">{data['CG01_KIS_SCORE'] === -1 ? '등급 없음 (초고위험)' : data['CG01_KIS_SCORE']}</span>
-            </div>
-            <div className="flex-row" style={{justifyContent: 'space-between'}}>
-              <span className="font-regular" style={{color: 'var(--text-muted)'}}>NICE 등급</span>
-              <span className="font-bold">{data['NICE_GRADE_CUR']}</span>
+          <div className="card" style={{flex: 1, overflowX: 'auto'}}>
+            {financials.length === 0 ? (
+              <span className="font-regular" style={{color: 'var(--text-muted)'}}>재무 데이터를 불러오는 중입니다...</span>
+            ) : (
+              <table style={{width: '100%', fontSize: '13px'}}>
+                <thead>
+                  <tr>
+                    <th style={{textAlign: 'left', paddingBottom: '8px', color: 'var(--text-muted)', fontWeight: 600}}>항목</th>
+                    {financials.map(f => (
+                      <th key={f.year} style={{textAlign: 'right', paddingBottom: '8px', color: 'var(--text-muted)', fontWeight: 600}}>{f.year}년</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {[
+                    { label: '자본총계', key: 'capital', unit: '천원' },
+                    { label: '총자산', key: 'total_assets', unit: '천원' },
+                    { label: '매출액', key: 'revenue', unit: '천원' },
+                    { label: '영업이익', key: 'operating_profit', unit: '천원' },
+                    { label: 'KIS 점수', key: 'kis_score', unit: '' },
+                    { label: 'NICE 등급', key: 'nice_grade', unit: '' },
+                  ].map(row => (
+                    <tr key={row.key} style={{borderTop: '1px dashed var(--border)'}}>
+                      <td style={{padding: '10px 0', color: 'var(--text-muted)'}}>{row.label}</td>
+                      {financials.map(f => (
+                        <td key={f.year} style={{padding: '10px 0', textAlign: 'right', fontWeight: 700}}>
+                          {row.key === 'kis_score' && f[row.key] === -1
+                            ? '등급 없음'
+                            : typeof f[row.key] === 'number'
+                              ? `${f[row.key].toLocaleString()}${row.unit ? ' ' + row.unit : ''}`
+                              : f[row.key]}
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </div>
+        </div>
+
+        {/* 5. 기업 역량 진단 (Radar) */}
+        <div className="flex-col" style={{gap: '12px', height: '100%'}}>
+          <div className="flex-row" style={{gap: '8px'}}>
+            <TrendingUp size={20} color="var(--primary)" />
+            <h2 className="font-semibold" style={{margin: 0}}>기업 역량 진단 (Radar)</h2>
+          </div>
+          <div className="card" style={{flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
+            <div style={{width: '100%', height: '260px'}}>
+              <ResponsiveContainer width="100%" height="100%">
+                <RadarChart cx="50%" cy="50%" outerRadius="80%" data={radarData}>
+                  <PolarGrid stroke="var(--border)" />
+                  <PolarAngleAxis dataKey="subject" tick={{fill: 'var(--text-main)', fontSize: 12, fontWeight: 500}} />
+                  <PolarRadiusAxis angle={30} domain={[0, 100]} tick={false} axisLine={false} />
+                  <Radar name="해당 기업" dataKey="A" stroke="var(--primary)" fill="var(--primary)" fillOpacity={0.5} />
+                  <Radar name="업종 평균" dataKey="B" stroke="var(--secondary)" fill="var(--secondary)" fillOpacity={0.3} />
+                  <RechartsTooltip contentStyle={{backgroundColor: 'var(--bg-card)', borderColor: 'var(--border)', borderRadius: '8px'}} />
+                </RadarChart>
+              </ResponsiveContainer>
             </div>
           </div>
         </div>
 
-        {/* 4. 부도 확률 시계열 추이 추정 */}
+        {/* Row 3: 4. 부도 확률 시계열 추이 추정 */}
         <div className="flex-col" style={{gap: '12px', height: '100%'}}>
           <div className="flex-row" style={{gap: '8px'}}>
             <Activity size={20} color="var(--primary)" />
@@ -318,46 +377,86 @@ export default function BorrowerDetail() {
           </div>
         </div>
 
-        {/* Row 3 */}
-        {/* 5. 기업 역량 진단 (Radar) */}
-        <div className="flex-col" style={{gap: '12px', height: '100%'}}>
-          <div className="flex-row" style={{gap: '8px'}}>
-            <TrendingUp size={20} color="var(--primary)" />
-            <h2 className="font-semibold" style={{margin: 0}}>기업 역량 진단 (Radar)</h2>
-          </div>
-          <div className="card" style={{flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
-            <div style={{width: '100%', height: '260px'}}>
-              <ResponsiveContainer width="100%" height="100%">
-                <RadarChart cx="50%" cy="50%" outerRadius="80%" data={radarData}>
-                  <PolarGrid stroke="var(--border)" />
-                  <PolarAngleAxis dataKey="subject" tick={{fill: 'var(--text-main)', fontSize: 12, fontWeight: 500}} />
-                  <PolarRadiusAxis angle={30} domain={[0, 100]} tick={false} axisLine={false} />
-                  <Radar name="해당 기업" dataKey="A" stroke="var(--primary)" fill="var(--primary)" fillOpacity={0.5} />
-                  <Radar name="업종 평균" dataKey="B" stroke="var(--secondary)" fill="var(--secondary)" fillOpacity={0.3} />
-                  <RechartsTooltip contentStyle={{backgroundColor: 'var(--bg-card)', borderColor: 'var(--border)', borderRadius: '8px'}} />
-                </RadarChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
-        </div>
-
-        {/* 6. 핵심 리스크 및 대응 방안 (NEW) */}
+        {/* 6. AI 핵심 리스크 및 대응 방안 */}
         <div className="flex-col" style={{gap: '12px', height: '100%'}}>
           <div className="flex-row" style={{gap: '8px'}}>
             <AlertTriangle size={20} color="var(--primary)" />
-            <h2 className="font-semibold" style={{margin: 0}}>핵심 리스크 및 대응 방안</h2>
+            <h2 className="font-semibold" style={{margin: 0}}>AI 핵심 리스크 및 대응 방안</h2>
           </div>
-          <div className="card flex-col" style={{flex: 1, gap: '16px', justifyContent: 'center'}}>
+          <div className="card flex-col" style={{flex: 1, gap: '16px', justifyContent: aiTips.tips.length ? 'flex-start' : 'center'}}>
             {aiTips.loading && (
               <p className="font-regular" style={{color: 'var(--text-muted)', fontSize: '14px'}}>Gemini가 분석 의견을 생성 중입니다...</p>
             )}
             {aiTips.error && (
               <p className="font-regular" style={{color: 'var(--danger)', fontSize: '14px'}}>{aiTips.error}</p>
             )}
-            {!aiTips.loading && !aiTips.error && aiTips.text && (
-              <p className="font-regular" style={{color: 'var(--text-main)', lineHeight: 1.6, fontSize: '14px', whiteSpace: 'pre-wrap'}}>
-                {aiTips.text}
-              </p>
+            {!aiTips.loading && !aiTips.error && aiTips.tips.length > 0 && (
+              <>
+                {aiTips.summary && (
+                  <p className="font-regular" style={{color: 'var(--text-main)', lineHeight: 1.6, fontSize: '14px'}}>
+                    {aiTips.summary}
+                  </p>
+                )}
+                <div className="flex-col" style={{gap: '10px'}}>
+                  {aiTips.tips.map((tip, idx) => {
+                    const isOpen = expandedTip === idx;
+                    return (
+                      <div
+                        key={idx}
+                        style={{
+                          border: '1px solid var(--border)',
+                          borderRadius: '8px',
+                          backgroundColor: isOpen ? 'var(--bg-main)' : 'white',
+                          overflow: 'hidden',
+                        }}
+                      >
+                        <button
+                          onClick={() => setExpandedTip(isOpen ? null : idx)}
+                          style={{
+                            width: '100%',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            gap: '10px',
+                            padding: '12px 14px',
+                            background: 'none',
+                            border: 'none',
+                            cursor: 'pointer',
+                            textAlign: 'left',
+                          }}
+                        >
+                          <span className="flex-row" style={{gap: '10px', alignItems: 'center'}}>
+                            <span
+                              className="font-bold"
+                              style={{
+                                flexShrink: 0,
+                                width: '22px',
+                                height: '22px',
+                                borderRadius: '50%',
+                                backgroundColor: 'var(--primary)',
+                                color: 'white',
+                                fontSize: '12px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                              }}
+                            >
+                              {idx + 1}
+                            </span>
+                            <span className="font-bold" style={{fontSize: '14px', color: 'var(--text-main)'}}>{tip.title}</span>
+                          </span>
+                          <ChevronDown size={16} color="var(--text-muted)" style={{flexShrink: 0, transform: isOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.15s'}} />
+                        </button>
+                        {isOpen && (
+                          <div style={{padding: '0 14px 14px 46px'}}>
+                            <span className="font-regular" style={{fontSize: '13px', color: 'var(--text-muted)', lineHeight: 1.5}}>{tip.reason}</span>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </>
             )}
           </div>
         </div>

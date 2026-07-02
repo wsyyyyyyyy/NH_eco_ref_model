@@ -32,6 +32,75 @@ def get_borrowers(branch_code: str = "VB001", base_ym: str = "202402", page: int
         r["KIS_GRADE_CUR"] = prob_to_grade(r["PROB_FULL"])
     return records
 
+@router.get("/{bzno}/financials")
+def get_borrower_financials(bzno: str, base_ym: Optional[str] = None, years: int = 3, db=Depends(get_db)):
+    """Last N distinct annual financial-statement vintages for a borrower.
+
+    JEMU_* columns (자본총계/총자산/매출액/영업이익 등) come from yearly
+    financial statements re-joined onto the monthly panel, so the same value
+    repeats for ~12 months until the next fiscal year's statement lands
+    (verified directly against the DB). Each vintage is labeled by the year
+    it FIRST took effect (MIN(BASE_YM) of the run) rather than whatever
+    month happens to be queried - otherwise the same FY2023 statement would
+    be mislabeled "2024" or "2025" depending purely on which month the user
+    is currently viewing, instead of the fiscal year it actually reports.
+
+    Some borrowers have a second vintage starting mid-year (e.g. a "no data
+    yet" placeholder for Jan-Jun, then the real first filing from Jul) which
+    would otherwise produce two columns both labeled with the same year; we
+    keep only the latest-starting vintage per calendar year.
+    """
+    panel = dedup_panel_sql("WHERE V_BZNO = ?")
+    params = [bzno]
+    cutoff = ""
+    if base_ym:
+        cutoff = "AND CAST(BASE_YM AS VARCHAR) <= ?"
+        params.append(str(base_ym))
+    params.append(years)
+
+    query = f"""
+        WITH vintages AS (
+            SELECT
+                MIN(BASE_YM) AS vintage_start,
+                arg_max(PROB_FULL, BASE_YM) AS PROB_FULL,
+                arg_max(CG01_KIS_SCORE, BASE_YM) AS CG01_KIS_SCORE,
+                JEMU_121000, JEMU_115000, JEMU_125000, JEMU_126000
+            FROM {panel}
+            WHERE 1=1 {cutoff}
+            GROUP BY JEMU_121000, JEMU_115000, JEMU_125000, JEMU_126000
+        ),
+        yearly AS (
+            SELECT *,
+                ROW_NUMBER() OVER (
+                    PARTITION BY SUBSTRING(CAST(vintage_start AS VARCHAR), 1, 4)
+                    ORDER BY vintage_start DESC
+                ) AS _yr_rn
+            FROM vintages
+        )
+        SELECT * FROM yearly WHERE _yr_rn = 1
+        ORDER BY vintage_start DESC
+        LIMIT ?
+    """
+    res = db.execute(query, params).df()
+    if res.empty:
+        raise HTTPException(status_code=404, detail=f"Borrower {bzno} not found")
+
+    records = []
+    for _, row in res.iloc[::-1].iterrows():  # oldest -> newest for a trend
+        vintage_start_str = str(int(row['vintage_start']))
+        records.append({
+            'year': vintage_start_str[:4],
+            'base_ym': vintage_start_str,
+            'capital': row['JEMU_121000'],
+            'total_assets': row['JEMU_115000'],
+            'revenue': row['JEMU_125000'],
+            'operating_profit': row['JEMU_126000'],
+            'kis_score': row['CG01_KIS_SCORE'],
+            'nice_grade': prob_to_grade(row['PROB_FULL']),
+        })
+    return records
+
+
 @router.get("/{bzno}")
 def get_borrower_detail(bzno: str, base_ym: Optional[str] = None, db=Depends(get_db)):
     panel = dedup_panel_sql("WHERE V_BZNO = ?")

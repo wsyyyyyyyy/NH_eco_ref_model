@@ -136,7 +136,7 @@ function AppLayout() {
           <Routes>
             <Route path="/global" element={<GlobalDashboard baseYm={baseDate} />} />
             <Route path="/branch" element={<BranchDashboard baseYm={baseDate} />} />
-            <Route path="/borrower/:id" element={<BorrowerDetail />} />
+            <Route path="/borrower/:id" element={<BorrowerDetail baseYm={baseDate} />} />
             <Route path="/monitoring" element={<ModelMonitoring />} />
             <Route path="/simulation" element={<MacroSimulation />} />
           </Routes>

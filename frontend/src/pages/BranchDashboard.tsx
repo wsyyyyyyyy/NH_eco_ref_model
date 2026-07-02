@@ -63,7 +63,9 @@ export default function BranchDashboard({ branch = 'VB001', baseYm = '202402' }:
 
   const checkIsBlindSpot = (b: any) => b.PROB_FULL >= 0.25 && b.OLD_PROB <= 0.06; // 기존평가 확률은 6% 이하로 낮았으나 ERM 실측은 25% 이상 고위험으로 판명된 AI 조기경보(사각지대) 대상
 
-  const filteredData = borrowers.filter(b => {
+  // 검색/업종/등급 필터: 상단 요약 카드(총 차주 수, 고위험군, 잠재 리스크)에도
+  // 반영되어야 하므로 탭 필터(activeTabFilter)와 분리해서 계산한다.
+  const contentFiltered = borrowers.filter(b => {
     const ermStr = getErmGrade(b.Z_GRADE);
     const matchSearch = String(b.V_BZNO).includes(searchTerm) ||
                         String(b.NICE_GRADE_CUR).toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -72,16 +74,20 @@ export default function BranchDashboard({ branch = 'VB001', baseYm = '202402' }:
     const matchInd = industryFilter ? getIndustryName(b.STD_INDS_CFC) === industryFilter : true;
     const matchLegacy = legacyGradeFilter ? b.NICE_GRADE_CUR === legacyGradeFilter : true;
     const matchErm = ermGradeFilter ? ermStr.startsWith(ermGradeFilter) : true;
-    const matchTab = activeTabFilter === 'highRisk' ? (b.PROB_FULL >= 0.25) : 
+    return matchSearch && matchInd && matchLegacy && matchErm;
+  });
+
+  const filteredData = contentFiltered.filter(b => {
+    const matchTab = activeTabFilter === 'highRisk' ? (b.PROB_FULL >= 0.25) :
                      activeTabFilter === 'mismatch' ? checkIsBlindSpot(b) : true;
-    return matchSearch && matchInd && matchLegacy && matchErm && matchTab;
+    return matchTab;
   });
 
   const totalPages = Math.ceil(filteredData.length / itemsPerPage) || 1;
   const paginatedData = filteredData.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
-  const highRiskCount = borrowers.filter(b => b.PROB_FULL >= 0.25).length;
-  const mismatchCount = borrowers.filter(b => checkIsBlindSpot(b)).length;
+  const highRiskCount = contentFiltered.filter(b => b.PROB_FULL >= 0.25).length;
+  const mismatchCount = contentFiltered.filter(b => checkIsBlindSpot(b)).length;
 
   return (
     <div className="flex-col" style={{gap: '24px'}}>
@@ -188,7 +194,7 @@ export default function BranchDashboard({ branch = 'VB001', baseYm = '202402' }:
               <p className="font-semibold" style={{fontSize: '14px', color: activeTabFilter === 'all' ? '#1d4ed8' : 'var(--text-muted)', margin: 0}}>지점 총 차주 수</p>
             </div>
             <div className="flex-row" style={{alignItems: 'baseline', gap: '8px'}}>
-              <div className="font-extrabold" style={{fontSize: '32px', color: activeTabFilter === 'all' ? '#1e40af' : 'var(--text-main)'}}>{borrowers.length.toLocaleString()}</div>
+              <div className="font-extrabold" style={{fontSize: '32px', color: activeTabFilter === 'all' ? '#1e40af' : 'var(--text-main)'}}>{contentFiltered.length.toLocaleString()}</div>
               <span className="font-medium" style={{fontSize: '14px', color: 'var(--text-muted)'}}>개사 전체보기</span>
             </div>
           </div>
