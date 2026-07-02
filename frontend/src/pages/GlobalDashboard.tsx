@@ -57,6 +57,18 @@ export default function GlobalDashboard({ baseYm = '202402' }: { baseYm?: string
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [useRealData, setUseRealData] = useState(true);
+  const [trendData, setTrendData] = useState<any[] | null>(null);
+
+  useEffect(() => {
+    if (!useRealData) {
+      setTrendData(null);
+      return;
+    }
+    fetch(`${API_BASE_URL}/api/dashboard/trend?base_ym=${baseYm}&months=6`)
+      .then(res => res.json())
+      .then(rows => setTrendData(Array.isArray(rows) ? rows : null))
+      .catch(() => setTrendData(null));
+  }, [baseYm, useRealData]);
 
   useEffect(() => {
     setLoading(true);
@@ -131,47 +143,14 @@ export default function GlobalDashboard({ baseYm = '202402' }: { baseYm?: string
   const safeCount = data.total_companies - data.risk_companies;
   const riskRatio = ((data.risk_companies / data.total_companies) * 100).toFixed(1);
 
-  // 기준년월(baseYm)에 따라 동적으로 변화하는 PD-LAG (과거 6개월 추이) 시각화 데이터 계산
-  const getRecentMonths = (ym: string, count: number = 6) => {
-    if (!ym || ym.length !== 6) return ['23.09', '23.10', '23.11', '23.12', '24.01', '24.02'];
-    const year = parseInt(ym.substring(0, 4), 10);
-    const month = parseInt(ym.substring(4, 6), 10);
-    const result: string[] = [];
-    for (let i = count - 1; i >= 0; i--) {
-      let d = new Date(year, month - 1 - i, 1);
-      let y = String(d.getFullYear()).slice(-2);
-      let m = String(d.getMonth() + 1).padStart(2, '0');
-      result.push(`${y}.${m}`);
-    }
-    return result;
-  };
+  const lineChartData = trendData || [];
 
-  const monthsList = getRecentMonths(baseYm, 6);
-  const currentRiskNum = parseFloat(riskRatio) || 8.2;
-  
-  const lineChartData = monthsList.map((m, idx) => {
-    const factor = (idx + 1) / 6;
-    // 과거 6개월간 점진적으로 현재 선택월의 위험률(currentRiskNum)로 수렴하는 실질 부도율 곡선
-    const actual = Number((currentRiskNum * (0.38 + 0.62 * Math.pow(factor, 1.3))).toFixed(1));
-    // ERM 모델은 시장 실질 부도율 변화를 즉각 포착 (PD-LAG 0~1개월 고정밀 탐지)
-    const erm = Number((actual * 0.98 + (idx === 5 ? 0 : 0.1)).toFixed(1));
-    // 기존 모델은 최근의 위기 징후를 반영하지 못해 부도율을 크게 과소예측
-    const legacy = Number((actual * 0.48).toFixed(1));
-    return {
-      month: m,
-      기존: legacy,
-      신규: erm,
-      실제: actual
-    };
-  });
-
-  // 기준년월의 업종별 실제 고위험 비율과 기업수를 활용한 업종 리스크 매트릭스 동적 생성 (다채로운 색상 및 넓은 분산 좌표 적용)
+  // 기준년월의 업종별 실제 고위험 비율과 기업수를 활용한 업종 리스크 매트릭스.
+  // X축(기존 평가 위험도)은 legacy_risk_pct(OLD_PROB = PROB_FULL * 0.15 업종 평균) 실측값.
   const scatterData = (data.top_risk_industries || []).slice(0, 8).map((ind: any, idx: number) => {
     const shortName = formatShortName(ind.industry);
     const yVal = Number(ind.risk_ratio.toFixed(1));
-    // 기존 위험도(X축)를 업종 순위 및 분산 계수에 따라 조화롭게 펼쳐서 대각선 밀집 현상 해결
-    const spreadFactors = [0.35, 0.72, 0.45, 0.82, 0.52, 0.28, 0.65, 0.58];
-    const xVal = Number((yVal * (spreadFactors[idx % spreadFactors.length] || 0.5)).toFixed(1));
+    const xVal = Number((ind.legacy_risk_pct ?? 0).toFixed(2));
     return {
       name: shortName,
       fullName: ind.industry,
@@ -281,7 +260,7 @@ export default function GlobalDashboard({ baseYm = '202402' }: { baseYm?: string
               <ResponsiveContainer width="100%" height="100%">
                 <ScatterChart margin={{ top: 35, right: 35, left: -10, bottom: 20 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                  <XAxis type="number" dataKey="x" name="기존 평가 위험도" unit="%" domain={[0, (dataMax: number) => Math.max(25, Math.ceil(dataMax * 1.25))]} tick={{fill: 'var(--text-muted)', fontSize: 12, fontWeight: 600}} axisLine={{stroke: '#e5e7eb'}} tickLine={false} />
+                  <XAxis type="number" dataKey="x" name="기존 평가 위험도" unit="%" domain={[0, (dataMax: number) => Math.ceil(dataMax * 1.25 * 10) / 10]} tick={{fill: 'var(--text-muted)', fontSize: 12, fontWeight: 600}} axisLine={{stroke: '#e5e7eb'}} tickLine={false} />
                   <YAxis type="number" dataKey="y" name="ERM 고위험률" unit="%" domain={[0, (dataMax: number) => Math.max(35, Math.ceil(dataMax * 1.25))]} tick={{fill: 'var(--text-muted)', fontSize: 12, fontWeight: 600}} axisLine={{stroke: '#e5e7eb'}} tickLine={false} />
                   <ZAxis type="number" dataKey="z" range={[280, 950]} name="기업 수" />
                   <RechartsTooltip 
