@@ -78,15 +78,54 @@
 
 ---
 
+## 🖥 AI 조기경보 웹 포털 (Portal & Real-Data Integration)
+
+모델링 산출물을 실사용자가 쓸 수 있는 형태로 서비스화한 FastAPI + DuckDB 백엔드와 React 프론트엔드 포털입니다 (`step14` ~ `step20`).
+
+### 1. 포털 구축 (`step14`, `step15`)
+- **DuckDB + FastAPI**: 194만 건 규모의 기업 시계열 패널(`portal.duckdb`)을 실시간 OLAP 조회하는 API 서버 구축.
+- **React 포털 UI/UX**: 글로벌 뱅크 뷰(전사 현황) → 지점 대시보드(차주 리스트) → 차주 상세(개별 심사) 3단 계층 구조의 실사용자 웹 포털 개발.
+
+### 2. 백엔드 안정화 및 모델 실연동 (`step16`, `step17`)
+- **거시경제 시뮬레이션 실모델화**: `/api/simulation`을 목업 대신 실제 LightGBM 모델 재추론(`model_inference.py`)으로 교체.
+- **데이터 정합성 확보**: 차주 리스트/상세 화면 간 등급 불일치 원인이었던 `(V_BZNO, BASE_YM)` 중복 행을 `dedup_panel_sql()`로 전면 제거, 기준연월 파라미터 미반영 버그 수정.
+- 운영 안전성: `.env` 기반 설정 분리, CORS 제한, LightGBM 모델 파일 CRLF 손상 방지용 `.gitattributes` 추가.
+
+### 3. 차주 상세 페이지 실데이터 전환 (`step18`, `step19`)
+- **재무/비재무 3개년 이력, 부도확률(PD) 시계열, 요인별 기여도(SHAP), 기업역량진단(Radar)**: 모두 하드코딩 mock을 제거하고 실제 DB 집계·`shap.TreeExplainer`·업종 백분위(`PERCENT_RANK`) 기반 실계산으로 교체.
+- **Gemini AI 조기경보 의견**: `google-genai` 구조화 출력(`response_schema`)으로 실시간 리스크 코멘트 생성, `(bzno, base_ym)` 캐싱 및 할당량 초과 시 정적 가이드로 자연스럽게 폴백하는 UX 적용.
+
+### 4. 글로벌 뱅크 뷰 실데이터 전환 (`step20`)
+- 전사 KPI, 등급분포, PD-LAG 실질 부도율 추이(`/api/dashboard/trend`), 업종별 리스크 매트릭스 산점도까지 남아있던 마지막 가짜 수식(mock)을 실제 월별 집계·실현 부도율(`IS_BUDO_12M`)로 전면 교체하여, 포털 전 화면이 end-to-end로 실데이터와 연동됨을 확인.
+
+---
+
 ## 📂 리포지토리 파일 구조 (File Structure)
 
 ```text
 ├── README.md                          # 프로젝트 오버뷰 및 요약 (현재 파일)
 ├── docs/                              # 기획, 설계, 분석 결과 등 산출물 관리 (Walkthrough, Task 등)
-│   ├── step14_portal_api_setup.md     # Step 14 DuckDB+FastAPI 웹 포털 구축 명세
-│   └── step15_integrated_portal_development_report.md # Step 15 AI 조기경보 웹 포털 UI/UX 종합 보고서
+│   ├── step01_to_06_data_pipeline_and_eda.md
+│   ├── step07_to_09_modeling_and_shap_analysis.md
+│   ├── step10_to_13_model_evaluation_and_walkthrough.md
+│   ├── step14_portal_api_setup.md             # Step 14 DuckDB+FastAPI 웹 포털 구축 명세
+│   ├── step15_integrated_portal_development_report.md # Step 15 AI 조기경보 웹 포털 UI/UX 종합 보고서
+│   ├── step16_backend_hardening_and_real_model_integration.md # Step 16 시뮬레이션 실모델화 및 백엔드 하드닝
+│   ├── step17_data_consistency_and_dedup_fixes.md      # Step 17 리스트/상세 정합성 및 중복행 제거
+│   ├── step18_borrower_detail_ux_and_ai_tips_structuring.md # Step 18 차주 상세 UX 개편 및 AI 팁 구조화
+│   ├── step19_gemini_reliability_and_real_shap_capability.md # Step 19 Gemini 안정화 및 실제 SHAP/역량진단
+│   └── step20_global_dashboard_real_trend_and_industry_matrix.md # Step 20 글로벌 뱅크 뷰 실데이터 전환
 ├── frontend/                          # React 18 + Vite + Recharts 기반 실사용자 ERM 조기경보 웹 포털
-├── backend/                           # FastAPI 기반 실시간 DuckDB OLAP 조회 및 AI 조기경보 분석 API
+│   └── src/
+│       ├── config.ts                  # API_BASE_URL 등 환경설정
+│       └── pages/                     # GlobalDashboard, BranchDashboard, BorrowerDetail, ModelMonitoring, MacroSimulation, LoginPage
+├── backend/                            # FastAPI 기반 실시간 DuckDB OLAP 조회 및 AI 조기경보 분석 API
+│   ├── main.py                        # FastAPI 앱 엔트리포인트, CORS/라우터 등록
+│   ├── database.py                    # DuckDB 커넥션 및 dedup_panel_sql 등 공통 쿼리 유틸
+│   ├── model_inference.py             # LightGBM 모델/SHAP explainer 로딩 및 실추론
+│   ├── grade_mapping.py                # PROB_FULL → 16단계 등급 매핑
+│   ├── feature_labels.py              # 모델 피처 코드 → 한글 라벨 매핑
+│   └── routers/                       # dashboard, borrowers, monitoring, simulation, ai API 라우터
 ├── database/                          # portal.duckdb 기업 시계열 패널 데이터 저장소
 ├── eda_pipeline/
 │   ├── step1_load.py                  # 원천 데이터 로드
