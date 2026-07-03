@@ -1,17 +1,30 @@
 import { useState } from 'react';
+import { API_BASE_URL } from '../config';
 
 export default function LoginPage({ onLogin }: { onLogin: () => void }) {
   const [empId, setEmpId] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
+    setError('');
     setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
-      onLogin();
-    }, 800);
+    fetch(`${API_BASE_URL}/api/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ emp_id: empId, password }),
+    })
+      .then(async res => {
+        if (!res.ok) {
+          const body = await res.json().catch(() => ({}));
+          throw new Error(body.detail || '로그인에 실패했습니다.');
+        }
+        onLogin();
+      })
+      .catch(err => setError(err.message || '로그인에 실패했습니다.'))
+      .finally(() => setLoading(false));
   };
 
   return (
@@ -44,8 +57,11 @@ export default function LoginPage({ onLogin }: { onLogin: () => void }) {
           </h1>
         </div>
         
-        <p style={{color: 'var(--text-muted)', marginBottom: '32px', textAlign: 'center'}}>
+        <p style={{color: 'var(--text-muted)', marginBottom: '8px', textAlign: 'center'}}>
           AI 조기경보 가상지점 포털에<br/>오신 것을 환영합니다.
+        </p>
+        <p style={{color: 'var(--text-muted)', fontSize: '12px', marginBottom: '24px', textAlign: 'center'}}>
+          테스트 계정: admin / admin1234
         </p>
 
         <form onSubmit={handleLogin} style={{width: '100%', display: 'flex', flexDirection: 'column', gap: '16px'}}>
@@ -81,9 +97,15 @@ export default function LoginPage({ onLogin }: { onLogin: () => void }) {
             />
           </div>
 
-          <button 
-            type="submit" 
-            className="btn btn-primary" 
+          {error && (
+            <div style={{padding: '10px 14px', borderRadius: '8px', background: '#fef2f2', border: '1px solid #fecaca', color: 'var(--danger)', fontSize: '13px', fontWeight: 600}}>
+              {error}
+            </div>
+          )}
+
+          <button
+            type="submit"
+            className="btn btn-primary"
             style={{width: '100%', padding: '14px', marginTop: '16px', justifyContent: 'center', fontWeight: 600, fontSize: '16px'}}
             disabled={loading}
           >

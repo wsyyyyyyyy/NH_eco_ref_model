@@ -87,16 +87,18 @@ footer.bottombar { height: 40px; background: white; border-top: 1px solid var(--
       <div style="width:40px;height:40px;border-radius:12px;background:var(--primary);display:flex;align-items:center;justify-content:center;color:white;font-weight:900;">E</div>
       <h1 style="margin:0;font-size:24px;letter-spacing:-0.5px;"><span style="color:var(--primary);">ECO</span> Ref Model</h1>
     </div>
-    <p style="color:var(--text-muted);margin-bottom:32px;text-align:center;">AI 조기경보 가상지점 포털에<br/>오신 것을 환영합니다.<br/><span style="font-size:12px;color:#94a3b8;">(공유용 Mockup — 샘플 데이터로 동작합니다)</span></p>
+    <p style="color:var(--text-muted);margin-bottom:8px;text-align:center;">AI 조기경보 가상지점 포털에<br/>오신 것을 환영합니다.<br/><span style="font-size:12px;color:#94a3b8;">(공유용 Mockup — 샘플 데이터로 동작합니다)</span></p>
+    <p style="color:var(--text-muted);font-size:12px;margin-bottom:24px;text-align:center;">테스트 계정: admin / admin1234</p>
     <form id="login-form" style="width:100%;display:flex;flex-direction:column;gap:16px;" onsubmit="return doLogin(event)">
       <div class="flex-col" style="gap:8px;">
         <label style="font-size:14px;font-weight:600;">사번 (행번)</label>
-        <input type="text" placeholder="예: 20240101" style="width:100%;padding:12px 16px;box-sizing:border-box;">
+        <input id="login-empid" type="text" placeholder="admin" style="width:100%;padding:12px 16px;box-sizing:border-box;">
       </div>
       <div class="flex-col" style="gap:8px;">
         <label style="font-size:14px;font-weight:600;">비밀번호</label>
-        <input type="password" placeholder="아무 값이나 입력하세요" style="width:100%;padding:12px 16px;box-sizing:border-box;">
+        <input id="login-password" type="password" placeholder="admin1234" style="width:100%;padding:12px 16px;box-sizing:border-box;">
       </div>
+      <div id="login-error" style="display:none;padding:10px 14px;border-radius:8px;background:#fef2f2;border:1px solid #fecaca;color:var(--danger);font-size:13px;font-weight:600;">사번 또는 비밀번호가 올바르지 않습니다.</div>
       <button type="submit" class="btn btn-primary" style="width:100%;padding:14px;margin-top:16px;justify-content:center;font-weight:600;font-size:16px;">로그인 (Mockup 체험 시작)</button>
     </form>
   </div>
@@ -491,6 +493,13 @@ let simState = { interestRate: 0, exchangeRate: 0, inflation: 0, oilPrice: 0, gd
 
 function doLogin(e) {
   e.preventDefault();
+  const empId = document.getElementById('login-empid').value;
+  const password = document.getElementById('login-password').value;
+  if (empId !== 'admin' || password !== 'admin1234') {
+    document.getElementById('login-error').style.display = 'block';
+    return false;
+  }
+  document.getElementById('login-error').style.display = 'none';
   document.getElementById('login-screen').style.display = 'none';
   document.getElementById('app-shell').style.display = 'flex';
   initApp();

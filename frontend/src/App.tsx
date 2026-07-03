@@ -143,9 +143,8 @@ function AppLayout() {
         </main>
 
         {/* Footer Status Bar */}
-        <footer style={{height: '40px', backgroundColor: 'white', borderTop: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 32px', flexShrink: 0}}>
+        <footer style={{height: '40px', backgroundColor: 'white', borderTop: '1px solid var(--border)', display: 'flex', alignItems: 'center', padding: '0 32px', flexShrink: 0}}>
           <span className="font-medium" style={{fontSize: '13px', color: 'var(--text-muted)'}}>ECO Ref Model v2.0 (Powered by LightGBM)</span>
-          <span className="font-medium" style={{fontSize: '13px', color: 'var(--text-muted)'}}>최근 모델 업데이트: 2024-02-15 03:00 KST</span>
         </footer>
         
       </div>
