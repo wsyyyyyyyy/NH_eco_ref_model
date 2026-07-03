@@ -65,6 +65,8 @@
 | Gini | 0.7598 | 0.7593 |
 | K-S | 0.5925 | 0.5916 |
 
+![평가 방식별 AUC 비교](../eda_pipeline/output/validation/step22_3way_split_comparison_bar.png)
+
 **핵심 발견**: 완전히 분리된 진짜 Test 성능(0.880)은 기존 정적 스플릿 보고값(0.9011)이나 §1의 Dev/Valid 방식 결과(0.9126)보다 뚜렷이 낮다. 다만 이는 방법론적 결함이라기보다 **"2023년 말에 학습을 멈춘 모델을 18개월 동안 한 번도 갱신하지 않고 미래로 계속 밀어붙였을 때의 실제 성능"**을 보여주는 것이다. §4의 워크포워드 CV에서 같은 기간(2025.01~2026.06, 폴드 9~14)을 **매 3개월마다 최신 데이터로 재학습**하며 평가했을 때는 평균 AUC가 약 0.906으로 훨씬 높았다 — 즉 **모델을 한 번 배포해 놓고 방치하는 것과, 주기적으로 재학습하는 것 사이에 약 2.6%p의 실질적 차이**가 있다는 뜻이다.
 
 **결론**: 3-way 완전 분리는 "얼마나 낙관적으로 편향돼 있었는가"를 더 정직하게 드러낸다 — 정적 스플릿 하나만 보고하는 관행보다 훨씬 보수적인(그리고 아마도 더 현실적인) 성능 추정치를 제공한다. 실무적 시사점은 명확하다: **모델을 1회성으로 배포하지 말고 분기 단위로 재학습하는 운영 정책이 필요하다.**
@@ -108,7 +110,11 @@ Top-30 중 고상관 쌍은 단 2개뿐이며, **두 쌍 모두 이미 기존 VI
 | **A. 현재 Lean(80) 단독 재검증** | 78개 수치형 (범주형 2개 제외) | **75개 통과, 3개는 VIF가 사실상 무한대** — `BSI_mfg_export_yoy`, `call_rate_overnight_diff12`, `import_index_yoy` (각각 자신의 3개월 이동평균(`_ma3m`) 버전과 함께 Lean셋에 들어있어 거의 완벽한 선형관계를 이룸) |
 | **B. Full(230) 228개 변수 from-scratch 재검증** | 228개 수치형 | **85개만 VIF≤10 통과, 143개(62.7%) 탈락** |
 
+![다중공선성 재검증: 생존 vs 탈락](../eda_pipeline/output/validation/step22_multicollinearity_survival_bar.png)
+
 **패턴**: 탈락한 143개 중 절대다수는 거시경제/외부 API 변수(금리·환율·원자재·경기지표)이며, VIF 값이 10^13~10^45 수준으로 사실상 완전선형관계다 — 대부분 **원본 계열과 그 3개월 이동평균(`_ma3m`) 버전이 동시에 들어있거나, 서로 다른 금리/환율 시리즈끼리 강하게 동조**하기 때문이다. 반면 핵심 재무비율(`JEMU_*`) 변수들의 탈락 사유는 VIF가 훨씬 낮은 수준(수십~수천)으로, 계정과목 간 대수적 연관성 정도의 "정상적인" 다중공선성이다.
+
+![탈락 143개 변수의 VIF 분포 (재무비율 vs 거시경제)](../eda_pipeline/output/validation/step22_vif_distribution.png)
 
 | 비교 | 건수 |
 |---|---:|
@@ -231,6 +237,7 @@ py eda_pipeline/step18_model_benchmark.py           # 항목 5 (xgboost 패키�
 py eda_pipeline/step19_validation_report_plots.py   # 항목 2/3/5 시각화 (step15/16/18 결과 CSV 재사용, 재학습 없음)
 py eda_pipeline/step20_true_3way_split_check.py     # §1-1 순수 3-way Train/Validation/Test 분할 추가 검증
 py eda_pipeline/step21_full_multicollinearity_check.py  # §2-1 전체 228개 변수 기준 VIF 재검증
+py eda_pipeline/step22_followup_plots.py            # §1-1/§2-1 시각화 (step17/20/21 결과 재사용, 재학습 없음)
 ```
 
 산출물(표/플롯)은 `eda_pipeline/output/validation/`에 저장된다(gitignore 대상, 재실행 시마다 갱신).
