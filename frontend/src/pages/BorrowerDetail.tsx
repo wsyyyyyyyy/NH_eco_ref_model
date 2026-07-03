@@ -158,7 +158,9 @@ export default function BorrowerDetail({ baseYm: globalBaseYm }: { baseYm?: stri
   if (!data) return <div className="p-6">Loading Details...</div>;
 
   const isAiHighRisk = data.PROB_FULL > 0.5;
-  const isExistingHighRisk = ['G4', 'G5'].includes(data.Z_GRADE);
+  // Z_GRADE는 ERM 자체 등급이라 이걸로 "기존"을 판정하면 ERM을 ERM과 비교하는 셈이 된다.
+  // 실제 은행 내부 조기경보 관찰등급(OBV_ELYWRN_OBV_GRD_DSC, B=위험)을 기준으로 판정한다.
+  const isExistingHighRisk = data.OBV_ELYWRN_OBV_GRD_DSC === 'B';
   
   // 기존신용평가 등급(NICE_GRADE_CUR)과 OLD_PROB은 백엔드가 실측 PROB_FULL 분포
   // 기반 grade_mapping.py로 산출해 내려주므로 그대로 사용한다.

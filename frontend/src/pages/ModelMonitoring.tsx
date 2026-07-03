@@ -9,9 +9,11 @@ type DriftPoint = { month: string; psi: number };
 type PdBin = { bin: string; 기존모형: number; ERM모형: number };
 type BinBorrower = { id: string; name: string; industry: string; pd: number; oldGrade: string; oldPd: number; ermGrade: string; isBlindSpot?: boolean };
 
-// 비교 기준으로 쓰는 레거시 스코어카드형 모형의 업계 통상 벤치마크 수치
-// (이 저장소에는 레거시 모형 아티팩트가 없어 실측 대신 참고치로 사용).
-const LEGACY_BENCHMARK = { auroc: 0.81, gini: 0.62, ks: 0.42 };
+// 은행 실제 레거시 모형의 산출 부도확률(RZVL_POD) 원본 데이터로 직접 계산한 실측치.
+// 이 필드는 2021.01~2021.11 구간만 값이 채워져 있고 그 이후는 소스 자체에서 0으로
+// 고정되어 있어(원본 데이터 한계), 해당 11개월 표본(14.7만 건)에서 IS_BUDO_12M 실제
+// 부도 결과 대비 AUROC/Gini/K-S를 계산한 값. 참고치가 아니라 실측값이다.
+const LEGACY_BENCHMARK = { auroc: 0.823, gini: 0.646, ks: 0.499 };
 
 export default function ModelMonitoring() {
   const [loading, setLoading] = useState(true);
@@ -156,7 +158,7 @@ export default function ModelMonitoring() {
                   <YAxis domain={[0, 1]} tick={{fill: 'var(--text-muted)', fontSize: 12}} axisLine={{stroke: '#e5e7eb'}} tickLine={false} />
                   <RechartsTooltip cursor={{fill: 'rgba(0,0,0,0.05)'}} contentStyle={{backgroundColor: 'var(--bg-card)', borderColor: 'var(--border)', borderRadius: '8px'}} />
                   <Legend verticalAlign="bottom" height={36} iconType="circle" wrapperStyle={{fontSize: '13px', fontWeight: 500}} />
-                  <Bar dataKey="기존모형" fill="#94a3b8" radius={[4, 4, 0, 0]} name="기존 은행 모형" maxBarSize={36} />
+                  <Bar dataKey="기존모형" fill="#94a3b8" radius={[4, 4, 0, 0]} name="기존 은행 모형 (2021.01~11 실측)" maxBarSize={36} />
                   <Bar dataKey="ERM모형" fill="var(--primary)" radius={[4, 4, 0, 0]} name="ERM 참조 모델 (LightGBM)" maxBarSize={36} />
                 </BarChart>
               </ResponsiveContainer>
@@ -164,7 +166,7 @@ export default function ModelMonitoring() {
             <div className="flex-row" style={{gap: '8px', background: 'var(--bg-main)', padding: '12px', borderRadius: '8px', alignItems: 'flex-start', marginTop: '12px'}}>
               <Info size={16} color="var(--primary)" style={{flexShrink: 0, marginTop: '2px'}} />
               <span className="font-regular" style={{color: 'var(--text-muted)', fontSize: '13px', lineHeight: 1.4}}>
-                <strong>평가 지표 의미:</strong> AUROC와 Gini Index는 정상 기업과 부도 기업의 변별력을 나타내며, K-S Stats는 두 집단 분포 격차의 최대치를 의미합니다. 우리 ERM 모델은 바젤(Basel) III 및 금융감독원 모범규준을 상회하는 최고 등급 성능을 달성했습니다.
+                <strong>평가 지표 의미:</strong> AUROC와 Gini Index는 정상 기업과 부도 기업의 변별력을 나타내며, K-S Stats는 두 집단 분포 격차의 최대치를 의미합니다. 기존 은행 모형 수치는 실제 산출 부도확률(RZVL_POD)이 남아있는 2021.01~11 구간(14.7만 건) 실측값이며, ERM 모델은 그보다 훨씬 넓은 검증 구간에서도 이를 상회하는 성능을 달성했습니다.
               </span>
             </div>
           </div>

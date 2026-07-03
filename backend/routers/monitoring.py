@@ -152,7 +152,7 @@ def get_borrowers_by_bin(bin: str):
     conn = duckdb.connect(DB_PATH, read_only=True)
     panel = dedup_panel_sql("WHERE BASE_YM = (SELECT MAX(BASE_YM) FROM corporate_panel)")
     df = conn.execute(f"""
-        SELECT V_BZNO, STD_INDS_CFC, PROB_FULL, Z_GRADE
+        SELECT V_BZNO, STD_INDS_CFC, PROB_FULL, Z_GRADE, OBV_ELYWRN_OBV_GRD_DSC
         FROM {panel}
         WHERE PROB_FULL >= ? AND PROB_FULL < ?
         ORDER BY PROB_FULL DESC
@@ -166,7 +166,9 @@ def get_borrowers_by_bin(bin: str):
     for _, row in df.iterrows():
         old_pd = row['PROB_FULL'] * 0.15
         old_grade = prob_to_grade(old_pd)
-        is_blind_spot = old_grade in ('AAA', 'AA+', 'AA0', 'AA-', 'A+', 'A0', 'A-') and row['PROB_FULL'] >= 0.5
+        # 사각지대 판정은 실제 은행 내부 조기경보 관찰등급(A=안전)을 기준으로 함 —
+        # old_grade/old_pd는 PROB_FULL의 근사 표시용일 뿐 독립적인 판정 근거가 아님.
+        is_blind_spot = row['OBV_ELYWRN_OBV_GRD_DSC'] == 'A' and row['PROB_FULL'] >= 0.5
         records.append({
             'id': str(row['V_BZNO']),
             'name': f"기업_{row['V_BZNO']}",

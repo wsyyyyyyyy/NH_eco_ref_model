@@ -19,6 +19,7 @@ def get_borrowers(branch_code: str = "VB001", base_ym: str = "202402", page: int
             MAX(PROB_FULL) as PROB_FULL,
             ANY_VALUE(Z_SCORE) as Z_SCORE,
             ANY_VALUE(Z_GRADE) as Z_GRADE,
+            ANY_VALUE(OBV_ELYWRN_OBV_GRD_DSC) as OBV_ELYWRN_OBV_GRD_DSC,
             ROUND(MAX(PROB_FULL) * 0.15, 4) as OLD_PROB
         FROM corporate_panel
         WHERE V_BRANCH_CODE = ? AND CAST(BASE_YM AS VARCHAR) = ?
@@ -282,6 +283,10 @@ def get_borrower_detail(bzno: str, base_ym: Optional[str] = None, db=Depends(get
 
     record = res.to_dict(orient="records")[0]
     record.pop("_rn", None)
+    # pandas represents SQL NULL in numeric columns as float('nan'), which json.dumps
+    # cannot serialize (raises ValueError) -- convert to None. Matters now that
+    # RZVL_POD is mostly NULL (only populated for 2021.01~11).
+    record = {k: (None if isinstance(v, float) and math.isnan(v) else v) for k, v in record.items()}
     old_prob = round(record["PROB_FULL"] * 0.15, 4)
     record["OLD_PROB"] = old_prob
     record["NICE_GRADE_PREV"] = prob_to_grade(old_prob)

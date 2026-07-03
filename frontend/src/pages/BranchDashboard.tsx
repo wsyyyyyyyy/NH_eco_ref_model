@@ -61,7 +61,9 @@ export default function BranchDashboard({ branch = 'VB001', baseYm = '202402' }:
   };
   const getErmGrade = (grade: string) => ERM_GRADE_LABELS[grade] || grade;
 
-  const checkIsBlindSpot = (b: any) => b.PROB_FULL >= 0.25 && b.OLD_PROB <= 0.06; // 기존평가 확률은 6% 이하로 낮았으나 ERM 실측은 25% 이상 고위험으로 판명된 AI 조기경보(사각지대) 대상
+  // 은행 자체 조기경보 관찰등급(A=안전)이었으나 ERM은 25% 이상 고위험으로 판명된 AI 조기경보(사각지대) 대상.
+  // OLD_PROB(=PROB_FULL*0.15)은 우리 모델을 축소한 근사치일 뿐 독립적인 판정 근거가 아니므로 쓰지 않는다.
+  const checkIsBlindSpot = (b: any) => b.PROB_FULL >= 0.25 && b.OBV_ELYWRN_OBV_GRD_DSC === 'A';
 
   // 검색/업종/등급 필터: 상단 요약 카드(총 차주 수, 고위험군, 잠재 리스크)에도
   // 반영되어야 하므로 탭 필터(activeTabFilter)와 분리해서 계산한다.

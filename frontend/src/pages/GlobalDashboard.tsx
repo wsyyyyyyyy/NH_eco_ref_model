@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { BarChart, Bar, LineChart, Line, ScatterChart, Scatter, XAxis, YAxis, Tooltip as RechartsTooltip, ResponsiveContainer, CartesianGrid, ReferenceArea, ZAxis, LabelList, Cell, Legend } from 'recharts';
+import { BarChart, Bar, ScatterChart, Scatter, XAxis, YAxis, Tooltip as RechartsTooltip, ResponsiveContainer, CartesianGrid, ZAxis, LabelList, Cell } from 'recharts';
 import { AlertTriangle, CheckCircle, TrendingUp, Users, BarChart as BarChartIcon } from 'lucide-react';
 import { getIndustryName } from '../utils/industry';
 import { globalMock } from '../utils/mockData';
@@ -53,24 +53,6 @@ const CustomScatterLabel = (props: any) => {
   );
 };
 
-const TrendTooltip = ({ active, payload, label }: any) => {
-  if (!active || !payload || !payload.length) return null;
-  const point = payload[0].payload;
-  return (
-    <div style={{backgroundColor: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: '8px', padding: '10px 14px'}}>
-      <p style={{fontWeight: 700, marginBottom: '6px'}}>{label}</p>
-      {payload.map((p: any) => (
-        <p key={p.dataKey} style={{color: p.color, margin: '2px 0'}}>{p.name} : {p.value != null ? `${p.value}%` : '-'}</p>
-      ))}
-      {point?.censored && (
-        <p style={{color: 'var(--text-muted)', fontSize: '12px', marginTop: '6px', maxWidth: '200px'}}>
-          ⓘ 아직 12개월 관측이 끝나지 않아 실질 부도율을 집계할 수 없는 구간입니다.
-        </p>
-      )}
-    </div>
-  );
-};
-
 // 벤다이어그램 안 라벨 대신, 영역 안쪽 점(dot)에서 바깥 뱃지로 이어지는 리더라인 + 색상 강조 뱃지.
 const VennBadge = ({ dot, to, align = 'start', label, value, color, bg }: any) => {
   const textX = align === 'end' ? to.x - 6 : to.x + 6;
@@ -88,7 +70,7 @@ const VennBadge = ({ dot, to, align = 'start', label, value, color, bg }: any) =
 
 const PredictionVenn = ({ pc }: { pc: any }) => {
   if (!pc) return null;
-  const { both, erm_only, internal_only, neither, total, lead_time } = pc;
+  const { both, erm_only, internal_only, neither, total, lead_time, grade_lag } = pc;
   const caughtTotal = both + erm_only + internal_only;
   const catchRate = total > 0 ? ((caughtTotal / total) * 100).toFixed(1) : '0';
   const blindSpotRate = total > 0 ? ((erm_only / total) * 100).toFixed(1) : '0';
@@ -125,7 +107,7 @@ const PredictionVenn = ({ pc }: { pc: any }) => {
               {lead_time?.avg_months != null ? `+${lead_time.avg_months}개월` : '-'}
             </div>
           </div>
-          <div className="flex-row" style={{gap: '20px'}}>
+          <div className="flex-row" style={{gap: '16px', flexWrap: 'wrap', rowGap: '10px'}}>
             <div>
               <div style={{fontSize: '12px', color: 'var(--text-muted)', whiteSpace: 'nowrap'}}>전체 포착률</div>
               <div className="font-bold" style={{fontSize: '18px'}}>{catchRate}%</div>
@@ -134,12 +116,17 @@ const PredictionVenn = ({ pc }: { pc: any }) => {
               <div style={{fontSize: '12px', color: 'var(--text-muted)', whiteSpace: 'nowrap'}}>ERM 단독 사각지대</div>
               <div className="font-bold" style={{fontSize: '18px', color: 'var(--danger)'}}>{blindSpotRate}%</div>
             </div>
+            <div>
+              <div style={{fontSize: '12px', color: 'var(--text-muted)', whiteSpace: 'nowrap'}}>등급하향의 사후 반영 비율</div>
+              <div className="font-bold" style={{fontSize: '18px', color: 'var(--warning)'}}>{grade_lag?.after_default_pct != null ? `${grade_lag.after_default_pct}%` : '-'}</div>
+            </div>
           </div>
         </div>
       </div>
       <p style={{fontSize: '12px', color: 'var(--text-muted)', margin: 0}}>
         실제 부도 기업 총 {total}개(내부등급 이력 보유분) 중, 내부등급이 A→B로 전환되는 시점이 관측된 {lead_time?.n}개사 기준 ERM이 내부등급 하향보다 평균 {lead_time?.avg_months}개월 먼저 고위험(G4/G5)으로 경고했습니다.
         (내부등급이 데이터 시작 시점부터 이미 &apos;B&apos;였던 {lead_time?.left_censored_excluded}개사는 하향 시점을 알 수 없어 이 평균에서 제외 — 여전히 &quot;둘 다 포착&quot;에는 포함됩니다.)
+        {grade_lag?.total ? ` 한편 실제 부도일자와 대조한 결과, 내부등급 A→B 전환이 관측된 ${grade_lag.total}개사 중 ${grade_lag.after_default_cnt}개사(${grade_lag.after_default_pct}%)는 부도가 이미 발생한 뒤(중앙값 ${Math.abs(grade_lag.median_lead_months ?? 0)}개월 후)에야 등급이 하향되어, 내부등급 하향의 상당수는 조기경보가 아닌 사후 반영에 가까웠습니다. (이 ${grade_lag.after_default_cnt}개사는 부도 시점 이전엔 B등급이 존재하지 않아 "둘 다 포착"이 아닌 "ERM만 포착"으로 이미 집계됩니다.)` : ''}
       </p>
     </div>
   );
@@ -149,19 +136,7 @@ export default function GlobalDashboard({ baseYm = '202402' }: { baseYm?: string
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [useRealData, setUseRealData] = useState(true);
-  const [trendData, setTrendData] = useState<any[] | null>(null);
   const [predictionComparison, setPredictionComparison] = useState<any>(null);
-
-  useEffect(() => {
-    if (!useRealData) {
-      setTrendData(null);
-      return;
-    }
-    fetch(`${API_BASE_URL}/api/dashboard/trend?base_ym=${baseYm}&months=6`)
-      .then(res => res.json())
-      .then(rows => setTrendData(Array.isArray(rows) ? rows : null))
-      .catch(() => setTrendData(null));
-  }, [baseYm, useRealData]);
 
   useEffect(() => {
     if (!useRealData) {
@@ -247,11 +222,6 @@ export default function GlobalDashboard({ baseYm = '202402' }: { baseYm?: string
   const safeCount = data.total_companies - data.risk_companies;
   const riskRatio = ((data.risk_companies / data.total_companies) * 100).toFixed(1);
 
-  const lineChartData = trendData || [];
-  const censoredMonths = lineChartData.filter((d: any) => d.censored);
-  const firstCensoredMonth = censoredMonths[0]?.month;
-  const lastMonth = lineChartData[lineChartData.length - 1]?.month;
-
   // 기준년월의 업종별 실제 고위험 비율과 기업수를 활용한 업종 리스크 매트릭스.
   // X축(기존 평가 위험도)은 legacy_risk_pct(OLD_PROB = PROB_FULL * 0.15 업종 평균) 실측값.
   const scatterData = (data.top_risk_industries || []).slice(0, 8).map((ind: any, idx: number) => {
@@ -333,45 +303,13 @@ export default function GlobalDashboard({ baseYm = '202402' }: { baseYm?: string
         </div>
       </div>
 
-      <div className="grid-2">
-        <div className="flex-col" style={{gap: '12px'}}>
-          <div className="flex-row" style={{gap: '8px'}}>
-            <TrendingUp size={20} color="var(--primary)" />
-            <h2 className="font-semibold" style={{margin: 0}}>실질 부도율 vs 모델 예측력 비교 (PD-LAG)</h2>
-          </div>
-          <div className="card">
-            <div style={{width: '100%', height: '300px'}}>
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={lineChartData} margin={{ top: 20, right: 30, left: -20, bottom: 10 }}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
-                  {firstCensoredMonth && (
-                    <ReferenceArea x1={firstCensoredMonth} x2={lastMonth} fill="#94a3b8" fillOpacity={0.08} />
-                  )}
-                  <XAxis dataKey="month" tick={{fill: 'var(--text-muted)', fontSize: 12}} dy={10} axisLine={{stroke: '#e5e7eb'}} tickLine={false} />
-                  <YAxis tick={{fill: 'var(--text-muted)', fontSize: 12}} axisLine={{stroke: '#e5e7eb'}} tickLine={false} />
-                  <RechartsTooltip content={<TrendTooltip />} />
-                  <Legend verticalAlign="bottom" height={36} iconType="circle" wrapperStyle={{fontSize: '13px', fontWeight: 500, paddingTop: '16px'}} />
-                  <Line type="monotone" dataKey="실제" name="시장 실질 부도율(%)" stroke="#94a3b8" strokeWidth={2} strokeDasharray="5 5" dot={{r:4, fill: '#fff', strokeWidth: 2}} connectNulls={false} />
-                  <Line type="monotone" dataKey="기존" name="기존 모델 예측(%)" stroke="#fbbf24" strokeWidth={2} dot={{r:4}} />
-                  <Line type="monotone" dataKey="신규" name="ERM 예측(%)" stroke="var(--primary)" strokeWidth={3} dot={{r:5, fill: 'var(--primary)'}} />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
-            {censoredMonths.length > 0 && (
-              <p style={{fontSize: '12px', color: 'var(--text-muted)', marginTop: '8px', marginBottom: 0}}>
-                ⓘ 음영 구간({firstCensoredMonth}~{lastMonth})은 아직 12개월 관측이 끝나지 않아 &quot;시장 실질 부도율&quot;을 집계할 수 없습니다.
-              </p>
-            )}
-          </div>
+      <div className="flex-col" style={{gap: '12px'}}>
+        <div className="flex-row" style={{gap: '8px'}}>
+          <TrendingUp size={20} color="var(--primary)" />
+          <h2 className="font-semibold" style={{margin: 0}}>업종별 리스크 매트릭스</h2>
         </div>
-
-        <div className="flex-col" style={{gap: '12px'}}>
-          <div className="flex-row" style={{gap: '8px'}}>
-            <TrendingUp size={20} color="var(--primary)" />
-            <h2 className="font-semibold" style={{margin: 0}}>업종별 리스크 매트릭스</h2>
-          </div>
-          <div className="card">
-            <div style={{width: '100%', height: '300px'}}>
+        <div className="card">
+          <div style={{width: '100%', height: '340px'}}>
               <ResponsiveContainer width="100%" height="100%">
                 <ScatterChart margin={{ top: 35, right: 35, left: -10, bottom: 20 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
@@ -413,10 +351,9 @@ export default function GlobalDashboard({ baseYm = '202402' }: { baseYm?: string
               </ResponsiveContainer>
             </div>
           </div>
-          </div>
         </div>
 
-        {/* 신규 추가: 예측 성공/실패 벤다이어그램 + 등급 분포 (같은 행에 나란히 배치) */}
+      {/* 신규 추가: 예측 성공/실패 벤다이어그램 + 등급 분포 (같은 행에 나란히 배치) */}
         <div className="grid-2" style={{marginTop: '12px'}}>
           <div className="flex-col" style={{gap: '12px'}}>
             <div className="flex-row" style={{gap: '8px'}}>
