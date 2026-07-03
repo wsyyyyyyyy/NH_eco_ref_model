@@ -704,6 +704,121 @@
                 </div>
             </div>
 
+            <!-- SLIDE 07-A -->
+            <div class="slide" data-notes="심사위원 여러분! 저희 팀이 현재의 압도적인 SME 4.0 ERM 모형을 완성할 수 있었던 결정적 계기는, 바로 기존(AS-IS)에 시도된 모델링 방법(0.~3. 단계)을 강도 높게 해부하고 기술적 한계를 명확히 규명했기 때문입니다. 0.~3. 단계의 기존 모형은 54만 건 규모의 월별 패널에서 출발했습니다. 그러나 여기에는 치명적인 3대 한계가 존재했습니다. 첫째, 부실 표본의 극단적 부족입니다. 전체 데이터 중 부실 건수가 단 463건(부실률 0.0857%)에 불과하여 통계적 한계에 부딪혔습니다. 둘째, 시간축 과적합(Time-dummy Overfitting)의 발생입니다. 환율, 금리 등 172개에 달하는 거시경제 지표를 과다 투입한 결과, Train AUC 0.8627에서 미래 검증용 OOT AUC 0.5847로 폭락했습니다! 트리 알고리즘이 특정 시점의 금리·환율 숫자 자체를 타임스탬프처럼 통째로 암기해 버린 것입니다. 셋째, 복잡한 구조적 보완의 한계입니다. 기존 모형은 이를 방어하기 위해 차주 재무(Track A)와 거시경제(Track B)를 분리하는 투트랙(Two-Track)을 도입해 OOT AUC를 0.6405까지 방어해 냈으나 여전히 은행 현업의 선제적 조기경보 엔진으로 쓰기에는 한계가 명확했습니다." data-qna="Q. 기존 모형의 실패 원인은? -> A. 부실 표본(463건) 극단적 부족과 172개 거시경제 변수 과다 투입으로 인한 시간축 과적합(Time-dummy Overfitting)이 핵심 원인이었습니다.">
+                <div class="slide-header">
+                    <div class="slide-part">Part 3. AI 모델링 아키텍처 및 통계적 혁신</div>
+                    <h2 class="slide-title">AS-IS Modeling Diagnosis — 54만 건 데이터의 한계와 시간축 과적합의 교훈</h2>
+                </div>
+                <div class="slide-body">
+                    <div class="grid-2">
+                        <div class="card card-danger">
+                            <span class="badge badge-red">기존 모형의 한계 1</span>
+                            <div class="card-title">📉 극단적 불균형과 표본 부족</div>
+                            <p class="card-text">전체 54만 행 중 부실 건수 <b>단 463건(0.0857%)</b>. 머신러닝 모형이 일반화된 부도 패턴을 학습하기에 통계적 표본이 절대적으로 부족했습니다.</p>
+                        </div>
+                        <div class="card card-danger">
+                            <span class="badge badge-red">기존 모형의 한계 2</span>
+                            <div class="card-title">⚠️ 시간축 과적합 (Time-dummy Overfitting)</div>
+                            <p class="card-text">거시경제 변수 172개 과다 투입 시 트리가 시점 숫자 자체를 암기. <b>Train AUC 0.8627 → OOT AUC 0.5847 폭락</b> 현상 규명.</p>
+                        </div>
+                    </div>
+                    <div style="margin-top: 15px; text-align: center;">
+                        <img src="images/asis_model_method_1.png" alt="기존 모형 분석기법 선택" style="max-height: 220px; border-radius: 8px; border: 1px solid #334155; margin: 0 10px;">
+                        <img src="images/asis_shap_sparsity.png" alt="기존 모형 SHAP 희소성" style="max-height: 220px; border-radius: 8px; border: 1px solid #334155; margin: 0 10px;">
+                    </div>
+                </div>
+            </div>
+
+            <!-- SLIDE 07-B -->
+            <div class="slide" data-notes="기존 모형의 통계적·구조적 한계를 명쾌하게 돌파하기 위해, 저희 팀은 4. 개선한 모델링 방법(TO-BE, SME 4.0 ERM 모형)을 완전히 새롭게 설계하고 구축했습니다! 첫째, 데이터 스케일과 PIT 정합성의 대혁신입니다. 은행 내·외부 11대 원장을 통합하여 중소기업 법인 차주 66개월 치, 총 194만 행의 압도적인 시계열 빅데이터 패널을 구축했습니다. 특히 12월 결산 재무제표는 이듬해 4월부터 매핑하는 PIT 롤링 조인으로 미래 참조 오류를 0%로 완벽 차단했습니다! 둘째, 타겟 엔지니어링의 혁신입니다. 바젤 III 및 금융감독원 1-Year PD 표준 규격에 100% 부합하는 '전방 12개월 부도 윈도우(0 < TTD <= 12)'를 타겟으로 재설계하여 +12.9개월의 골든타임을 확보했습니다. 셋째, VIF Diet 및 통계적 최적화를 통한 단일 파이프라인 완결입니다. 다중공선성을 과감히 자동 드롭하고, LightGBM의 use_missing=true 기능으로 결측치를 자동 리스크 분기시킴으로써 복잡한 투트랙 분리 없이 단일 엔드투엔드 파이프라인만으로 일반화 성능을 극대화했습니다!" data-qna="Q. TO-BE 모델의 핵심 개선점은? -> A. 194만 행 패널 확보, PIT 롤링 조인, 전방 12개월 부도 윈도우 도입, 그리고 VIF Diet를 통한 단일 파이프라인 최적화입니다.">
+                <div class="slide-header">
+                    <div class="slide-part">Part 3. AI 모델링 아키텍처 및 통계적 혁신</div>
+                    <h2 class="slide-title">TO-BE Modeling Innovation — 194만 행 패널 · 12M 타겟 · VIF Diet를 통한 돌파</h2>
+                </div>
+                <div class="slide-body">
+                    <div class="grid-3">
+                        <div class="card card-highlight">
+                            <span class="badge badge-blue">TO-BE 혁신 1</span>
+                            <div class="card-title">🏢 194만 행 빅데이터 패널</div>
+                            <p class="card-text">2021~2026년 66개월 전수 중소기업 패널 <b>1,940,000+ 행 확보</b> 및 PIT 공시 시차 롤링 조인으로 미래 참조 오류 0% 달성.</p>
+                        </div>
+                        <div class="card card-highlight">
+                            <span class="badge badge-blue">TO-BE 혁신 2</span>
+                            <div class="card-title">⏳ 전방 12M TTD 타겟</div>
+                            <p class="card-text">바젤 III / 금감원 1-Year PD 규격 부합 <b>향후 12개월 부도 타겟(`TARGET_12M`)</b> 도입으로 여신 회수 골든타임 확보.</p>
+                        </div>
+                        <div class="card card-highlight">
+                            <span class="badge badge-blue">TO-BE 혁신 3</span>
+                            <div class="card-title">🛡️ VIF Diet & 결측 분기</div>
+                            <p class="card-text">VIF 10.0 이상 다중공선성 드롭 및 `use_missing=true` 결측 자동 분기로 복잡한 투트랙 없이 <b>단일 모형 완결</b>.</p>
+                        </div>
+                    </div>
+                    <div style="margin-top: 15px; text-align: center;">
+                        <img src="images/ttd_analysis_raw_facts.png" alt="TTD 원천 팩트" style="max-height: 200px; border-radius: 8px; border: 1px solid #334155; margin: 0 10px;">
+                        <img src="images/missing_rate.png" alt="결측치 비율 분석" style="max-height: 200px; border-radius: 8px; border: 1px solid #334155; margin: 0 10px;">
+                    </div>
+                </div>
+            </div>
+
+            <!-- SLIDE 07-C -->
+            <div class="slide" data-notes="심사위원 여러분! 이 한 장의 대조 표가 이번 프로젝트의 기술적 가치와 도메인 깊이를 완벽하게 증명합니다! 좌측의 0.~3. 기존 모델링 방법(AS-IS)이 부딪혔던 54만 건 데이터의 극단적 불균형과 시간축 과적합, 그리고 OOT AUROC 0.6405의 한계를 눈여겨보시기 바랍니다. 저희 팀은 우측의 4. 개선한 모델링 방법(TO-BE)을 통해 194만 행의 압도적 빅데이터 패널과 전방 12개월 TTD 타겟 엔지니어링, 그리고 VIF Diet를 적용하여 이를 완벽히 돌파했습니다. 그 결과, 미래 미공개 OOT 검증 데이터에 대한 변별력을 0.6405에서 0.902+로 무려 26%p 이상 비약적으로 끌어올렸으며, 실제 부도가 터지기 평균 12.9개월 먼저 선제적으로 경고등을 켜는 은행 여신 심사의 기적적인 엔진을 완성했습니다!" data-qna="Q. AS-IS 대비 가장 큰 성능 차이는? -> A. 미래 검증 OOT AUROC가 0.6405에서 0.902+로 +0.26 상승했고, 조기경보 리드타임이 +12.9개월 선제 발령으로 증명되었습니다.">
+                <div class="slide-header">
+                    <div class="slide-part">Part 3. AI 모델링 아키텍처 및 통계적 혁신</div>
+                    <h2 class="slide-title">AS-IS vs TO-BE Comprehensive Comparison — 왜 SME 4.0 ERM인가?</h2>
+                </div>
+                <div class="slide-body">
+                    <table style="width: 100%; border-collapse: collapse; font-size: 0.82rem; background: #0f172a; border-radius: 8px; overflow: hidden;">
+                        <thead>
+                            <tr style="background: #1e293b; color: #38bdf8; text-align: left;">
+                                <th style="padding: 10px; border: 1px solid #334155;">비교 영역</th>
+                                <th style="padding: 10px; border: 1px solid #334155;">0.~3. 기존 모델링 방법 (AS-IS)</th>
+                                <th style="padding: 10px; border: 1px solid #334155; color: #facc15;">⭐ 4. 개선한 모델링 방법 (TO-BE / SME 4.0)</th>
+                                <th style="padding: 10px; border: 1px solid #334155;">혁신 및 개선 효과</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td style="padding: 8px; border: 1px solid #334155; font-weight: bold;">① 데이터 규모</td>
+                                <td style="padding: 8px; border: 1px solid #334155;">540,568행 / 부실 463건 (0.0857%)</td>
+                                <td style="padding: 8px; border: 1px solid #334155; color: #38bdf8; font-weight: bold;">1,940,000+행 / 66개월 SME 법인 전수</td>
+                                <td style="padding: 8px; border: 1px solid #334155; color: #4ade80;">표본 3.5배 확대 & 통계적 유의성 극대화</td>
+                            </tr>
+                            <tr style="background: #1e293b; background-opacity: 0.4;">
+                                <td style="padding: 8px; border: 1px solid #334155; font-weight: bold;">② 타겟 변수</td>
+                                <td style="padding: 8px; border: 1px solid #334155;">단기 부실 여부 (정적/상각 혼재)</td>
+                                <td style="padding: 8px; border: 1px solid #334155; color: #38bdf8; font-weight: bold;">전방 12개월 부도 (`0 < TTD <= 12`)</td>
+                                <td style="padding: 8px; border: 1px solid #334155; color: #4ade80;">바젤 III 1-Year PD 부합 & 골든타임 확보</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 8px; border: 1px solid #334155; font-weight: bold;">③ PIT 정합성</td>
+                                <td style="padding: 8px; border: 1px solid #334155;">재무/거시 단순 병합 (누수 위험)</td>
+                                <td style="padding: 8px; border: 1px solid #334155; color: #38bdf8; font-weight: bold;">이듬해 4월 적용 PIT 롤링 조인</td>
+                                <td style="padding: 8px; border: 1px solid #334155; color: #4ade80;">미래 참조 오류 0% & 중복 연도 0건 달성</td>
+                            </tr>
+                            <tr style="background: #1e293b; background-opacity: 0.4;">
+                                <td style="padding: 8px; border: 1px solid #334155; font-weight: bold;">④ 과적합 제어</td>
+                                <td style="padding: 8px; border: 1px solid #334155;">매크로 172개 과다 투입 → 투트랙 의존</td>
+                                <td style="padding: 8px; border: 1px solid #334155; color: #38bdf8; font-weight: bold;">VIF Diet(VIF&ge;10) + Z-Score + 결측분기</td>
+                                <td style="padding: 8px; border: 1px solid #334155; color: #4ade80;">단일 LightGBM 파이프라인 완결 안정성</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 8px; border: 1px solid #334155; font-weight: bold;">⑤ OOT 검증</td>
+                                <td style="padding: 8px; border: 1px solid #334155;">Train 0.7635 → <b>OOT 0.6405</b></td>
+                                <td style="padding: 8px; border: 1px solid #334155; color: #facc15; font-weight: bold;">Train 0.993 → OOT 0.902+ (0.901~0.902)</td>
+                                <td style="padding: 8px; border: 1px solid #334155; color: #4ade80;"><b>AUROC +0.26 비약적 변별력 상승 증명!</b></td>
+                            </tr>
+                            <tr style="background: #1e293b; background-opacity: 0.4;">
+                                <td style="padding: 8px; border: 1px solid #334155; font-weight: bold;">⑥ 리드타임</td>
+                                <td style="padding: 8px; border: 1px solid #334155;">기존 은행 등급은 부도 이후 사후 반응</td>
+                                <td style="padding: 8px; border: 1px solid #334155; color: #facc15; font-weight: bold;">부도 터지기 평균 12.9개월 전 선제 발령</td>
+                                <td style="padding: 8px; border: 1px solid #334155; color: #4ade80;"><b>선제적 한도 회수 및 대손보전 패러다임 전환</b></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
             <!-- SLIDE 8 -->
             <div class="slide" data-notes="모델링 후 진행된 정밀 검증 과정에서 저희는 중요한 통계적 부채를 발견하고 완벽하게 해결했습니다. 초기 UI 화면에서는 부도 확률을 단순히 60%, 30%, 10%라는 임의의 수치로 나누어 G1~G5 등급을 부여했습니다. 그 결과 실제로는 상위 1% 초고위험 차주(37% 부도 확률)가 화면에서는 G4나 G3로 안전하게 포장되는 '73.8%의 등급 괴리 및 리스크 과소평가 현상'이 있었습니다. 저희는 이를 전면 폐기하고, 194만 건 모집단 전체의 확률을 로그오즈로 변환하여 평균(mu=-4.22)과 표준편차(std=1.85)로 정규화한 통계적 Z-score 기반의 공식 Z_GRADE로 100% 일치화했습니다. 이제 우리 포털은 단 1%의 오차나 왜곡 없이 진짜 고위험 차주를 정확하게 붉은색 배지로 경고합니다." data-qna="Q. 화면 표시 등급을 바꾼 이유는? -> A. 임의 분할 시 실제 고위험 차주가 안전 등급으로 숨는 73.8% 왜곡이 있었습니다. DB 모집단 정규분포 기준 Z-score(mu=-4.22, std=1.85) 공식 Z_GRADE로 정합성을 100% 일치시켰습니다.">
                 <div class="slide-header">
