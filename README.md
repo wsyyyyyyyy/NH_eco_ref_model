@@ -105,6 +105,7 @@
 ```text
 ├── README.md                          # 프로젝트 오버뷰 및 요약 (현재 파일)
 ├── docs/                              # 기획, 설계, 분석 결과 등 산출물 관리 (Walkthrough, Task 등)
+│   ├── 00_project_master_report.md    # ⭐ 데이터 명세~전처리~목표변수~모델링~성능~기존모형 비교~포털화 전체 종합 리포트
 │   ├── step01_to_06_data_pipeline_and_eda.md
 │   ├── step07_to_09_modeling_and_shap_analysis.md
 │   ├── step10_to_13_model_evaluation_and_walkthrough.md
