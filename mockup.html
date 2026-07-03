@@ -1,0 +1,1192 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ECO Ref Model - AI 조기경보 포털 (Mockup)</title>
+<style>
+@import url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css");
+
+:root {
+  --primary: #2563eb;
+  --primary-hover: #1d4ed8;
+  --secondary: #64748b;
+  --danger: #ef4444;
+  --warning: #f59e0b;
+  --safe: #10b981;
+  --bg-main: #f1f5f9;
+  --bg-card: #ffffff;
+  --text-main: #0f172a;
+  --text-muted: #64748b;
+  --border: #e2e8f0;
+}
+* { box-sizing: border-box; font-family: "Pretendard", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+body { margin: 0; padding: 0; background-color: var(--bg-main); color: var(--text-main); font-size: 14px; line-height: 1.6; }
+h1, h2, h3 { margin: 0 0 16px 0; letter-spacing: -0.5px; line-height: 1.3; }
+h1 { font-size: 28px; font-weight: 700; }
+h2 { font-size: 18px; font-weight: 600; }
+p { margin: 0; color: var(--text-muted); font-weight: 400; }
+.font-black { font-weight: 900; } .font-extrabold { font-weight: 800; } .font-bold { font-weight: 700; }
+.font-semibold { font-weight: 600; } .font-medium { font-weight: 500; } .font-regular { font-weight: 400; }
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+.grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 24px; align-items: stretch; }
+.grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; align-items: stretch; }
+.grid-macro { display: grid; grid-template-columns: 35% 65%; gap: 24px; align-items: stretch; }
+@media (max-width: 1300px) { .grid-2, .grid-3, .grid-4, .grid-macro { grid-template-columns: 1fr; } }
+.flex-row { display: flex; flex-direction: row; align-items: center; }
+.flex-col { display: flex; flex-direction: column; }
+.glass-panel, .card { background-color: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 24px; box-shadow: 0 1px 2px 0 rgba(0,0,0,0.05); height: 100%; }
+.card-danger { border-left: 4px solid var(--danger); }
+.card-safe { border-left: 4px solid var(--safe); }
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-width: 100px; min-height: 40px; padding: 12px 24px; border-radius: 8px; border: none; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s ease; }
+.btn-primary { background-color: #6C5CE7; color: white; }
+.btn-primary:hover { background-color: #5b4bc4; box-shadow: 0 4px 6px rgba(108,92,231,0.3); }
+.btn-ghost { background-color: transparent; border: 2px solid var(--border); color: var(--text-main); }
+.btn-ghost:hover { background-color: var(--bg-main); border-color: var(--secondary); }
+.badge { display: inline-flex; align-items: center; padding: 4px 12px; border-radius: 9999px; font-size: 12px; font-weight: 700; }
+.badge-danger { background-color: #fee2e2; color: #b91c1c; border: 1px solid #fecaca; }
+.badge-warning { background-color: #fef3c7; color: #b45309; }
+.badge-safe { background-color: #d1fae5; color: #047857; }
+table { width: 100%; border-collapse: collapse; }
+th { text-align: left; padding: 12px 16px; font-size: 13px; color: var(--text-muted); font-weight: 600; border-bottom: 2px solid var(--border); }
+td { padding: 12px 16px; border-bottom: 1px solid var(--border); font-size: 14px; }
+tr:hover { background-color: #f8fafc; }
+tr:nth-child(even) { background-color: #f8fafc; }
+input[type=range] { -webkit-appearance: none; width: 100%; background: transparent; }
+input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 20px; width: 20px; border-radius: 50%; background: var(--primary); cursor: pointer; margin-top: -7px; box-shadow: 0 1px 3px rgba(0,0,0,0.3); }
+input[type=range]::-webkit-slider-runnable-track { width: 100%; height: 6px; cursor: pointer; background: var(--border); border-radius: 3px; }
+input[type=range]:focus { outline: none; }
+input[type=text], input[type=password], select.select-box { padding: 8px 12px; border-radius: 8px; border: 1px solid var(--border); outline: none; font-size: 13px; background: white; }
+
+/* Layout shell */
+#app-shell { display: none; width: 100vw; height: 100vh; overflow: hidden; }
+.sidebar { width: 250px; background: white; border-right: 1px solid var(--border); display: flex; flex-direction: column; flex-shrink: 0; }
+.nav-item { display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-radius: 8px; font-size: 15px; font-weight: 500; color: var(--text-main); cursor: pointer; transition: all .15s; text-decoration: none; }
+.nav-item:hover { background: #f8fafc; }
+.nav-item.active { background: rgba(37,99,235,0.1); color: var(--primary); font-weight: 700; }
+header.topbar { height: 64px; background: white; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; padding: 0 32px; flex-shrink: 0; }
+footer.bottombar { height: 40px; background: white; border-top: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; padding: 0 32px; flex-shrink: 0; }
+.main-content { flex: 1; padding: 32px; overflow-y: auto; overflow-x: hidden; }
+.page { display: none; }
+.page.active { display: block; }
+.mock-tag { position: fixed; bottom: 16px; right: 16px; background: #1f2937; color: white; padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 700; z-index: 999; box-shadow: 0 4px 12px rgba(0,0,0,0.25); }
+
+/* SVG chart helpers */
+.chart-svg text { font-family: "Pretendard", sans-serif; }
+.legend-dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; }
+</style>
+</head>
+<body>
+
+<!-- ===================== LOGIN SCREEN ===================== -->
+<div id="login-screen" style="width:100vw;height:100vh;display:flex;align-items:center;justify-content:center;background:var(--bg-main);position:relative;overflow:hidden;">
+  <div style="position:absolute;top:10%;left:20%;width:400px;height:400px;background:rgba(37,99,235,0.1);filter:blur(100px);border-radius:50%;"></div>
+  <div style="position:absolute;bottom:10%;right:20%;width:300px;height:300px;background:rgba(236,72,153,0.1);filter:blur(80px);border-radius:50%;"></div>
+  <div class="glass-panel" style="width:400px;padding:40px;display:flex;flex-direction:column;align-items:center;z-index:10;background:rgba(255,255,255,0.9);">
+    <div style="margin-bottom:24px;display:flex;align-items:center;gap:12px;">
+      <div style="width:40px;height:40px;border-radius:12px;background:var(--primary);display:flex;align-items:center;justify-content:center;color:white;font-weight:900;">E</div>
+      <h1 style="margin:0;font-size:24px;letter-spacing:-0.5px;"><span style="color:var(--primary);">ECO</span> Ref Model</h1>
+    </div>
+    <p style="color:var(--text-muted);margin-bottom:32px;text-align:center;">AI 조기경보 가상지점 포털에<br/>오신 것을 환영합니다.<br/><span style="font-size:12px;color:#94a3b8;">(공유용 Mockup — 샘플 데이터로 동작합니다)</span></p>
+    <form id="login-form" style="width:100%;display:flex;flex-direction:column;gap:16px;" onsubmit="return doLogin(event)">
+      <div class="flex-col" style="gap:8px;">
+        <label style="font-size:14px;font-weight:600;">사번 (행번)</label>
+        <input type="text" placeholder="예: 20240101" style="width:100%;padding:12px 16px;box-sizing:border-box;">
+      </div>
+      <div class="flex-col" style="gap:8px;">
+        <label style="font-size:14px;font-weight:600;">비밀번호</label>
+        <input type="password" placeholder="아무 값이나 입력하세요" style="width:100%;padding:12px 16px;box-sizing:border-box;">
+      </div>
+      <button type="submit" class="btn btn-primary" style="width:100%;padding:14px;margin-top:16px;justify-content:center;font-weight:600;font-size:16px;">로그인 (Mockup 체험 시작)</button>
+    </form>
+  </div>
+</div>
+
+<!-- ===================== APP SHELL ===================== -->
+<div id="app-shell">
+  <div class="sidebar">
+    <div style="padding:24px;border-bottom:1px solid var(--border);">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <div style="width:36px;height:36px;border-radius:8px;background:var(--primary);display:flex;align-items:center;justify-content:center;color:white;font-weight:900;">E</div>
+        <h1 class="font-bold" style="font-size:20px;letter-spacing:-0.5px;margin:0;"><span style="color:var(--primary);">ECO</span> Ref Model</h1>
+      </div>
+      <p class="font-medium" style="margin-top:8px;font-size:13px;color:var(--text-muted);">AI 조기경보 가상지점 포털</p>
+    </div>
+    <nav style="flex:1;padding:24px 16px;display:flex;flex-direction:column;gap:8px;overflow-y:auto;">
+      <div class="nav-item active" data-page="global" onclick="showPage('global')">🌐 <span>글로벌 뱅크 뷰</span></div>
+      <div class="nav-item" data-page="branch" onclick="showPage('branch')">🏢 <span>가상 지점 대시보드</span></div>
+      <div class="nav-item" data-page="monitoring" onclick="showPage('monitoring')">📈 <span>모델 모니터링</span></div>
+      <div class="nav-item" data-page="simulation" onclick="showPage('simulation')">🎚️ <span>매크로 시뮬레이션</span></div>
+    </nav>
+    <div style="padding:24px 16px;border-top:1px solid var(--border);">
+      <div class="nav-item" style="color:var(--danger);font-weight:600;" onclick="doLogout()">🚪 <span>로그아웃</span></div>
+    </div>
+  </div>
+
+  <div style="flex:1;display:flex;flex-direction:column;min-width:0;">
+    <header class="topbar">
+      <div class="font-bold" id="page-title" style="font-size:20px;">글로벌 뱅크 뷰</div>
+      <div style="display:flex;align-items:center;gap:24px;">
+        <div style="display:flex;align-items:center;gap:8px;padding-right:16px;border-right:1px solid var(--border);">
+          <span class="font-semibold" style="font-size:14px;color:var(--text-muted);">기준일</span>
+          <select id="base-date-select" class="select-box" style="font-weight:600;color:var(--primary);cursor:pointer;" onchange="onBaseDateChange()"></select>
+        </div>
+        <span class="badge badge-safe">시스템 정상 작동중</span>
+        <div style="display:flex;align-items:center;gap:12px;">
+          <div style="width:36px;height:36px;border-radius:18px;background:var(--primary);color:white;display:flex;align-items:center;justify-content:center;font-weight:bold;font-size:16px;">R</div>
+          <div class="flex-col" style="gap:2px;">
+            <span class="font-bold" style="font-size:14px;line-height:1;">Risk Manager</span>
+            <span class="font-medium" style="font-size:12px;color:var(--text-muted);line-height:1;">관리자 계정</span>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <main class="main-content">
+      <div id="page-global" class="page active"></div>
+      <div id="page-branch" class="page"></div>
+      <div id="page-borrower" class="page"></div>
+      <div id="page-monitoring" class="page"></div>
+      <div id="page-simulation" class="page"></div>
+    </main>
+
+    <footer class="bottombar">
+      <span class="font-medium" style="font-size:13px;color:var(--text-muted);">ECO Ref Model v2.0 Mockup (Powered by LightGBM)</span>
+      <span class="font-medium" style="font-size:13px;color:var(--text-muted);">이 파일은 공유용 정적 목업입니다 — 실 서비스와 데이터가 다릅니다</span>
+    </footer>
+  </div>
+</div>
+
+<div class="mock-tag">🧪 MOCKUP — 샘플 데이터</div>
+
+<script>
+/* ============================================================
+   1. Seeded RNG + Mock Data Generation
+   ============================================================ */
+function mulberry32(seed) {
+  return function() {
+    seed |= 0; seed = (seed + 0x6D2B79F5) | 0;
+    let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+const rng = mulberry32(20260703);
+function rnd(min, max) { return min + rng() * (max - min); }
+function rndInt(min, max) { return Math.floor(rnd(min, max + 1)); }
+function pick(arr) { return arr[Math.floor(rng() * arr.length)]; }
+
+const INDUSTRIES = ['제조업', '도매 및 소매업', '건설업', '정보통신업', '부동산업', '운수 및 창고업', '숙박 및 음식점업', '전문,과학 및 기술서비스업'];
+const BRANCHES = ['VB001', 'VB002', 'VB003', 'VB004', 'VB005'];
+const NICE_GRADES = ['AAA', 'AA+', 'AA0', 'A+', 'A0', 'BBB+', 'BBB0', 'BB+', 'BB0', 'B+', 'B0', 'CCC'];
+const ERM_GRADE_LABELS = { G1: 'G1 (최우량)', G2: 'G2 (안정권)', G3: 'G3 (주의요망)', G4: 'G4 (고위험)', G5: 'G5 (부실우려)' };
+const GRADE_COLOR = { G1: '#10b981', G2: '#10b981', G3: '#f59e0b', G4: '#ef4444', G5: '#ef4444' };
+const AVAILABLE_MONTHS = ['202406','202405','202404','202403','202402','202401','202312','202311','202310','202309'];
+
+function gradeFromProb(p) {
+  if (p < 0.01) return 'G1';
+  if (p < 0.05) return 'G2';
+  if (p < 0.15) return 'G3';
+  if (p < 0.35) return 'G4';
+  return 'G5';
+}
+// 백분위(percentile rank) 기반으로 등급을 매겨, 절대 확률값이 낮게 몰려 있어도
+// NICE/KIS 12단계 등급이 표 전체에 고르게 분산되어 보이도록 함.
+function gradeFromPercentile(pct, jitter) {
+  const noisy = Math.max(0, Math.min(0.999, pct + (jitter || 0)));
+  const idx = Math.min(NICE_GRADES.length - 1, Math.floor(noisy * NICE_GRADES.length));
+  return NICE_GRADES[idx];
+}
+
+const N_BORROWERS = 220;
+let BORROWERS = [];
+const rawRows = [];
+for (let i = 0; i < N_BORROWERS; i++) {
+  // 등급 분포를 실제 포털과 비슷한 비율(G1 19% / G2 39% / G3 24% / G4 9% / G5 9%)로 근사
+  const rr = rng();
+  let grade;
+  if (rr < 0.19) grade = 'G1';
+  else if (rr < 0.58) grade = 'G2';
+  else if (rr < 0.82) grade = 'G3';
+  else if (rr < 0.91) grade = 'G4';
+  else grade = 'G5';
+
+  const probRange = { G1: [0.001, 0.01], G2: [0.01, 0.05], G3: [0.05, 0.15], G4: [0.15, 0.35], G5: [0.35, 0.95] }[grade];
+  const prob = rnd(probRange[0], probRange[1]);
+  const oldProb = prob * rnd(0.10, 0.20);
+  const bzno = String(1000000000 + i * 37 + rndInt(0, 30));
+  rawRows.push({ bzno, grade, prob, oldProb });
+}
+const sortedByOldProb = [...rawRows].sort((a, b) => a.oldProb - b.oldProb);
+const pctRank = {};
+sortedByOldProb.forEach((row, i) => { pctRank[row.bzno] = i / sortedByOldProb.length; });
+
+for (let i = 0; i < rawRows.length; i++) {
+  const { bzno, grade, prob, oldProb } = rawRows[i];
+  const pct = pctRank[bzno];
+  const niceCur = gradeFromPercentile(pct, 0);
+  const niceIdx = NICE_GRADES.indexOf(niceCur);
+  const nicePrev = NICE_GRADES[Math.min(NICE_GRADES.length - 1, Math.max(0, niceIdx + rndInt(-1, 1)))];
+  const kisCur = gradeFromPercentile(pct, (rng() - 0.5) * 0.12);
+  const kisIdx = NICE_GRADES.indexOf(kisCur);
+  const kisPrev = NICE_GRADES[Math.min(NICE_GRADES.length - 1, Math.max(0, kisIdx + rndInt(-1, 1)))];
+
+  BORROWERS.push({
+    V_BZNO: bzno,
+    V_BRANCH_CODE: pick(BRANCHES),
+    STD_INDS_CFC: pick(INDUSTRIES),
+    Z_GRADE: grade,
+    PROB_FULL: prob,
+    OLD_PROB: oldProb,
+    NICE_GRADE_CUR: niceCur,
+    NICE_GRADE_PREV: nicePrev,
+    KIS_GRADE_CUR: kisCur,
+    KIS_GRADE_PREV: kisPrev,
+    BUSINESS_AGE: rndInt(12, 340),
+  });
+}
+
+/* ============================================================
+   2. Small SVG chart helpers (no external library, dependency-free)
+   ============================================================ */
+function svgEl(tag, attrs) {
+  let s = '<' + tag;
+  for (const k in attrs) s += ' ' + k + '="' + attrs[k] + '"';
+  return s + '/>';
+}
+function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;'); }
+
+// Simple multi-series line chart. series: [{name, color, values:[...], dashed?}], xLabels: [...]
+function lineChart(w, h, xLabels, series, opts) {
+  opts = opts || {};
+  const padL = 34, padR = 16, padT = 16, padB = 28;
+  const plotW = w - padL - padR, plotH = h - padT - padB;
+  const allVals = series.flatMap(s => s.values.filter(v => v != null));
+  const maxV = opts.max != null ? opts.max : Math.max(...allVals) * 1.2;
+  const minV = 0;
+  const n = xLabels.length;
+  const xAt = i => padL + (n <= 1 ? 0 : (plotW * i) / (n - 1));
+  const yAt = v => padT + plotH - ((v - minV) / (maxV - minV)) * plotH;
+
+  let svg = '<svg class="chart-svg" width="' + w + '" height="' + h + '" viewBox="0 0 ' + w + ' ' + h + '">';
+  // gridlines
+  for (let g = 0; g <= 4; g++) {
+    const gy = padT + (plotH * g) / 4;
+    const val = maxV - (maxV * g) / 4;
+    svg += svgEl('line', {x1: padL, y1: gy.toFixed(1), x2: w - padR, y2: gy.toFixed(1), stroke: '#e5e7eb', 'stroke-dasharray': '3 3'});
+    svg += '<text x="' + (padL - 6) + '" y="' + (gy + 4).toFixed(1) + '" font-size="10" fill="var(--text-muted)" text-anchor="end">' + Math.round(val * 10) / 10 + '</text>';
+  }
+  xLabels.forEach((lab, i) => {
+    svg += '<text x="' + xAt(i).toFixed(1) + '" y="' + (h - 8) + '" font-size="10" fill="var(--text-muted)" text-anchor="middle">' + esc(lab) + '</text>';
+  });
+  if (opts.censoredFrom != null) {
+    svg += svgEl('rect', {x: xAt(opts.censoredFrom).toFixed(1), y: padT, width: (w - padR - xAt(opts.censoredFrom)).toFixed(1), height: plotH, fill: '#94a3b8', 'fill-opacity': 0.1});
+  }
+  series.forEach(s => {
+    let path = '', started = false;
+    const pts = [];
+    s.values.forEach((v, i) => {
+      if (v == null) { started = false; return; }
+      const x = xAt(i), y = yAt(v);
+      path += (started ? ' L ' : 'M ') + x.toFixed(1) + ' ' + y.toFixed(1);
+      started = true;
+      pts.push([x, y]);
+    });
+    svg += svgEl('path', {d: path, fill: 'none', stroke: s.color, 'stroke-width': s.width || 2, 'stroke-dasharray': s.dashed ? '5 5' : 'none'});
+    pts.forEach(p => { svg += svgEl('circle', {cx: p[0].toFixed(1), cy: p[1].toFixed(1), r: 3.5, fill: s.color}); });
+  });
+  svg += '</svg>';
+  // legend
+  let legend = '<div class="flex-row" style="gap:16px;flex-wrap:wrap;justify-content:center;margin-top:6px;">';
+  series.forEach(s => {
+    legend += '<span style="font-size:12px;font-weight:600;color:var(--text-muted);"><span class="legend-dot" style="background:' + s.color + ';"></span>' + esc(s.name) + '</span>';
+  });
+  legend += '</div>';
+  return svg + legend;
+}
+
+// Simple vertical bar chart. bars: [{label, value, color}]
+function barChart(w, h, bars, opts) {
+  opts = opts || {};
+  const padL = 36, padR = 12, padT = 16, padB = 28;
+  const plotW = w - padL - padR, plotH = h - padT - padB;
+  const maxV = opts.max != null ? opts.max : Math.max(...bars.map(b => b.value)) * 1.15;
+  const bw = (plotW / bars.length) * 0.55;
+  const gap = (plotW / bars.length) * 0.45;
+  let svg = '<svg class="chart-svg" width="' + w + '" height="' + h + '" viewBox="0 0 ' + w + ' ' + h + '">';
+  for (let g = 0; g <= 4; g++) {
+    const gy = padT + (plotH * g) / 4;
+    const val = maxV - (maxV * g) / 4;
+    svg += svgEl('line', {x1: padL, y1: gy.toFixed(1), x2: w - padR, y2: gy.toFixed(1), stroke: '#e5e7eb', 'stroke-dasharray': '3 3'});
+    svg += '<text x="' + (padL - 6) + '" y="' + (gy + 4).toFixed(1) + '" font-size="10" fill="var(--text-muted)" text-anchor="end">' + Math.round(val) + '</text>';
+  }
+  bars.forEach((b, i) => {
+    const x = padL + i * (bw + gap) + gap / 2;
+    const bh = (b.value / maxV) * plotH;
+    const y = padT + plotH - bh;
+    svg += svgEl('rect', {x: x.toFixed(1), y: y.toFixed(1), width: bw.toFixed(1), height: Math.max(0,bh).toFixed(1), rx: 4, fill: b.color, 'data-idx': i, class: 'bar-rect', style: opts.onClick ? 'cursor:pointer' : ''});
+    svg += '<text x="' + (x + bw / 2).toFixed(1) + '" y="' + (h - 8) + '" font-size="11" fill="var(--text-main)" font-weight="600" text-anchor="middle">' + esc(b.label) + '</text>';
+  });
+  svg += '</svg>';
+  return svg;
+}
+
+// Grouped bar chart (2 series). groups: [{label, values:[v1,v2]}]
+function groupedBarChart(w, h, groups, colors, names, opts) {
+  opts = opts || {};
+  const padL = 36, padR = 12, padT = 16, padB = 30;
+  const plotW = w - padL - padR, plotH = h - padT - padB;
+  const allV = groups.flatMap(g => g.values);
+  const maxV = opts.max != null ? opts.max : Math.max(...allV) * 1.2;
+  const groupW = plotW / groups.length;
+  const barW = groupW * 0.32;
+  let svg = '<svg class="chart-svg" width="' + w + '" height="' + h + '" viewBox="0 0 ' + w + ' ' + h + '">';
+  for (let g = 0; g <= 4; g++) {
+    const gy = padT + (plotH * g) / 4;
+    const val = maxV - (maxV * g) / 4;
+    svg += svgEl('line', {x1: padL, y1: gy.toFixed(1), x2: w - padR, y2: gy.toFixed(1), stroke: '#e5e7eb', 'stroke-dasharray': '3 3'});
+    svg += '<text x="' + (padL - 6) + '" y="' + (gy + 4).toFixed(1) + '" font-size="10" fill="var(--text-muted)" text-anchor="end">' + (Math.round(val*100)/100) + '</text>';
+  }
+  groups.forEach((grp, i) => {
+    const gx = padL + i * groupW;
+    grp.values.forEach((v, si) => {
+      const bh = (v / maxV) * plotH;
+      const x = gx + groupW / 2 - barW - 3 + si * (barW + 6);
+      const y = padT + plotH - bh;
+      svg += svgEl('rect', {x: x.toFixed(1), y: y.toFixed(1), width: barW.toFixed(1), height: Math.max(0,bh).toFixed(1), rx: 3, fill: colors[si], class: 'bar-rect', 'data-idx': i, style: opts.onClick ? 'cursor:pointer' : ''});
+    });
+    svg += '<text x="' + (gx + groupW / 2).toFixed(1) + '" y="' + (h - 10) + '" font-size="10.5" fill="var(--text-main)" font-weight="600" text-anchor="middle">' + esc(grp.label) + '</text>';
+  });
+  svg += '</svg>';
+  let legend = '<div class="flex-row" style="gap:16px;flex-wrap:wrap;justify-content:center;margin-top:4px;">';
+  names.forEach((n, i) => { legend += '<span style="font-size:12px;font-weight:600;color:var(--text-muted);"><span class="legend-dot" style="background:' + colors[i] + ';"></span>' + esc(n) + '</span>'; });
+  legend += '</div>';
+  return svg + legend;
+}
+
+// Scatter chart. points: [{x,y,z,label,color}]
+function scatterChart(w, h, points, opts) {
+  opts = opts || {};
+  const padL = 40, padR = 20, padT = 20, padB = 30;
+  const plotW = w - padL - padR, plotH = h - padT - padB;
+  const maxX = opts.maxX != null ? opts.maxX : Math.max(...points.map(p => p.x)) * 1.3;
+  const maxY = opts.maxY != null ? opts.maxY : Math.max(...points.map(p => p.y)) * 1.3;
+  const maxZ = Math.max(...points.map(p => p.z));
+  const xAt = v => padL + (v / maxX) * plotW;
+  const yAt = v => padT + plotH - (v / maxY) * plotH;
+  let svg = '<svg class="chart-svg" width="' + w + '" height="' + h + '" viewBox="0 0 ' + w + ' ' + h + '">';
+  for (let g = 0; g <= 4; g++) {
+    const gy = padT + (plotH * g) / 4;
+    svg += svgEl('line', {x1: padL, y1: gy.toFixed(1), x2: w - padR, y2: gy.toFixed(1), stroke: '#e5e7eb', 'stroke-dasharray': '3 3'});
+  }
+  svg += svgEl('line', {x1: padL, y1: padT, x2: padL, y2: padT+plotH, stroke: '#e5e7eb'});
+  svg += svgEl('line', {x1: padL, y1: padT+plotH, x2: w-padR, y2: padT+plotH, stroke: '#e5e7eb'});
+  svg += '<text x="4" y="' + (padT+4) + '" font-size="10" fill="var(--text-muted)">' + Math.round(maxY) + '%</text>';
+  svg += '<text x="' + padL + '" y="' + (h-6) + '" font-size="10" fill="var(--text-muted)">0%</text>';
+  svg += '<text x="' + (w-padR) + '" y="' + (h-6) + '" font-size="10" fill="var(--text-muted)" text-anchor="end">' + maxX.toFixed(1) + '%</text>';
+  const labelOffsets = [
+    {dx:0, dy:-16, anchor:'middle'}, {dx:0, dy:22, anchor:'middle'},
+    {dx:20, dy:4, anchor:'start'}, {dx:-20, dy:4, anchor:'end'},
+    {dx:16, dy:-16, anchor:'start'}, {dx:-16, dy:20, anchor:'end'},
+    {dx:0, dy:-28, anchor:'middle'}, {dx:0, dy:32, anchor:'middle'},
+  ];
+  points.forEach((p, i) => {
+    const r = 8 + (p.z / maxZ) * 13;
+    const cx = xAt(p.x), cy = yAt(p.y);
+    const off = labelOffsets[i % labelOffsets.length];
+    svg += svgEl('circle', {cx: cx.toFixed(1), cy: cy.toFixed(1), r: r.toFixed(1), fill: p.color, 'fill-opacity': 0.75, stroke: p.color, 'stroke-width': 2});
+    svg += '<text x="' + (cx+off.dx).toFixed(1) + '" y="' + (cy+off.dy).toFixed(1) + '" font-size="11" font-weight="700" fill="#0f172a" text-anchor="' + off.anchor + '" stroke="white" stroke-width="3" paint-order="stroke">' + esc(p.label) + '</text>';
+  });
+  svg += '</svg>';
+  return svg;
+}
+
+// Radar chart. axes: [label...], series: [{name,color,values:[0-100...]}]
+function radarChart(w, h, axes, series) {
+  const cx = w / 2, cy = h / 2, R = Math.min(w, h) / 2 - 34;
+  const n = axes.length;
+  const angle = i => (Math.PI * 2 * i) / n - Math.PI / 2;
+  let svg = '<svg class="chart-svg" width="' + w + '" height="' + h + '" viewBox="0 0 ' + w + ' ' + h + '">';
+  [0.25, 0.5, 0.75, 1].forEach(f => {
+    let pts = [];
+    for (let i = 0; i < n; i++) { const a = angle(i); pts.push((cx + R*f*Math.cos(a)).toFixed(1) + ',' + (cy + R*f*Math.sin(a)).toFixed(1)); }
+    svg += svgEl('polygon', {points: pts.join(' '), fill: 'none', stroke: '#e5e7eb'});
+  });
+  for (let i = 0; i < n; i++) {
+    const a = angle(i);
+    const x2 = cx + R * Math.cos(a), y2 = cy + R * Math.sin(a);
+    svg += svgEl('line', {x1: cx, y1: cy, x2: x2.toFixed(1), y2: y2.toFixed(1), stroke: '#e5e7eb'});
+    const lx = cx + (R + 18) * Math.cos(a), ly = cy + (R + 18) * Math.sin(a);
+    svg += '<text x="' + lx.toFixed(1) + '" y="' + ly.toFixed(1) + '" font-size="12" font-weight="600" fill="var(--text-main)" text-anchor="middle">' + esc(axes[i]) + '</text>';
+  }
+  series.forEach(s => {
+    let pts = [];
+    for (let i = 0; i < n; i++) { const a = angle(i); const f = Math.max(0, Math.min(1, s.values[i] / 100)); pts.push((cx + R*f*Math.cos(a)).toFixed(1) + ',' + (cy + R*f*Math.sin(a)).toFixed(1)); }
+    svg += svgEl('polygon', {points: pts.join(' '), fill: s.color, 'fill-opacity': 0.35, stroke: s.color, 'stroke-width': 2});
+  });
+  svg += '</svg>';
+  let legend = '<div class="flex-row" style="gap:16px;justify-content:center;margin-top:4px;">';
+  series.forEach(s => { legend += '<span style="font-size:12px;font-weight:600;color:var(--text-muted);"><span class="legend-dot" style="background:' + s.color + ';"></span>' + esc(s.name) + '</span>'; });
+  legend += '</div>';
+  return svg + legend;
+}
+
+// Area chart (single series)
+function areaChart(w, h, xLabels, values, color) {
+  const padL = 34, padR = 16, padT = 16, padB = 28;
+  const plotW = w - padL - padR, plotH = h - padT - padB;
+  const maxV = Math.max(...values) * 1.25;
+  const n = values.length;
+  const xAt = i => padL + (n <= 1 ? 0 : (plotW * i) / (n - 1));
+  const yAt = v => padT + plotH - (v / maxV) * plotH;
+  let path = '', area = '';
+  values.forEach((v, i) => {
+    const x = xAt(i), y = yAt(v);
+    path += (i === 0 ? 'M ' : ' L ') + x.toFixed(1) + ' ' + y.toFixed(1);
+  });
+  area = path + ' L ' + xAt(n-1).toFixed(1) + ' ' + (padT+plotH) + ' L ' + xAt(0).toFixed(1) + ' ' + (padT+plotH) + ' Z';
+  let svg = '<svg class="chart-svg" width="' + w + '" height="' + h + '" viewBox="0 0 ' + w + ' ' + h + '">';
+  svg += '<defs><linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stop-color="' + color + '" stop-opacity="0.35"/><stop offset="95%" stop-color="' + color + '" stop-opacity="0"/></linearGradient></defs>';
+  for (let g = 0; g <= 3; g++) {
+    const gy = padT + (plotH * g) / 3;
+    svg += svgEl('line', {x1: padL, y1: gy.toFixed(1), x2: w-padR, y2: gy.toFixed(1), stroke: '#e5e7eb', 'stroke-dasharray': '3 3'});
+  }
+  xLabels.forEach((lab, i) => { svg += '<text x="' + xAt(i).toFixed(1) + '" y="' + (h-8) + '" font-size="10" fill="var(--text-muted)" text-anchor="middle">' + esc(lab) + '</text>'; });
+  svg += svgEl('path', {d: area, fill: 'url(#areaGrad)'});
+  svg += svgEl('path', {d: path, fill: 'none', stroke: color, 'stroke-width': 3});
+  values.forEach((v, i) => { svg += svgEl('circle', {cx: xAt(i).toFixed(1), cy: yAt(v).toFixed(1), r: 3.5, fill: color}); });
+  svg += '</svg>';
+  return svg;
+}
+
+// Horizontal bar chart (for SHAP-style +/- values, domain -100..100)
+function hBarChart(w, h, items) {
+  const padL = 118, padR = 40, padT = 10, padB = 10;
+  const plotW = w - padL - padR;
+  const rowH = (h - padT - padB) / items.length;
+  const mid = padL + plotW / 2;
+  let svg = '<svg class="chart-svg" width="' + w + '" height="' + h + '" viewBox="0 0 ' + w + ' ' + h + '">';
+  svg += svgEl('line', {x1: mid, y1: padT, x2: mid, y2: h-padB, stroke: '#cbd5e1'});
+  items.forEach((it, i) => {
+    const y = padT + i * rowH + rowH * 0.2;
+    const bh = rowH * 0.6;
+    const bw = (Math.abs(it.value) / 100) * (plotW / 2);
+    const x = it.value >= 0 ? mid : mid - bw;
+    svg += '<text x="' + (padL - 8) + '" y="' + (y + bh/2 + 4) + '" font-size="11.5" font-weight="600" fill="var(--text-main)" text-anchor="end">' + esc(it.label) + '</text>';
+    svg += svgEl('rect', {x: x.toFixed(1), y: y.toFixed(1), width: bw.toFixed(1), height: bh.toFixed(1), rx: 3, fill: it.value >= 0 ? 'var(--danger)' : 'var(--primary)'});
+  });
+  svg += '</svg>';
+  return svg;
+}
+</script>
+<script>
+/* ============================================================
+   3. Navigation / App shell wiring
+   ============================================================ */
+const PAGE_TITLES = { global: '글로벌 뱅크 뷰', branch: '가상 지점 대시보드', borrower: '차주 상세 분석', monitoring: '모델 모니터링', simulation: '매크로 시뮬레이션' };
+let currentBaseYm = '202402';
+let branchState = { search: '', industry: '', nice: '', erm: '', tab: 'all', page: 1 };
+let monitoringState = { selectedBin: '70%+ (고위험)' };
+let simState = { interestRate: 0, exchangeRate: 0, inflation: 0, oilPrice: 0, gdpGrowth: 0, scenario: '정상 상태', tab: 'bar' };
+
+function doLogin(e) {
+  e.preventDefault();
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('app-shell').style.display = 'flex';
+  initApp();
+  return false;
+}
+function doLogout() {
+  document.getElementById('app-shell').style.display = 'none';
+  document.getElementById('login-screen').style.display = 'flex';
+}
+
+function showPage(name, opts) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  document.querySelectorAll('.nav-item[data-page]').forEach(n => n.classList.toggle('active', n.dataset.page === name));
+  document.getElementById('page-title').textContent = PAGE_TITLES[name];
+  if (name === 'global') renderGlobal();
+  if (name === 'branch') renderBranch();
+  if (name === 'monitoring') renderMonitoring();
+  if (name === 'simulation') renderSimulation();
+  if (name === 'borrower' && opts && opts.bzno) renderBorrower(opts.bzno);
+  document.querySelector('.main-content').scrollTop = 0;
+}
+
+function onBaseDateChange() {
+  currentBaseYm = document.getElementById('base-date-select').value;
+  const active = document.querySelector('.page.active').id.replace('page-', '');
+  showPage(active);
+}
+function fmtMonth(ym) { return ym.substring(0,4) + '년 ' + Number(ym.substring(4,6)) + '월'; }
+
+function initApp() {
+  const sel = document.getElementById('base-date-select');
+  sel.innerHTML = AVAILABLE_MONTHS.map(ym => '<option value="' + ym + '"' + (ym === currentBaseYm ? ' selected' : '') + '>' + fmtMonth(ym) + '</option>').join('');
+  showPage('global');
+}
+
+/* ============================================================
+   4. GLOBAL DASHBOARD
+   ============================================================ */
+function renderGlobal() {
+  const total = BORROWERS.length * 118; // 실제 포털 규모감(26,184개사)에 맞춘 스케일 표시용 승수
+  const riskCount = BORROWERS.filter(b => ['G4','G5'].includes(b.Z_GRADE)).length * 118;
+  const safeCount = BORROWERS.filter(b => ['G1','G2'].includes(b.Z_GRADE)).length * 118;
+  const riskRatio = ((riskCount / total) * 100).toFixed(1);
+
+  const gradeDist = ['G1','G2','G3','G4','G5'].map(g => ({ label: g, value: BORROWERS.filter(b => b.Z_GRADE === g).length, color: ['G4','G5'].includes(g) ? '#ef4444' : g === 'G3' ? '#f59e0b' : '#10b981' }));
+
+  const indAgg = {};
+  BORROWERS.forEach(b => {
+    if (!indAgg[b.STD_INDS_CFC]) indAgg[b.STD_INDS_CFC] = { total: 0, risk: 0, oldSum: 0 };
+    indAgg[b.STD_INDS_CFC].total++;
+    if (['G4','G5'].includes(b.Z_GRADE)) indAgg[b.STD_INDS_CFC].risk++;
+    indAgg[b.STD_INDS_CFC].oldSum += b.OLD_PROB;
+  });
+  const colors = ['#ef4444','#f97316','#8b5cf6','#3b82f6','#10b981','#ec4899','#06b6d4','#eab308'];
+  const scatterPts = Object.keys(indAgg).map((name, i) => ({
+    label: name.length > 6 ? name.slice(0,6) : name,
+    x: (indAgg[name].oldSum / indAgg[name].total) * 100,
+    y: (indAgg[name].risk / indAgg[name].total) * 100,
+    z: indAgg[name].total,
+    color: colors[i % colors.length]
+  }));
+
+  // PD-LAG: 최근 실제 대시보드에서 확인된 우측절단(right-censoring) 패턴을 재현한 예시 추이
+  const months = ['24.09','24.10','24.11','24.12','25.01','25.02'];
+  const erm = [7.5, 7.6, 7.3, 7.25, 9.9, 9.46];
+  const legacy = [1.13, 1.14, 1.10, 1.09, 1.48, 1.42];
+  const actual = [0.93, 0.91, 0.93, 0.93, 0.97, 0.99];
+
+  document.getElementById('page-global').innerHTML = `
+    <div class="flex-col" style="gap:24px;">
+      <div class="flex-row" style="justify-content:space-between;margin-bottom:8px;align-items:center;">
+        <div class="flex-col" style="gap:8px;">
+          <h1 class="font-bold">글로벌 뱅크 뷰</h1>
+          <p class="font-regular">전체 은행 관점의 포트폴리오 리스크 요약 (기준일: ${currentBaseYm}) · <span style="color:#94a3b8;">샘플 ${BORROWERS.length}개사 기반 추정치</span></p>
+        </div>
+      </div>
+
+      <div class="grid-3">
+        <div class="card flex-col"><div class="flex-row" style="gap:8px;margin-bottom:16px;"><span>👥</span><span class="font-semibold" style="color:var(--text-muted);">전체 평가 기업 수</span></div>
+          <div class="flex-row" style="align-items:baseline;gap:8px;"><div class="font-extrabold" style="font-size:36px;">${total.toLocaleString()}</div><span class="font-medium" style="color:var(--text-muted);">개사</span></div></div>
+        <div class="card card-danger flex-col"><div class="flex-row" style="gap:8px;margin-bottom:16px;"><span>⚠️</span><span class="font-semibold" style="color:var(--text-muted);">고위험군 (G4, G5)</span></div>
+          <div class="flex-row" style="align-items:baseline;gap:8px;"><div class="font-extrabold" style="font-size:36px;color:var(--danger);">${riskCount.toLocaleString()}</div><span class="font-medium">개사</span></div>
+          <p style="margin-top:12px;font-size:14px;">전체 대비 ${riskRatio}% 비중</p></div>
+        <div class="card card-safe flex-col"><div class="flex-row" style="gap:8px;margin-bottom:16px;"><span>✅</span><span class="font-semibold" style="color:var(--text-muted);">안전군 (G1, G2)</span></div>
+          <div class="flex-row" style="align-items:baseline;gap:8px;"><div class="font-extrabold" style="font-size:36px;color:var(--safe);">${safeCount.toLocaleString()}</div><span class="font-medium">개사</span></div></div>
+      </div>
+
+      <div class="grid-2">
+        <div class="flex-col" style="gap:12px;">
+          <div class="flex-row" style="gap:8px;"><span>📈</span><h2 class="font-semibold" style="margin:0;">실질 부도율 vs 모델 예측력 비교 (PD-LAG)</h2></div>
+          <div class="card">
+            ${lineChart(420, 260, months, [
+              {name:'ERM 예측(%)', color:'#2563eb', width:3, values: erm},
+              {name:'기존 모델 예측(%)', color:'#fbbf24', values: legacy},
+              {name:'시장 실질 부도율(%)', color:'#94a3b8', dashed:true, values: actual},
+            ], {censoredFrom: 4})}
+            <p style="font-size:12px;color:var(--text-muted);margin-top:8px;">ⓘ 음영 구간은 12개월 관측이 아직 끝나지 않아 실질 부도율 집계가 불완전한 최근월 예시입니다.</p>
+          </div>
+        </div>
+        <div class="flex-col" style="gap:12px;">
+          <div class="flex-row" style="gap:8px;"><span>📊</span><h2 class="font-semibold" style="margin:0;">업종별 리스크 매트릭스</h2></div>
+          <div class="card">${scatterChart(420, 260, scatterPts, {maxX: Math.max(...scatterPts.map(p=>p.x))*1.4, maxY: Math.max(35, Math.max(...scatterPts.map(p=>p.y))*1.3)})}</div>
+        </div>
+      </div>
+
+      <div class="grid-2" style="margin-top:12px;">
+        <div class="flex-col" style="gap:12px;">
+          <div class="flex-row" style="gap:8px;"><span>📈</span><h2 class="font-semibold" style="margin:0;">부도 예측 성공/실패 비교 (ERM vs 은행 내부등급)</h2></div>
+          <div class="card">${renderPredictionVenn()}</div>
+        </div>
+        <div class="flex-col" style="gap:12px;">
+          <div class="flex-row" style="gap:8px;"><span>📶</span><h2 class="font-semibold" style="margin:0;">전체 포트폴리오 ⚡ ERM 리스크 평가등급 분포 (G1 ~ G5)</h2></div>
+          <div class="card">${barChart(420, 260, gradeDist)}</div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function renderPredictionVenn() {
+  // Step 21~22에서 검증한 실제 결과값(전 기간, 내부등급 이력 보유 973개사 기준)을 그대로 재현
+  const both = 386, ermOnly = 580, internalOnly = 0, neither = 7, total = 973;
+  const catchRate = (((both+ermOnly+internalOnly)/total)*100).toFixed(1);
+  const blindSpotRate = ((ermOnly/total)*100).toFixed(1);
+  const r1=70, r2=48, cx1=128, cy=128, cx2=cx1+(r1-r2);
+  return `
+    <div class="flex-col" style="gap:16px;">
+      <div class="flex-row" style="gap:16px;align-items:center;flex-wrap:wrap;">
+        <svg width="320" height="266" viewBox="0 0 320 266" style="flex-shrink:0;">
+          <circle cx="${cx1}" cy="${cy}" r="${r1}" fill="#3b82f6" fill-opacity="0.22" stroke="#3b82f6" stroke-width="2"/>
+          <circle cx="${cx2}" cy="${cy}" r="${r2}" fill="#fbbf24" fill-opacity="0.4" stroke="#f59e0b" stroke-width="2"/>
+          <circle cx="${cx1-r1*0.5}" cy="${cy-r1*0.42}" r="3.5" fill="#3b82f6"/>
+          <line x1="${cx1-r1*0.5}" y1="${cy-r1*0.42}" x2="26" y2="44" stroke="#3b82f6" stroke-width="1.5"/>
+          <rect x="26" y="29" width="68" height="30" rx="8" fill="#eff6ff" stroke="#3b82f6"/>
+          <text x="26" y="41" font-size="10.5" font-weight="700" fill="#3b82f6">ERM만 포착</text>
+          <text x="26" y="53" font-size="16" font-weight="800" fill="#3b82f6">${ermOnly}</text>
+
+          <circle cx="${cx2-4}" cy="${cy+r2*0.35}" r="3.5" fill="#b45309"/>
+          <line x1="${cx2-4}" y1="${cy+r2*0.35}" x2="226" y2="150" stroke="#b45309" stroke-width="1.5"/>
+          <rect x="226" y="135" width="68" height="30" rx="8" fill="#fffbeb" stroke="#b45309"/>
+          <text x="226" y="147" font-size="10.5" font-weight="700" fill="#b45309">둘 다 포착</text>
+          <text x="226" y="159" font-size="16" font-weight="800" fill="#b45309">${both}</text>
+
+          <circle cx="${cx2+r2*0.55}" cy="${cy-r2*0.75}" r="3.5" fill="#b45309"/>
+          <line x1="${cx2+r2*0.55}" y1="${cy-r2*0.75}" x2="210" y2="40" stroke="#b45309" stroke-width="1.5"/>
+          <rect x="210" y="25" width="68" height="30" rx="8" fill="#fff7ed" stroke="#b45309"/>
+          <text x="210" y="37" font-size="10.5" font-weight="700" fill="#b45309">내부만 포착</text>
+          <text x="210" y="49" font-size="16" font-weight="800" fill="#b45309">${internalOnly}</text>
+
+          <circle cx="30" cy="${cy+r1+30}" r="3.5" fill="#64748b"/>
+          <text x="42" y="${cy+r1+30}" font-size="12" font-weight="600" fill="#64748b">둘 다 놓침 ${neither}개</text>
+          <text x="42" y="${cy+r1+48}" font-size="12" font-weight="600" fill="#64748b">실제 부도 기업 총 ${total}개 (내부등급 이력 보유분)</text>
+        </svg>
+        <div class="flex-col" style="gap:14px;flex:1;min-width:160px;">
+          <div><div class="font-semibold" style="color:var(--text-muted);font-size:13px;">평균 조기경보 리드타임</div>
+          <div class="font-extrabold" style="font-size:26px;color:var(--primary);">+9.2개월</div></div>
+          <div class="flex-row" style="gap:20px;">
+            <div><div style="font-size:12px;color:var(--text-muted);white-space:nowrap;">전체 포착률</div><div class="font-bold" style="font-size:18px;">${catchRate}%</div></div>
+            <div><div style="font-size:12px;color:var(--text-muted);white-space:nowrap;">ERM 단독 사각지대</div><div class="font-bold" style="font-size:18px;color:var(--danger);">${blindSpotRate}%</div></div>
+          </div>
+        </div>
+      </div>
+      <p style="font-size:12px;color:var(--text-muted);margin:0;">실제 부도 기업 총 973개(내부등급 이력 보유분) 중, 내부등급이 A→B로 전환되는 시점이 관측된 73개사 기준 ERM이 내부등급 하향보다 평균 9.2개월 먼저 고위험(G4/G5)으로 경고했습니다. (내부등급이 데이터 시작 시점부터 이미 'B'였던 313개사는 하향 시점을 알 수 없어 이 평균에서 제외 — 여전히 "둘 다 포착"에는 포함됩니다.)</p>
+    </div>
+  `;
+}
+
+/* ============================================================
+   5. BRANCH DASHBOARD
+   ============================================================ */
+function checkIsBlindSpot(b) { return b.PROB_FULL >= 0.25 && b.OLD_PROB <= 0.06; }
+
+function branchFiltered() {
+  return BORROWERS.filter(b => {
+    const ermStr = ERM_GRADE_LABELS[b.Z_GRADE];
+    const s = branchState.search.toLowerCase();
+    const matchSearch = !s || b.V_BZNO.includes(s) || b.NICE_GRADE_CUR.toLowerCase().includes(s) || ermStr.toLowerCase().includes(s) || b.Z_GRADE.toLowerCase().includes(s);
+    const matchInd = !branchState.industry || b.STD_INDS_CFC === branchState.industry;
+    const matchNice = !branchState.nice || b.NICE_GRADE_CUR === branchState.nice;
+    const matchErm = !branchState.erm || b.Z_GRADE === branchState.erm;
+    return matchSearch && matchInd && matchNice && matchErm;
+  });
+}
+
+function setBranchTab(tab) { branchState.tab = tab; branchState.page = 1; renderBranch(); }
+function setBranchFilter(field, val) { branchState[field] = val; branchState.page = 1; renderBranch(); }
+function setBranchPage(p) { branchState.page = p; renderBranch(); }
+
+function renderBranch() {
+  const contentFiltered = branchFiltered();
+  const highRiskCount = contentFiltered.filter(b => b.PROB_FULL >= 0.25).length;
+  const mismatchCount = contentFiltered.filter(checkIsBlindSpot).length;
+  const tabFiltered = contentFiltered.filter(b => branchState.tab === 'highRisk' ? b.PROB_FULL >= 0.25 : branchState.tab === 'mismatch' ? checkIsBlindSpot(b) : true);
+
+  const perPage = 20;
+  const totalPages = Math.max(1, Math.ceil(tabFiltered.length / perPage));
+  if (branchState.page > totalPages) branchState.page = totalPages;
+  const pageItems = tabFiltered.slice((branchState.page-1)*perPage, branchState.page*perPage);
+
+  const industryOptions = [...new Set(BORROWERS.map(b => b.STD_INDS_CFC))].sort();
+  const niceOptions = [...new Set(BORROWERS.map(b => b.NICE_GRADE_CUR))].sort();
+
+  const rows = pageItems.map(item => {
+    const isBlind = checkIsBlindSpot(item);
+    const gradeColor = ['G4','G5'].includes(item.Z_GRADE) ? ['#fee2e2','#dc2626'] : item.Z_GRADE === 'G3' ? ['#fef3c7','#d97706'] : ['#d1fae5','#059669'];
+    const probColor = item.PROB_FULL >= 0.3 ? 'var(--danger)' : item.PROB_FULL >= 0.1 ? 'var(--warning)' : 'var(--safe)';
+    return `<tr style="background:${isBlind ? 'rgba(239,68,68,0.02)' : 'transparent'};">
+      <td><div class="flex-col" style="gap:4px;"><div class="flex-row" style="gap:6px;"><span class="font-bold" style="font-size:15px;">기업_${item.V_BZNO}</span>${isBlind ? '<span style="background:#fef2f2;color:var(--danger);border:1px solid #fca5a5;padding:2px 6px;border-radius:4px;font-size:11px;font-weight:800;white-space:nowrap;">🚨 AI 조기경보</span>' : ''}</div><span style="font-size:12px;color:var(--text-muted);">${item.V_BZNO}</span></div></td>
+      <td>${esc(item.STD_INDS_CFC)}</td>
+      <td style="text-align:right;"><span class="font-bold" style="color:#64748b;">${(item.OLD_PROB*100).toFixed(2)}%</span></td>
+      <td style="text-align:center;"><span class="badge" style="background:${gradeColor[0]};color:${gradeColor[1]};font-weight:800;">${ERM_GRADE_LABELS[item.Z_GRADE]}</span></td>
+      <td style="text-align:right;"><span class="font-extrabold" style="color:${probColor};font-size:15px;">${(item.PROB_FULL*100).toFixed(2)}%</span></td>
+      <td style="text-align:center;font-size:13px;">${item.NICE_GRADE_PREV} <span style="color:var(--border);">→</span> <strong>${item.NICE_GRADE_CUR}</strong></td>
+      <td style="text-align:center;font-size:13px;">${item.KIS_GRADE_PREV} <span style="color:var(--border);">→</span> <strong>${item.KIS_GRADE_CUR}</strong></td>
+      <td style="text-align:center;"><button class="btn btn-ghost" style="min-width:auto;padding:8px 12px;" onclick="showPage('borrower',{bzno:'${item.V_BZNO}'})">▶</button></td>
+    </tr>`;
+  }).join('');
+
+  const pageBtns = [];
+  for (let p = 1; p <= totalPages && p <= 7; p++) pageBtns.push(p);
+
+  document.getElementById('page-branch').innerHTML = `
+    <div class="flex-col" style="gap:24px;">
+      <div class="flex-row" style="justify-content:space-between;margin-bottom:8px;align-items:center;flex-wrap:wrap;gap:12px;">
+        <div class="flex-col" style="gap:8px;"><h1 class="font-bold">가상 지점 대시보드</h1><p class="font-regular">전 지점 통합 차주 리스트 및 고위험 모니터링 현황 (샘플 데이터)</p></div>
+        <div class="flex-row" style="gap:10px;flex-wrap:wrap;">
+          <select class="select-box" onchange="setBranchFilter('industry', this.value)"><option value="">모든 업종</option>${industryOptions.map(o=>`<option ${branchState.industry===o?'selected':''}>${esc(o)}</option>`).join('')}</select>
+          <select class="select-box" onchange="setBranchFilter('nice', this.value)"><option value="">🏛️ NICE 등급</option>${niceOptions.map(o=>`<option ${branchState.nice===o?'selected':''}>${esc(o)}</option>`).join('')}</select>
+          <select class="select-box" onchange="setBranchFilter('erm', this.value)"><option value="">⚡ ERM 등급</option>${Object.keys(ERM_GRADE_LABELS).map(g=>`<option value="${g}" ${branchState.erm===g?'selected':''}>${ERM_GRADE_LABELS[g]}</option>`).join('')}</select>
+          <div class="card flex-row" style="padding:8px 14px;gap:8px;min-width:220px;">🔍<input type="text" placeholder="기업명_사업자번호_등급 검색..." value="${esc(branchState.search)}" style="border:none;outline:none;width:100%;font-size:13px;" oninput="setBranchFilter('search', this.value)"></div>
+        </div>
+      </div>
+
+      <div class="flex-row" style="gap:16px;width:100%;flex-wrap:wrap;">
+        <div class="card flex-row" style="flex:1;min-width:280px;justify-content:space-between;cursor:pointer;padding:20px 24px;${branchState.tab==='all'?'background:#eff6ff;border:2px solid #3b82f6;':''}" onclick="setBranchTab('all')">
+          <div class="flex-col" style="gap:8px;"><span class="font-semibold" style="font-size:14px;color:${branchState.tab==='all'?'#1d4ed8':'var(--text-muted)'};">🏢 지점 총 차주 수</span>
+          <div class="flex-row" style="align-items:baseline;gap:8px;"><div class="font-extrabold" style="font-size:32px;">${contentFiltered.length.toLocaleString()}</div><span style="font-size:14px;color:var(--text-muted);">개사 전체보기</span></div></div>
+        </div>
+        <div class="card flex-row" style="flex:1;min-width:280px;justify-content:space-between;cursor:pointer;padding:20px 24px;${branchState.tab==='highRisk'?'background:#fef2f2;border:2px solid var(--danger);':''}" onclick="setBranchTab('highRisk')">
+          <div class="flex-col" style="gap:8px;"><span class="font-semibold" style="font-size:14px;color:${branchState.tab==='highRisk'?'#b91c1c':'var(--text-muted)'};">⚡ ERM 분석 고위험군</span>
+          <div class="flex-row" style="align-items:baseline;gap:8px;"><div class="font-extrabold" style="font-size:32px;color:var(--danger);">${highRiskCount.toLocaleString()}</div><span style="font-size:14px;color:var(--text-muted);">개사 (G4·G5)</span></div></div>
+        </div>
+        <div class="card flex-row" style="flex:1;min-width:280px;justify-content:space-between;cursor:pointer;padding:20px 24px;${branchState.tab==='mismatch'?'background:#fffbeb;border:2px solid var(--warning);':''}" onclick="setBranchTab('mismatch')">
+          <div class="flex-col" style="gap:8px;"><span class="font-semibold" style="font-size:14px;color:${branchState.tab==='mismatch'?'#b45309':'var(--text-muted)'};">🚨 잠재 리스크 (등급 괴리)</span>
+          <div class="flex-row" style="align-items:baseline;gap:8px;"><div class="font-extrabold" style="font-size:32px;color:var(--warning);">${mismatchCount.toLocaleString()}</div><span style="font-size:14px;color:var(--text-muted);">건 (AI 조기경보)</span></div></div>
+        </div>
+      </div>
+
+      <div class="card" style="padding:0;overflow-x:auto;">
+        <table style="min-width:1050px;">
+          <thead><tr><th>기업명 (사업자번호)</th><th>업종</th><th style="text-align:right;">기존모델 확률</th><th style="text-align:center;">⚡ ERM 등급</th><th style="text-align:right;">⚡ ERM 확률</th><th style="text-align:center;">NICE (전월→당월)</th><th style="text-align:center;">KIS (전월→당월)</th><th style="text-align:center;">상세분석</th></tr></thead>
+          <tbody>${rows || '<tr><td colspan="8" style="text-align:center;padding:40px;color:var(--text-muted);">데이터 없음</td></tr>'}</tbody>
+        </table>
+      </div>
+
+      <div class="card flex-row" style="justify-content:space-between;align-items:center;padding:16px 24px;">
+        <span style="font-size:14px;color:var(--text-muted);">총 <strong style="color:var(--text-main);">${tabFiltered.length}</strong>개 기업 중 ${tabFiltered.length ? ((branchState.page-1)*perPage+1) : 0} ~ ${Math.min(branchState.page*perPage, tabFiltered.length)}개 표시 (페이지 ${branchState.page} / ${totalPages})</span>
+        <div class="flex-row" style="gap:6px;">
+          <button class="btn" style="padding:6px 14px;font-size:13px;background:var(--bg-main);border:1px solid var(--border);" onclick="setBranchPage(Math.max(1,${branchState.page}-1))">이전</button>
+          ${pageBtns.map(p => `<button style="width:34px;height:34px;border-radius:8px;border:${p===branchState.page?'none':'1px solid var(--border)'};background:${p===branchState.page?'var(--primary)':'var(--bg-main)'};color:${p===branchState.page?'white':'var(--text-main)'};font-weight:${p===branchState.page?700:500};cursor:pointer;font-size:13px;" onclick="setBranchPage(${p})">${p}</button>`).join('')}
+          <button class="btn" style="padding:6px 14px;font-size:13px;background:var(--bg-main);border:1px solid var(--border);" onclick="setBranchPage(Math.min(${totalPages},${branchState.page}+1))">다음</button>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+/* ============================================================
+   6. BORROWER DETAIL
+   ============================================================ */
+const FALLBACK_TIPS_HIGH_RISK = [
+  { title: '신규 여신 취급 전 면밀 검토 및 담보 확보', reason: '고위험 등급(G4/G5) 차주는 추가 익스포저 확대 전 보수적인 심사와 충분한 담보/보증 확보가 필요합니다.' },
+  { title: '현금흐름 및 연체 현황 밀착 모니터링', reason: '부실 징후를 조기에 포착하기 위해 월 단위로 재무 상태와 상환 이력을 점검하는 것이 중요합니다.' },
+  { title: '채권 보전 조치 사전 검토', reason: '리스크가 현실화될 경우를 대비해 담보 설정 현황과 회수 방안을 미리 점검해 두어야 합니다.' },
+];
+const FALLBACK_TIPS_NORMAL = [
+  { title: '정기적인 재무/비재무 현황 점검', reason: '안정권 차주라도 분기별 재무제표 및 영업 현황을 주기적으로 확인해 변화를 조기에 파악해야 합니다.' },
+  { title: '업종 평균 대비 경쟁력 모니터링', reason: '동일 업종 내 상대적 위치를 파악하여 잠재적 리스크 요인을 선제적으로 관리합니다.' },
+  { title: '추가 거래 확대 가능성 검토', reason: '안정적인 차주는 장기적인 관계 강화를 위해 맞춤형 금융 상품 제안을 검토할 수 있습니다.' },
+];
+const SHAP_LABELS = ['자기자본비율', '매출액증가율', '차입금의존도', '영업이익률', '업력', '대표자신용점수', '거래처집중도', '환율변동노출도'];
+let expandedTipIdx = null;
+let currentBorrowerBzno = null;
+
+function seedFromString(str) { let h = 0; for (let i = 0; i < str.length; i++) h = (h * 31 + str.charCodeAt(i)) | 0; return h; }
+
+function renderBorrower(bzno) {
+  let item = BORROWERS.find(b => b.V_BZNO === bzno);
+  if (!item) item = BORROWERS[0];
+  currentBorrowerBzno = item.V_BZNO;
+  const r = mulberry32(seedFromString(item.V_BZNO));
+  const isBlind = item.PROB_FULL >= 0.25 && item.OLD_PROB <= 0.06;
+  const isHighBoth = ['G4','G5'].includes(item.Z_GRADE) && item.OLD_PROB > 0.06;
+  const status = isBlind ? 'BLIND_SPOT' : isHighBoth ? 'HIGH_RISK' : 'SAFE';
+
+  // 3개년 재무 (seed 기반 pseudo-random, 회사별로 일관되게 재현)
+  const baseRevenue = r() * 4000000 + 500000;
+  const years = [Number(currentBaseYm.slice(0,4)) - 2, Number(currentBaseYm.slice(0,4)) - 1, Number(currentBaseYm.slice(0,4))];
+  const financials = years.map((y, i) => {
+    const growth = 1 + (r() - 0.4) * 0.15;
+    const rev = Math.round(baseRevenue * Math.pow(growth, i));
+    return {
+      year: y,
+      capital: Math.round(rev * (0.25 + r()*0.15)),
+      total_assets: Math.round(rev * (0.6 + r()*0.3)),
+      revenue: rev,
+      operating_profit: Math.round(rev * (0.02 + r()*0.08) * (item.Z_GRADE==='G5' ? -1 : 1)),
+      kis_score: item.Z_GRADE === 'G5' && i === 2 ? -1 : Math.round(400 + (1 - item.PROB_FULL) * 500),
+      nice_grade: item.NICE_GRADE_CUR,
+    };
+  });
+
+  // PD 시계열 (6개월)
+  const pdMonths = ['1월','2월','3월','4월','5월','6월'];
+  let pdVal = item.PROB_FULL * 100 * (0.6 + r()*0.3);
+  const pdHistory = pdMonths.map(() => { pdVal = Math.max(0.1, pdVal + (r()-0.5) * item.PROB_FULL * 40); return Math.round(pdVal*100)/100; });
+  pdHistory[pdHistory.length-1] = Math.round(item.PROB_FULL*10000)/100;
+
+  // SHAP (요인별 기여도)
+  const shapFeatures = SHAP_LABELS.map(label => ({ label, value: Math.round((r()*2-1) * (40 + r()*60)) }))
+    .sort((a,b) => Math.abs(b.value) - Math.abs(a.value));
+  const basePd = 1.5;
+
+  // 기업 역량 진단 (Radar)
+  const axes = ['활동성','수익성','안정성','성장성','규모'];
+  const target = axes.map(() => Math.round(Math.max(5, Math.min(95, (1-item.PROB_FULL)*100 + (r()-0.5)*30))));
+  const industryAvg = axes.map(() => Math.round(45 + (r()-0.5)*20));
+
+  const tips = ['G4','G5'].includes(item.Z_GRADE) ? FALLBACK_TIPS_HIGH_RISK : FALLBACK_TIPS_NORMAL;
+  const summary = ['G4','G5'].includes(item.Z_GRADE)
+    ? `해당 차주는 ERM 예측 부도확률이 ${(item.PROB_FULL*100).toFixed(2)}%로 고위험 구간에 있습니다. 조기 리스크 관리 조치가 필요합니다.`
+    : `해당 차주는 ERM 예측 부도확률이 ${(item.PROB_FULL*100).toFixed(2)}%로 안정적인 수준을 유지하고 있습니다.`;
+
+  const gradeColor = ['G4','G5'].includes(item.Z_GRADE) ? ['#fee2e2','#dc2626'] : item.Z_GRADE === 'G3' ? ['#fef3c7','#d97706'] : ['#d1fae5','#059669'];
+
+  const statusBoxHtml = status === 'BLIND_SPOT'
+    ? `<div style="background:#fef2f2;border-radius:8px;padding:16px;display:flex;gap:12px;"><span style="font-size:22px;">🚨</span><div class="flex-col" style="gap:4px;"><span class="font-bold" style="color:#b91c1c;font-size:15px;">잠재 리스크 감지 (사각지대)</span><span style="color:#991b1b;font-size:14px;">기존 신용평가 지표는 상대적으로 안전한 편이나, AI 모델은 부도 확률을 고위험 수준인 ${(item.PROB_FULL*100).toFixed(2)}%로 예측했습니다. 선제적 여신 관리가 필요합니다.</span></div></div>`
+    : status === 'HIGH_RISK'
+    ? `<div style="background:#fef2f2;border-radius:8px;padding:16px;display:flex;gap:12px;"><span style="font-size:22px;">🚨</span><div class="flex-col" style="gap:4px;"><span class="font-bold" style="color:#b91c1c;font-size:15px;">초고위험 경고 (부도 임박)</span><span style="color:#991b1b;font-size:14px;">AI 예측 부도 확률이 ${(item.PROB_FULL*100).toFixed(2)}%로 매우 높습니다. 즉각적인 채권 보전 조치가 시급합니다.</span></div></div>`
+    : `<div style="background:#ecfdf5;border-radius:8px;padding:16px;display:flex;gap:12px;"><span style="font-size:22px;">✅</span><div class="flex-col" style="gap:4px;"><span class="font-bold" style="color:#047857;font-size:15px;">정상 수준</span><span style="color:#065f46;font-size:14px;">AI 예측 부도 확률이 안전한 수준(${(item.PROB_FULL*100).toFixed(2)}%)입니다.</span></div></div>`;
+
+  document.getElementById('page-borrower').innerHTML = `
+    <div class="flex-col" style="gap:24px;">
+      <button class="btn btn-ghost" style="padding:8px 16px;min-height:auto;width:fit-content;" onclick="showPage('branch')">← 뒤로가기</button>
+      <div class="flex-row" style="justify-content:space-between;margin-bottom:8px;flex-wrap:wrap;gap:12px;">
+        <div class="flex-row" style="gap:12px;align-items:center;flex-wrap:wrap;">
+          <h1 class="font-bold" style="margin:0;">기업_${item.V_BZNO} <span style="font-size:20px;color:var(--text-muted);font-weight:500;">(${item.V_BZNO})</span></h1>
+          <span class="badge" style="background:#f1f5f9;color:#475569;border:1px solid #cbd5e1;font-weight:700;">🏛️ 기존신용평가 등급: ${item.NICE_GRADE_CUR}</span>
+          <span class="badge" style="background:${gradeColor[0]};color:${gradeColor[1]};font-weight:800;">⚡ ERM 등급: ${ERM_GRADE_LABELS[item.Z_GRADE]}</span>
+        </div>
+        <button class="btn btn-primary">상세 보고서 출력</button>
+      </div>
+
+      <div class="flex-col" style="gap:12px;">
+        <div class="flex-row" style="gap:8px;">ℹ️<h2 class="font-semibold" style="margin:0;">기업 개요</h2></div>
+        <div class="card grid-4">
+          <div class="flex-col" style="gap:8px;"><span style="color:var(--text-muted);">업종</span><span class="font-bold" style="font-size:16px;">${esc(item.STD_INDS_CFC)}</span></div>
+          <div class="flex-col" style="gap:8px;"><span style="color:var(--text-muted);">기준년월</span><span class="font-bold" style="font-size:16px;">${currentBaseYm}</span></div>
+          <div class="flex-col" style="gap:8px;"><span style="color:var(--text-muted);">관할 지점</span><span class="font-bold" style="font-size:16px;">${item.V_BRANCH_CODE}</span></div>
+          <div class="flex-col" style="gap:8px;"><span style="color:var(--text-muted);">업력 (개월)</span><span class="font-bold" style="font-size:16px;">${item.BUSINESS_AGE}</span></div>
+        </div>
+      </div>
+
+      <div class="flex-col" style="gap:12px;">
+        <div class="flex-row" style="gap:8px;">🤖<h2 class="font-semibold" style="margin:0;">AI 조기경보 모델 분석 의견</h2></div>
+        <div class="card ${status!=='SAFE'?'card-danger':'card-safe'} flex-col" style="gap:16px;">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;background:white;padding:16px 18px;border-radius:10px;border:1px solid var(--border);">
+            <div class="flex-col" style="gap:8px;border-right:1px solid #e2e8f0;padding-right:16px;">
+              <div class="flex-row" style="justify-content:space-between;"><span style="font-size:13px;color:var(--text-muted);font-weight:700;">🏛️ 기존신용평가모형</span><span class="badge" style="background:#f1f5f9;color:#475569;">${item.NICE_GRADE_CUR}</span></div>
+              <div class="flex-row" style="justify-content:space-between;align-items:baseline;"><span style="font-size:13px;font-weight:600;">기존모델 부도확률</span><span style="font-size:20px;font-weight:800;color:#64748b;">${(item.OLD_PROB*100).toFixed(2)}%</span></div>
+            </div>
+            <div class="flex-col" style="gap:8px;padding-left:6px;">
+              <div class="flex-row" style="justify-content:space-between;"><span style="font-size:13px;color:var(--primary);font-weight:800;">⚡ AI ERM 신용평가모형</span><span class="badge" style="background:${gradeColor[0]};color:${gradeColor[1]};">${ERM_GRADE_LABELS[item.Z_GRADE]}</span></div>
+              <div class="flex-row" style="justify-content:space-between;align-items:baseline;"><span style="font-size:13px;font-weight:700;">ERM 산출 부도확률</span><span style="font-size:24px;font-weight:900;color:${item.PROB_FULL>=0.3?'var(--danger)':item.PROB_FULL>=0.1?'var(--warning)':'var(--safe)'};">${(item.PROB_FULL*100).toFixed(2)}%</span></div>
+            </div>
+          </div>
+          ${statusBoxHtml}
+        </div>
+      </div>
+
+      <div class="grid-2" style="gap:24px;">
+        <div class="flex-col" style="gap:12px;">
+          <div class="flex-row" style="gap:8px;">🧮<h2 class="font-semibold" style="margin:0;">주요 재무/비재무 (최근 3개년)</h2></div>
+          <div class="card" style="overflow-x:auto;">
+            <table style="font-size:13px;">
+              <thead><tr><th>항목</th>${financials.map(f=>`<th style="text-align:right;">${f.year}년</th>`).join('')}</tr></thead>
+              <tbody>
+                <tr><td style="color:var(--text-muted);">자본총계</td>${financials.map(f=>`<td style="text-align:right;font-weight:700;">${f.capital.toLocaleString()} 천원</td>`).join('')}</tr>
+                <tr><td style="color:var(--text-muted);">총자산</td>${financials.map(f=>`<td style="text-align:right;font-weight:700;">${f.total_assets.toLocaleString()} 천원</td>`).join('')}</tr>
+                <tr><td style="color:var(--text-muted);">매출액</td>${financials.map(f=>`<td style="text-align:right;font-weight:700;">${f.revenue.toLocaleString()} 천원</td>`).join('')}</tr>
+                <tr><td style="color:var(--text-muted);">영업이익</td>${financials.map(f=>`<td style="text-align:right;font-weight:700;">${f.operating_profit.toLocaleString()} 천원</td>`).join('')}</tr>
+                <tr><td style="color:var(--text-muted);">KIS 점수</td>${financials.map(f=>`<td style="text-align:right;font-weight:700;">${f.kis_score===-1?'등급 없음':f.kis_score}</td>`).join('')}</tr>
+                <tr><td style="color:var(--text-muted);">NICE 등급</td>${financials.map(f=>`<td style="text-align:right;font-weight:700;">${f.nice_grade}</td>`).join('')}</tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="flex-col" style="gap:12px;">
+          <div class="flex-row" style="gap:8px;justify-content:space-between;"><div class="flex-row" style="gap:8px;">📈<h2 class="font-semibold" style="margin:0;">기업 역량 진단 (Radar)</h2></div><span style="font-size:12px;color:var(--text-muted);">동일 업종 대비 백분위</span></div>
+          <div class="card" style="display:flex;align-items:center;justify-content:center;">
+            ${radarChart(340, 280, axes, [{name:'해당 기업', color:'#2563eb', values: target}, {name:'업종 평균', color:'#64748b', values: industryAvg}])}
+          </div>
+        </div>
+
+        <div class="flex-col" style="gap:12px;">
+          <div class="flex-row" style="gap:8px;">📊<h2 class="font-semibold" style="margin:0;">부도 확률 시계열 추이 추정 (최근 6개월)</h2></div>
+          <div class="card">${areaChart(420, 240, pdMonths, pdHistory, item.PROB_FULL > 0.5 ? '#ef4444' : '#2563eb')}</div>
+        </div>
+
+        <div class="flex-col" style="gap:12px;">
+          <div class="flex-row" style="gap:8px;">⚠️<h2 class="font-semibold" style="margin:0;">AI 핵심 리스크 및 대응 방안</h2></div>
+          <div class="card flex-col" style="gap:16px;">
+            <div style="background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:12px 14px;"><span style="color:#92400e;font-size:14px;">${summary}</span></div>
+            <div class="flex-col" style="gap:10px;">
+              ${tips.map((tip, idx) => `
+                <div style="border:1px solid var(--border);border-radius:8px;background:${expandedTipIdx===idx?'var(--bg-main)':'white'};overflow:hidden;">
+                  <button onclick="toggleTip(${idx})" style="width:100%;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 14px;background:none;border:none;cursor:pointer;text-align:left;">
+                    <span class="flex-row" style="gap:10px;"><span class="font-bold" style="width:22px;height:22px;border-radius:50%;background:var(--primary);color:white;font-size:12px;display:flex;align-items:center;justify-content:center;">${idx+1}</span><span class="font-bold" style="font-size:14px;">${esc(tip.title)}</span></span>
+                    <span>${expandedTipIdx===idx?'▲':'▼'}</span>
+                  </button>
+                  ${expandedTipIdx===idx ? `<div style="padding:0 14px 14px 46px;"><span style="font-size:13px;color:var(--text-muted);">${esc(tip.reason)}</span></div>` : ''}
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        </div>
+
+        <div class="flex-col" style="gap:12px;">
+          <div class="flex-row" style="gap:8px;justify-content:space-between;"><div class="flex-row" style="gap:8px;">📊<h2 class="font-semibold" style="margin:0;">요인별 기여도 시각화 (SHAP)</h2></div><span style="font-size:12px;color:var(--text-muted);">평균 ${basePd}% → 이 기업 ${(item.PROB_FULL*100).toFixed(2)}%</span></div>
+          <div class="card">${hBarChart(420, 260, shapFeatures.slice(0,8))}</div>
+        </div>
+
+        <div class="flex-col" style="gap:12px;">
+          <div class="flex-row" style="gap:8px;">📋<h2 class="font-semibold" style="margin:0;">변수별 위험 기여량 상세</h2></div>
+          <div class="card flex-col" style="gap:24px;justify-content:center;">
+            ${shapFeatures.slice(0,4).map(f => `
+              <div class="flex-col" style="gap:10px;">
+                <div class="flex-row" style="justify-content:space-between;align-items:flex-end;"><span class="font-bold" style="font-size:15px;">${esc(f.label)}</span><span class="font-extrabold" style="color:${f.value>=0?'var(--danger)':'var(--primary)'};font-size:16px;">${f.value>0?'+':''}${f.value}</span></div>
+                <div style="width:100%;height:8px;background:var(--bg-main);border-radius:4px;overflow:hidden;"><div style="width:${Math.min(Math.abs(f.value),100)}%;height:100%;background:${f.value>=0?'var(--danger)':'var(--primary)'};"></div></div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+function toggleTip(idx) { expandedTipIdx = expandedTipIdx === idx ? null : idx; renderBorrower(currentBorrowerBzno || BORROWERS[0].V_BZNO); }
+
+/* ============================================================
+   7. MODEL MONITORING
+   ============================================================ */
+const METRICS = { valid_auc: 0.901, valid_gini: 0.802, valid_ks: 0.672, total_psi: 0.1247 };
+const LEGACY_BENCHMARK = { auroc: 0.81, gini: 0.62, ks: 0.42 };
+const DRIFT_DATA = ['23.03','23.06','23.09','23.12','24.03','24.06','24.09','24.12','25.03','25.06'].map((m,i) => ({ month: m, psi: Math.round((0.02 + i*0.011 + (i>7?0.01:0)) * 10000)/10000 }));
+const PD_DIST = [
+  { bin: '0-5%', 기존모형: 62, ERM모형: 55 },
+  { bin: '5-10%', 기존모형: 20, ERM모형: 18 },
+  { bin: '10-25%', 기존모형: 11, ERM모형: 14 },
+  { bin: '25-50%', 기존모형: 5, ERM모형: 8 },
+  { bin: '50%+', 기존모형: 2, ERM모형: 5 },
+];
+function binBorrowersFor(bin) {
+  const ranges = { '0-5%':[0,0.05], '5-10%':[0.05,0.10], '10-25%':[0.10,0.25], '25-50%':[0.25,0.50], '50%+':[0.50,1.0], '70%+ (고위험)':[0.35,1.0] };
+  const [lo,hi] = ranges[bin] || [0.35,1.0];
+  return BORROWERS.filter(b => b.PROB_FULL >= lo && b.PROB_FULL < hi).slice(0, 5);
+}
+function setMonitoringBin(bin) { monitoringState.selectedBin = bin; renderMonitoring(); }
+
+function renderMonitoring() {
+  const perfGroups = [
+    { label: 'AUROC', values: [LEGACY_BENCHMARK.auroc, METRICS.valid_auc] },
+    { label: 'GINI', values: [LEGACY_BENCHMARK.gini, METRICS.valid_gini] },
+    { label: 'K-S', values: [LEGACY_BENCHMARK.ks, METRICS.valid_ks] },
+  ];
+  const binList = binBorrowersFor(monitoringState.selectedBin);
+  document.getElementById('page-monitoring').innerHTML = `
+    <div class="flex-col" style="gap:24px;">
+      <div class="flex-col"><h1 class="font-bold" style="font-size:24px;margin:0;">AI 리스크 평가 모형 (ERM) 성능 및 안정성 모니터링</h1><p style="margin-top:4px;">금융 규제 기준(바젤/금감원) 핵심 평가 지표 실시간 감지 및 부도율 구간별 차주 드릴다운 분석</p></div>
+
+      <div class="grid-4">
+        <div class="card flex-col" style="gap:8px;padding:16px;border-top:3px solid var(--primary);">
+          <div class="flex-row" style="justify-content:space-between;"><span class="font-bold" style="font-size:14px;">AUROC (변별력)</span>🎯</div>
+          <div class="flex-row" style="align-items:baseline;gap:8px;"><span class="font-extrabold" style="font-size:24px;color:var(--primary);">${METRICS.valid_auc.toFixed(3)}</span><span class="font-bold" style="color:var(--safe);font-size:13px;">▲ ${(METRICS.valid_auc-LEGACY_BENCHMARK.auroc).toFixed(3)}</span></div>
+          <span style="color:var(--text-muted);font-size:12px;">부도/정상 기업 간 식별력 지표<br/>(0.7 이상 시 우수 모형, Valid 기준)</span>
+        </div>
+        <div class="card flex-col" style="gap:8px;padding:16px;border-top:3px solid var(--primary);">
+          <div class="flex-row" style="justify-content:space-between;"><span class="font-bold" style="font-size:14px;">GINI INDEX</span>📶</div>
+          <div class="flex-row" style="align-items:baseline;gap:8px;"><span class="font-extrabold" style="font-size:24px;color:var(--primary);">${METRICS.valid_gini.toFixed(3)}</span><span class="font-bold" style="color:var(--safe);font-size:13px;">▲ ${(METRICS.valid_gini-LEGACY_BENCHMARK.gini).toFixed(3)}</span></div>
+          <span style="color:var(--text-muted);font-size:12px;">모형 누적 변별도 및 정확도<br/>(2 × AUROC - 1 공식 산출)</span>
+        </div>
+        <div class="card flex-col" style="gap:8px;padding:16px;border-top:3px solid var(--safe);">
+          <div class="flex-row" style="justify-content:space-between;"><span class="font-bold" style="font-size:14px;">PSI (인구안정성지수)</span>🛡️</div>
+          <div class="flex-row" style="align-items:baseline;gap:8px;"><span class="font-extrabold" style="font-size:24px;color:var(--safe);">${METRICS.total_psi.toFixed(4)}</span><span class="badge badge-safe" style="font-size:11px;padding:2px 6px;">${METRICS.total_psi<0.1?'안정권':METRICS.total_psi<0.25?'모니터링':'재학습 필요'}</span></div>
+          <span style="color:var(--text-muted);font-size:12px;">개발 시점 대비 데이터 일치도<br/>(0.1 미만 시 매우 안정적)</span>
+        </div>
+        <div class="card flex-col" style="gap:8px;padding:16px;border-top:3px solid var(--primary);">
+          <div class="flex-row" style="justify-content:space-between;"><span class="font-bold" style="font-size:14px;">K-S STATISTICS</span>📊</div>
+          <div class="flex-row" style="align-items:baseline;gap:8px;"><span class="font-extrabold" style="font-size:24px;color:var(--primary);">${(METRICS.valid_ks*100).toFixed(1)}%</span><span class="font-bold" style="color:var(--safe);font-size:13px;">▲ ${((METRICS.valid_ks-LEGACY_BENCHMARK.ks)*100).toFixed(1)}%p</span></div>
+          <span style="color:var(--text-muted);font-size:12px;">부도-정상 누적분포 최대격차<br/>(40% 이상 시 최고 등급 변별력)</span>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="flex-col" style="gap:12px;">
+          <div class="flex-row" style="gap:8px;">🎯<h2 class="font-semibold" style="margin:0;">금융 규제 핵심 평가 지표 비교</h2></div>
+          <div class="card">
+            ${groupedBarChart(420, 260, perfGroups, ['#94a3b8','#2563eb'], ['기존 은행 모형','ERM 참조 모델 (LightGBM)'], {max:1})}
+            <div class="flex-row" style="gap:8px;background:var(--bg-main);padding:12px;border-radius:8px;margin-top:12px;">ℹ️<span style="font-size:13px;color:var(--text-muted);">AUROC/Gini는 변별력을, K-S는 정상·부도 분포 최대 격차를 의미합니다. ERM 모델은 바젤 III 및 금감원 모범규준을 상회하는 성능입니다.</span></div>
+          </div>
+        </div>
+        <div class="flex-col" style="gap:12px;">
+          <div class="flex-row" style="gap:8px;">📈<h2 class="font-semibold" style="margin:0;">데이터/컨셉 드리프트 모니터링 (PSI)</h2></div>
+          <div class="card">
+            ${lineChart(420, 260, DRIFT_DATA.map(d=>d.month), [{name:'PSI', color:'#2563eb', values: DRIFT_DATA.map(d=>d.psi)}, {name:'재학습 임계치 (0.25)', color:'#ef4444', dashed:true, values: DRIFT_DATA.map(()=>0.25)}], {max:0.3})}
+            <div class="flex-row" style="gap:8px;background:#ecfdf5;padding:12px;border-radius:8px;border:1px solid #10b981;margin-top:12px;">🛡️<span style="font-size:13px;color:#065f46;">최근 PSI ${DRIFT_DATA[DRIFT_DATA.length-1].psi}로 재학습 임계치(0.25) 대비 안정권입니다.</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="flex-col" style="gap:12px;">
+          <div class="flex-row" style="justify-content:space-between;"><div class="flex-row" style="gap:8px;">📊<h2 class="font-semibold" style="margin:0;">예측 부도율 구간별 (PD Bin) 분포 비교</h2></div><span style="font-size:12px;color:var(--primary);background:rgba(59,130,246,0.1);padding:4px 8px;border-radius:6px;">💡 막대를 클릭하면 우측에 차주가 표시됩니다</span></div>
+          <div class="card">
+            <div onclick="handlePdBinClick(event)">${groupedBarChart(420, 300, PD_DIST.map(d=>({label:d.bin, values:[d.기존모형, d.ERM모형]})), ['#94a3b8','#ef4444'], ['기존 모형 (안전 편향)','ERM 모델 (고위험 식별)'], {max:70, onClick:true})}</div>
+          </div>
+        </div>
+        <div class="flex-col" style="gap:12px;">
+          <div class="flex-row" style="justify-content:space-between;"><div class="flex-row" style="gap:8px;">📋<h2 class="font-semibold" style="margin:0;">[${esc(monitoringState.selectedBin)}] 구간 차주 목록</h2></div><span class="badge badge-danger">클릭 시 상세 보고서 이동</span></div>
+          <div class="card flex-col" style="gap:10px;max-height:380px;overflow-y:auto;">
+            ${binList.length === 0 ? '<span style="color:var(--text-muted);">해당 구간에 표시할 차주가 없습니다.</span>' : binList.map(item => {
+              const isBlind = item.PROB_FULL >= 0.25 && item.OLD_PROB <= 0.06;
+              return `<div class="flex-col" style="gap:12px;padding:16px;background:var(--bg-main);border-radius:10px;border:1px solid var(--border);cursor:pointer;" onclick="showPage('borrower',{bzno:'${item.V_BZNO}'})">
+                <div class="flex-row" style="justify-content:space-between;"><div class="flex-row" style="gap:8px;"><span class="font-bold" style="font-size:15px;">기업_${item.V_BZNO}</span><span style="color:var(--text-muted);font-size:13px;">(${esc(item.STD_INDS_CFC)})</span>${isBlind?'<span style="background:#fee2e2;color:#b91c1c;font-size:11px;font-weight:700;padding:2px 6px;border-radius:4px;">🚨 심사 사각지대</span>':''}</div><span style="color:var(--primary);font-size:12px;font-weight:600;">상세 보고서 ▶</span></div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;background:white;padding:12px 14px;border-radius:8px;border:1px solid var(--border);">
+                  <div class="flex-col" style="gap:4px;border-right:1px solid #f1f5f9;padding-right:10px;"><span style="font-size:11px;color:var(--text-muted);font-weight:600;">🏛️ 기존신용평가모형</span><div class="flex-row" style="justify-content:space-between;"><span style="font-size:13px;font-weight:700;">등급: ${item.NICE_GRADE_CUR}</span><span style="font-size:13px;color:#64748b;">확률: ${(item.OLD_PROB*100).toFixed(2)}%</span></div></div>
+                  <div class="flex-col" style="gap:4px;"><span style="font-size:11px;color:var(--primary);font-weight:700;">⚡ AI ERM 모형</span><div class="flex-row" style="justify-content:space-between;"><span style="font-size:13px;font-weight:700;">등급: ${ERM_GRADE_LABELS[item.Z_GRADE]}</span><span style="font-size:14px;font-weight:800;color:${item.PROB_FULL>=0.3?'var(--danger)':'var(--warning)'};">확률: ${(item.PROB_FULL*100).toFixed(2)}%</span></div></div>
+                </div>
+              </div>`;
+            }).join('')}
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+function handlePdBinClick(e) {
+  const rect = e.target.closest('.bar-rect');
+  if (!rect) return;
+  const idx = Number(rect.getAttribute('data-idx'));
+  setMonitoringBin(PD_DIST[idx].bin);
+}
+
+/* ============================================================
+   8. MACRO SIMULATION
+   ============================================================ */
+const SIM_BASE_INDUSTRIES = [
+  { industry: '제조업', baseRisk: 2.15, sensitivity: 1.15, oldModelRisk: 1.80 },
+  { industry: '도매 및 소매업', baseRisk: 3.42, sensitivity: 1.35, oldModelRisk: 2.90 },
+  { industry: '건설업', baseRisk: 5.80, sensitivity: 1.85, oldModelRisk: 4.20 },
+  { industry: '정보통신업', baseRisk: 1.45, sensitivity: 0.85, oldModelRisk: 1.20 },
+  { industry: '부동산업', baseRisk: 4.90, sensitivity: 1.65, oldModelRisk: 3.80 },
+  { industry: '운수 및 창고업', baseRisk: 2.85, sensitivity: 1.40, oldModelRisk: 2.50 },
+  { industry: '숙박 및 음식점업', baseRisk: 4.10, sensitivity: 1.55, oldModelRisk: 3.40 },
+  { industry: '전문, 과학 및 기술', baseRisk: 1.20, sensitivity: 0.70, oldModelRisk: 1.10 },
+];
+const SIM_PRESETS = {
+  '정상 상태': {interestRate:0, exchangeRate:0, inflation:0, oilPrice:0, gdpGrowth:0},
+  '🔥 1997 IMF 외환위기': {interestRate:80, exchangeRate:80, inflation:4.5, oilPrice:15, gdpGrowth:-2.0},
+  '📉 2008 글로벌 금융위기': {interestRate:-40, exchangeRate:50, inflation:2.0, oilPrice:-35, gdpGrowth:-3.5},
+  '📈 2024 3고 스태그플레이션': {interestRate:50, exchangeRate:40, inflation:3.5, oilPrice:20, gdpGrowth:-0.8},
+  '🌱 연착륙 및 금리인하 기대': {interestRate:-50, exchangeRate:-20, inflation:-1.5, oilPrice:-10, gdpGrowth:1.2},
+};
+function applySimScenario(name) { simState = {...simState, ...SIM_PRESETS[name], scenario: name}; renderSimulation(); }
+function setSimParam(field, val) { simState[field] = Number(val); simState.scenario = '사용자 맞춤 설정'; renderSimulation(); }
+function setSimTab(tab) { simState.tab = tab; renderSimulation(); }
+
+function runSimCalc() {
+  const intImpact = simState.interestRate * 0.055;
+  const fxImpact = simState.exchangeRate * 0.038;
+  const infImpact = simState.inflation * 0.042;
+  const oilImpact = simState.oilPrice * 0.025;
+  const gdpImpact = simState.gdpGrowth * -0.65;
+  const totalShock = intImpact + fxImpact + infImpact + oilImpact + gdpImpact;
+  return SIM_BASE_INDUSTRIES.map(item => {
+    const shockEffect = totalShock * item.sensitivity;
+    const newRisk = Math.max(0.1, Number((item.baseRisk + shockEffect).toFixed(2)));
+    const diff = Number((newRisk - item.baseRisk).toFixed(2));
+    return { ...item, newRisk, diff };
+  });
+}
+function heatColor(diff) {
+  if (diff > 2.0) return '#ef4444';
+  if (diff > 1.0) return '#f87171';
+  if (diff > 0.3) return '#fca5a5';
+  if (diff > -0.3) return '#f1f5f9';
+  if (diff > -1.0) return '#a7f3d0';
+  return '#34d399';
+}
+function heatText(diff) { return (diff > 1.0 || diff < -1.5) ? '#ffffff' : 'var(--text-main)'; }
+
+function sliderRow(label, field, min, max, step, unit, val) {
+  const color = (field==='gdpGrowth') ? (val<0?'var(--danger)':val>0?'var(--safe)':'var(--text-main)') : (val>0?'var(--danger)':val<0?'var(--safe)':'var(--text-main)');
+  return `<div>
+    <div class="flex-row" style="justify-content:space-between;margin-bottom:8px;"><span class="font-semibold" style="font-size:14px;">${label}</span><span class="font-bold" style="color:${color};">${val>0?'+':''}${val} ${unit}</span></div>
+    <input type="range" min="${min}" max="${max}" step="${step}" value="${val}" oninput="setSimParam('${field}', this.value)">
+  </div>`;
+}
+
+function renderSimulation() {
+  const results = runSimCalc();
+  const highRisk = results.filter(r => r.newRisk >= 4.5 || r.diff >= 2.0);
+  const midRisk = results.filter(r => (r.newRisk >= 2.5 && r.newRisk < 4.5) && r.diff < 2.0);
+  const safe = results.filter(r => r.newRisk < 2.5 && r.diff < 2.0);
+
+  let tabContent = '';
+  if (simState.tab === 'bar') {
+    tabContent = `<div class="flex-col" style="gap:12px;">
+      <div class="flex-row" style="justify-content:space-between;"><span style="font-size:13px;color:var(--text-muted);">현재 적용 시나리오: <strong style="color:var(--text-main);">${esc(simState.scenario)}</strong></span><span class="badge badge-warning">평시 대비 부도율 변화량(diff) 시각화</span></div>
+      ${groupedBarChart(560, 320, results.map(r=>({label:r.industry.length>5?r.industry.slice(0,5):r.industry, values:[r.baseRisk, r.newRisk]})), ['#94a3b8','#ef4444'], ['평시 기준 부도율','시뮬레이션 적용 부도율'], {max: Math.max(...results.map(r=>r.newRisk))*1.3})}
+    </div>`;
+  } else if (simState.tab === 'heatmap') {
+    tabContent = `<div class="flex-col" style="gap:14px;">
+      <div class="flex-row" style="justify-content:space-between;"><span style="font-size:13px;color:var(--text-muted);">거시경제 충격에 따른 산업군별 민감도 매트릭스</span>
+        <div class="flex-row" style="gap:10px;font-size:11px;font-weight:600;"><span style="display:inline-block;width:10px;height:10px;background:#ef4444;border-radius:2px;"></span>고위험 <span style="display:inline-block;width:10px;height:10px;background:#fca5a5;border-radius:2px;"></span>주의 <span style="display:inline-block;width:10px;height:10px;background:#10b981;border-radius:2px;"></span>감소</div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;">
+        ${results.map(r => `<div class="card flex-col" style="padding:16px 12px;background:${heatColor(r.diff)};color:${heatText(r.diff)};align-items:center;text-align:center;gap:6px;">
+          <span class="font-bold" style="font-size:14px;">${esc(r.industry)}</span>
+          <span class="font-black" style="font-size:20px;">${r.newRisk.toFixed(2)}%</span>
+          <div style="background:rgba(0,0,0,0.12);padding:3px 8px;border-radius:6px;"><span class="font-bold" style="font-size:12px;">${r.diff>0?`▲+${r.diff.toFixed(2)}%p`:r.diff<0?`▼${r.diff.toFixed(2)}%p`:'변동 없음'}</span></div>
+        </div>`).join('')}
+      </div>
+    </div>`;
+  } else if (simState.tab === 'tier') {
+    const tierCol = (title, color, bg, border, items) => `<div class="flex-col" style="background:${bg};border:1px solid ${border};border-radius:10px;padding:12px;gap:8px;max-height:340px;overflow-y:auto;">
+      <div class="flex-row" style="gap:6px;border-bottom:1px solid ${border};padding-bottom:8px;"><span class="font-bold" style="color:${color};font-size:13px;">${title} (${items.length})</span></div>
+      ${items.length===0?`<span style="font-size:12px;color:${color};text-align:center;padding:20px 0;">해당 없음</span>`:items.map(it=>`<div class="card flex-col" style="padding:10px;gap:4px;background:white;"><div class="flex-row" style="justify-content:space-between;"><span class="font-bold" style="font-size:14px;color:${color};">${esc(it.industry)}</span><span class="font-extrabold" style="font-size:15px;color:${color};">${it.newRisk}%</span></div><span style="font-size:11px;font-weight:600;color:${color};">평시(${it.baseRisk}%) 대비 ${it.diff>=0?'▲+':'▼'}${it.diff}%p</span></div>`).join('')}
+    </div>`;
+    tabContent = `<div class="flex-col" style="gap:14px;">
+      <span style="font-size:13px;color:var(--text-muted);">충격 후 부도 위험도 기준 산업군 자동 분류 (고위험 4.5%+ / 주의 2.5%+ / 안정 &lt;2.5%)</span>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;">
+        ${tierCol('🚨 고위험 감지','#b91c1c','#fef2f2','#fecaca', highRisk)}
+        ${tierCol('⚠️ 주의 요망','#b45309','#fffbeb','#fde68a', midRisk)}
+        ${tierCol('🟢 안정권 유지','#047857','#ecfdf5','#a7f3d0', safe)}
+      </div>
+    </div>`;
+  } else if (simState.tab === 'radar') {
+    tabContent = `<div class="flex-col" style="gap:12px;align-items:center;">
+      <span style="font-size:13px;color:var(--text-muted);align-self:flex-start;">전체 산업 생태계 부도 균형 왜곡도 비교 레이더</span>
+      ${radarChart(480, 320, results.map(r=>r.industry.length>4?r.industry.slice(0,4):r.industry), [{name:'평시 기준 부도율', color:'#94a3b8', values: results.map(r=>Math.min(100,r.baseRisk*10))}, {name:'스트레스 적용 부도율', color:'#ef4444', values: results.map(r=>Math.min(100,r.newRisk*10))}])}
+    </div>`;
+  }
+
+  document.getElementById('page-simulation').innerHTML = `
+    <div class="flex-col" style="gap:24px;">
+      <div class="flex-row" style="justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">
+        <div class="flex-col" style="gap:4px;"><h1 class="font-bold" style="font-size:24px;margin:0;">매크로 스트레스 테스트 시뮬레이터</h1><p>거시경제 지표(금리, 환율, 유가 등) 변동에 따른 산업군별 부도 위험률 변화 다차원 분석</p></div>
+        <button class="btn btn-ghost" onclick="applySimScenario('정상 상태')">🔄 설정 초기화</button>
+      </div>
+
+      <div class="card flex-col" style="gap:12px;padding:16px;background:linear-gradient(135deg,#fff 0%,#f8fafc 100%);">
+        <div class="flex-row" style="gap:8px;"><span>⚡</span><span class="font-bold" style="font-size:14px;">역사적 금융위기 시나리오 원클릭 프리셋 적용</span></div>
+        <div class="flex-row" style="gap:12px;flex-wrap:wrap;">
+          ${Object.keys(SIM_PRESETS).filter(k=>k!=='정상 상태').map(name => `<button class="btn" style="padding:10px 16px;font-size:13px;background:${simState.scenario===name?'var(--danger)':'white'};color:${simState.scenario===name?'white':'var(--text-main)'};border:1px solid var(--border);font-weight:600;" onclick="applySimScenario('${name}')">${esc(name)}</button>`).join('')}
+        </div>
+      </div>
+
+      <div class="grid-macro">
+        <div class="flex-col" style="gap:12px;">
+          <div class="flex-row" style="gap:8px;">⚙️<h2 class="font-semibold" style="margin:0;">거시경제 지표 변동 시뮬레이터</h2></div>
+          <div class="card flex-col" style="gap:22px;">
+            ${sliderRow('기준 금리','interestRate',-100,100,10,'bp', simState.interestRate)}
+            ${sliderRow('환율 (원/달러)','exchangeRate',-100,100,10,'원', simState.exchangeRate)}
+            ${sliderRow('물가 상승률','inflation',-3,5,0.5,'%p', simState.inflation)}
+            ${sliderRow('국제 유가 (WTI)','oilPrice',-40,60,5,'$', simState.oilPrice)}
+            ${sliderRow('실질 GDP 성장률','gdpGrowth',-4,3,0.2,'%p', simState.gdpGrowth)}
+          </div>
+        </div>
+        <div class="flex-col" style="gap:12px;">
+          <div class="flex-row" style="justify-content:space-between;">
+            <div class="flex-row" style="gap:8px;">📊<h2 class="font-semibold" style="margin:0;">산업군별 충격 파급도 다차원 분석</h2></div>
+            <div class="flex-row" style="gap:4px;background:var(--border);padding:3px;border-radius:8px;flex-wrap:wrap;">
+              ${['bar','heatmap','tier','radar'].map(t => `<button style="padding:6px 12px;font-size:12px;font-weight:600;border:none;border-radius:6px;background:${simState.tab===t?'white':'transparent'};color:${simState.tab===t?'var(--primary)':'var(--text-muted)'};cursor:pointer;" onclick="setSimTab('${t}')">${{bar:'📊 가로형 비교',heatmap:'🔥 히트맵',tier:'🚨 위험 매트릭스',radar:'🕸️ 레이더'}[t]}</button>`).join('')}
+            </div>
+          </div>
+          <div class="card flex-col" style="min-height:430px;">
+            ${tabContent}
+            <div class="flex-row" style="gap:10px;background:var(--bg-main);padding:12px 16px;border-radius:8px;border-left:4px solid var(--primary);margin-top:12px;">ℹ️<span style="font-size:13px;color:var(--text-muted);"><strong>💡 AI 거시경제 스트레스 진단:</strong> 금리 및 환율 상승 시 건설업/부동산업이 가장 민감하게 반응합니다. 고위험군은 신규 여신 한도 심사 강화를 권장합니다.</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+</script>
+</body>
+</html>
