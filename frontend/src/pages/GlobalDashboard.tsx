@@ -71,37 +71,76 @@ const TrendTooltip = ({ active, payload, label }: any) => {
   );
 };
 
+// 벤다이어그램 안 라벨 대신, 영역 안쪽 점(dot)에서 바깥 뱃지로 이어지는 리더라인 + 색상 강조 뱃지.
+const VennBadge = ({ dot, to, align = 'start', label, value, color, bg }: any) => {
+  const textX = align === 'end' ? to.x - 6 : to.x + 6;
+  const badgeW = align === 'end' ? -68 : 68;
+  return (
+    <g>
+      <circle cx={dot.x} cy={dot.y} r="3.5" fill={color} />
+      <line x1={dot.x} y1={dot.y} x2={to.x} y2={to.y} stroke={color} strokeWidth="1.5" />
+      <rect x={align === 'end' ? to.x + badgeW : to.x} y={to.y - 15} width={Math.abs(badgeW)} height="30" rx="8" fill={bg} stroke={color} strokeWidth="1" />
+      <text x={textX + (align === 'end' ? badgeW + 6 : 0)} y={to.y - 3} textAnchor={align} fontSize="10.5" fontWeight={700} fill={color}>{label}</text>
+      <text x={textX + (align === 'end' ? badgeW + 6 : 0)} y={to.y + 13} textAnchor={align} fontSize="16" fontWeight={800} fill={color}>{value}</text>
+    </g>
+  );
+};
+
 const PredictionVenn = ({ pc }: { pc: any }) => {
   if (!pc) return null;
   const { both, erm_only, internal_only, neither, total, lead_time } = pc;
+  const caughtTotal = both + erm_only + internal_only;
+  const catchRate = total > 0 ? ((caughtTotal / total) * 100).toFixed(1) : '0';
+  const blindSpotRate = total > 0 ? ((erm_only / total) * 100).toFixed(1) : '0';
+
+  // r2(내부) 원은 기본적으로 r1(ERM) 원 안에 완전히 내포되도록 배치하고(내부만 포착=0인 실제
+  // 데이터를 정직하게 반영), internal_only가 존재하면 그 비율만큼 오른쪽으로 살짝 튀어나오게 함.
+  const r1 = 70, r2 = 48, cx1 = 128, cy = 128;
+  const protrusion = (internal_only / Math.max(1, internal_only + both)) * r2 * 1.3;
+  const cx2 = cx1 + Math.min(r1 - 6, (r1 - r2) + protrusion);
+  const ERM_COLOR = '#3b82f6', BOTH_COLOR = '#b45309', NEITHER_COLOR = '#64748b';
+
   return (
-    <div className="flex-row" style={{gap: '32px', alignItems: 'center', flexWrap: 'wrap'}}>
-      <svg width="360" height="230" viewBox="0 0 360 230">
-        <rect x="10" y="10" width="340" height="210" rx="12" fill="#f8fafc" stroke="#e5e7eb" />
-        <circle cx="150" cy="115" r="80" fill="var(--primary)" fillOpacity="0.28" stroke="var(--primary)" strokeWidth="2" />
-        <circle cx="225" cy="115" r="60" fill="#fbbf24" fillOpacity="0.35" stroke="#f59e0b" strokeWidth="2" />
-        <text x="110" y="80" textAnchor="middle" fontSize="12" fontWeight={700} fill="var(--primary)">ERM 모델만 포착</text>
-        <text x="110" y="100" textAnchor="middle" fontSize="20" fontWeight={800} fill="var(--primary)">{erm_only}</text>
-        <text x="196" y="115" textAnchor="middle" fontSize="11" fontWeight={700} fill="#78350f">둘 다</text>
-        <text x="196" y="132" textAnchor="middle" fontSize="16" fontWeight={800} fill="#78350f">{both}</text>
-        <text x="255" y="150" textAnchor="middle" fontSize="12" fontWeight={700} fill="#b45309">내부만 포착</text>
-        <text x="255" y="170" textAnchor="middle" fontSize="20" fontWeight={800} fill="#b45309">{internal_only}</text>
-        <text x="180" y="210" textAnchor="middle" fontSize="12" fontWeight={600} fill="var(--text-muted)">
-          둘 다 놓침 {neither}개 · 실제 부도 기업 총 {total}개 (내부등급 이력 보유분)
-        </text>
-      </svg>
-      <div className="flex-col" style={{gap: '10px', minWidth: '220px'}}>
-        <div>
-          <div className="font-semibold" style={{color: 'var(--text-muted)', fontSize: '13px'}}>평균 조기경보 리드타임</div>
-          <div className="font-extrabold" style={{fontSize: '28px', color: 'var(--primary)'}}>
-            {lead_time?.avg_months != null ? `+${lead_time.avg_months}개월` : '-'}
+    <div className="flex-col" style={{gap: '16px'}}>
+      <div className="flex-row" style={{gap: '16px', alignItems: 'center', flexWrap: 'wrap'}}>
+        <svg width="320" height="266" viewBox="0 0 320 266" style={{flexShrink: 0}}>
+          <circle cx={cx1} cy={cy} r={r1} fill={ERM_COLOR} fillOpacity="0.22" stroke={ERM_COLOR} strokeWidth="2" />
+          <circle cx={cx2} cy={cy} r={r2} fill="#fbbf24" fillOpacity="0.4" stroke="#f59e0b" strokeWidth="2" />
+
+          <VennBadge dot={{x: cx1 - r1 * 0.5, y: cy - r1 * 0.42}} to={{x: 26, y: 44}} align="start"
+            label="ERM만 포착" value={erm_only} color={ERM_COLOR} bg="#eff6ff" />
+          <VennBadge dot={{x: cx2 - 4, y: cy + r2 * 0.35}} to={{x: 226, y: 150}} align="start"
+            label="둘 다 포착" value={both} color={BOTH_COLOR} bg="#fffbeb" />
+          <VennBadge dot={{x: cx2 + r2 * 0.55, y: cy - r2 * 0.75}} to={{x: 210, y: 40}} align="start"
+            label="내부만 포착" value={internal_only} color="#b45309" bg="#fff7ed" />
+
+          <circle cx="30" cy={cy + r1 + 30} r="3.5" fill={NEITHER_COLOR} />
+          <text x="42" y={cy + r1 + 30} textAnchor="start" fontSize="12" fontWeight={600} fill={NEITHER_COLOR}>둘 다 놓침 {neither}개</text>
+          <text x="42" y={cy + r1 + 48} textAnchor="start" fontSize="12" fontWeight={600} fill={NEITHER_COLOR}>실제 부도 기업 총 {total}개 (내부등급 이력 보유분)</text>
+        </svg>
+        <div className="flex-col" style={{gap: '14px', flex: 1, minWidth: '160px'}}>
+          <div>
+            <div className="font-semibold" style={{color: 'var(--text-muted)', fontSize: '13px'}}>평균 조기경보 리드타임</div>
+            <div className="font-extrabold" style={{fontSize: '26px', color: 'var(--primary)'}}>
+              {lead_time?.avg_months != null ? `+${lead_time.avg_months}개월` : '-'}
+            </div>
+          </div>
+          <div className="flex-row" style={{gap: '20px'}}>
+            <div>
+              <div style={{fontSize: '12px', color: 'var(--text-muted)', whiteSpace: 'nowrap'}}>전체 포착률</div>
+              <div className="font-bold" style={{fontSize: '18px'}}>{catchRate}%</div>
+            </div>
+            <div>
+              <div style={{fontSize: '12px', color: 'var(--text-muted)', whiteSpace: 'nowrap'}}>ERM 단독 사각지대</div>
+              <div className="font-bold" style={{fontSize: '18px', color: 'var(--danger)'}}>{blindSpotRate}%</div>
+            </div>
           </div>
         </div>
-        <p style={{fontSize: '12px', color: 'var(--text-muted)', margin: 0, maxWidth: '260px'}}>
-          내부등급이 A→B로 전환되는 시점이 관측된 {lead_time?.n}개사 기준, ERM이 내부등급 하향보다 평균 {lead_time?.avg_months}개월 먼저 고위험(G4/G5)으로 경고했습니다.
-          (내부등급이 데이터 시작 시점부터 이미 'B'였던 {lead_time?.left_censored_excluded}개사는 하향 시점을 알 수 없어 이 평균에서 제외 — 여전히 "둘 다 포착"에는 포함됩니다.)
-        </p>
       </div>
+      <p style={{fontSize: '12px', color: 'var(--text-muted)', margin: 0}}>
+        실제 부도 기업 총 {total}개(내부등급 이력 보유분) 중, 내부등급이 A→B로 전환되는 시점이 관측된 {lead_time?.n}개사 기준 ERM이 내부등급 하향보다 평균 {lead_time?.avg_months}개월 먼저 고위험(G4/G5)으로 경고했습니다.
+        (내부등급이 데이터 시작 시점부터 이미 &apos;B&apos;였던 {lead_time?.left_censored_excluded}개사는 하향 시점을 알 수 없어 이 평균에서 제외 — 여전히 &quot;둘 다 포착&quot;에는 포함됩니다.)
+      </p>
     </div>
   );
 };
@@ -377,48 +416,49 @@ export default function GlobalDashboard({ baseYm = '202402' }: { baseYm?: string
           </div>
         </div>
 
-        {/* 신규 추가: 등급 분포 바 차트 */}
-        <div className="flex-col" style={{gap: '12px', gridColumn: '1 / -1', marginTop: '12px'}}>
-          <div className="flex-row" style={{gap: '8px'}}>
-            <BarChartIcon size={20} color="var(--primary)" />
-            <h2 className="font-semibold" style={{margin: 0}}>전체 포트폴리오 ⚡ ERM 리스크 평가등급 분포 (G1 ~ G5)</h2>
-          </div>
-          <div className="card">
-            <div style={{width: '100%', height: '300px'}}>
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={data.grade_distribution} margin={{ top: 20, right: 30, left: -20, bottom: 5 }}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
-                  <XAxis dataKey="Z_GRADE" tick={{fill: 'var(--text-muted)', fontSize: 12, fontWeight: 600}} dy={10} axisLine={{stroke: '#e5e7eb'}} tickLine={false} />
-                  <YAxis tick={{fill: 'var(--text-muted)', fontSize: 12}} axisLine={{stroke: '#e5e7eb'}} tickLine={false} />
-                  <RechartsTooltip 
-                    cursor={{fill: 'rgba(0,0,0,0.02)'}}
-                    contentStyle={{backgroundColor: 'var(--bg-card)', borderColor: 'var(--border)', borderRadius: '8px'}} 
-                  />
-                  <Bar dataKey="cnt" name="기업 수" radius={[4, 4, 0, 0]} maxBarSize={60}>
-                    {data.grade_distribution.map((entry: any, index: number) => {
-                      const color = ['G4', 'G5'].includes(entry.Z_GRADE) ? 'var(--danger)' : 
-                                    entry.Z_GRADE === 'G3' ? 'var(--warning)' : 'var(--safe)';
-                      return <Cell key={`cell-${index}`} fill={color} />;
-                    })}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
-        </div>
-
-        {/* 신규 추가: 예측 성공/실패 벤다이어그램 (실제 부도 기업 기준 ERM vs 내부등급) */}
-        {predictionComparison && (
-          <div className="flex-col" style={{gap: '12px', gridColumn: '1 / -1', marginTop: '12px'}}>
+        {/* 신규 추가: 예측 성공/실패 벤다이어그램 + 등급 분포 (같은 행에 나란히 배치) */}
+        <div className="grid-2" style={{marginTop: '12px'}}>
+          <div className="flex-col" style={{gap: '12px'}}>
             <div className="flex-row" style={{gap: '8px'}}>
               <TrendingUp size={20} color="var(--primary)" />
               <h2 className="font-semibold" style={{margin: 0}}>부도 예측 성공/실패 비교 (ERM vs 은행 내부등급)</h2>
             </div>
             <div className="card">
-              <PredictionVenn pc={predictionComparison} />
+              {predictionComparison
+                ? <PredictionVenn pc={predictionComparison} />
+                : <div style={{padding: '60px 0', textAlign: 'center', color: 'var(--text-muted)'}}>불러오는 중...</div>}
             </div>
           </div>
-        )}
+
+          <div className="flex-col" style={{gap: '12px'}}>
+            <div className="flex-row" style={{gap: '8px'}}>
+              <BarChartIcon size={20} color="var(--primary)" />
+              <h2 className="font-semibold" style={{margin: 0}}>전체 포트폴리오 ⚡ ERM 리스크 평가등급 분포 (G1 ~ G5)</h2>
+            </div>
+            <div className="card">
+              <div style={{width: '100%', height: '300px'}}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={data.grade_distribution} margin={{ top: 20, right: 30, left: -20, bottom: 5 }}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
+                    <XAxis dataKey="Z_GRADE" tick={{fill: 'var(--text-muted)', fontSize: 12, fontWeight: 600}} dy={10} axisLine={{stroke: '#e5e7eb'}} tickLine={false} />
+                    <YAxis tick={{fill: 'var(--text-muted)', fontSize: 12}} axisLine={{stroke: '#e5e7eb'}} tickLine={false} />
+                    <RechartsTooltip
+                      cursor={{fill: 'rgba(0,0,0,0.02)'}}
+                      contentStyle={{backgroundColor: 'var(--bg-card)', borderColor: 'var(--border)', borderRadius: '8px'}}
+                    />
+                    <Bar dataKey="cnt" name="기업 수" radius={[4, 4, 0, 0]} maxBarSize={60}>
+                      {data.grade_distribution.map((entry: any, index: number) => {
+                        const color = ['G4', 'G5'].includes(entry.Z_GRADE) ? 'var(--danger)' :
+                                      entry.Z_GRADE === 'G3' ? 'var(--warning)' : 'var(--safe)';
+                        return <Cell key={`cell-${index}`} fill={color} />;
+                      })}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+          </div>
+        </div>
 
       </div>
   );
