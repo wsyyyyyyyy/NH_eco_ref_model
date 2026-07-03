@@ -271,12 +271,13 @@ export default function GlobalDashboard({ baseYm = '202402' }: { baseYm?: string
         <div className="card flex-col">
           <div className="flex-row" style={{gap: '8px', marginBottom: '16px'}}>
             <Users size={20} color="var(--primary)" />
-            <span className="font-semibold" style={{color: 'var(--text-muted)'}}>전체 평가 기업 수</span>
+            <span className="font-semibold" style={{color: 'var(--text-muted)'}}>관측 대상 전체 기업 수</span>
           </div>
           <div className="flex-row" style={{alignItems: 'baseline', gap: '8px'}}>
             <div className="font-extrabold" style={{fontSize: '36px'}}>{data.total_companies.toLocaleString()}</div>
             <span className="font-medium" style={{color: 'var(--text-muted)'}}>개사</span>
           </div>
+          <p className="font-regular" style={{marginTop: '12px', fontSize: '12px'}}>전체 관측기간(2021.01~2026.06) 내내 데이터가 있는 고정 패널 — 기준월을 바꿔도 동일</p>
         </div>
         
         <div className="card card-danger flex-col">

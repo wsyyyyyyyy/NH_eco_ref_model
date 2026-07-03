@@ -564,8 +564,9 @@ function renderGlobal() {
       </div>
 
       <div class="grid-3">
-        <div class="card flex-col"><div class="flex-row" style="gap:8px;margin-bottom:16px;"><span>👥</span><span class="font-semibold" style="color:var(--text-muted);">전체 평가 기업 수</span></div>
-          <div class="flex-row" style="align-items:baseline;gap:8px;"><div class="font-extrabold" style="font-size:36px;">${total.toLocaleString()}</div><span class="font-medium" style="color:var(--text-muted);">개사</span></div></div>
+        <div class="card flex-col"><div class="flex-row" style="gap:8px;margin-bottom:16px;"><span>👥</span><span class="font-semibold" style="color:var(--text-muted);">관측 대상 전체 기업 수</span></div>
+          <div class="flex-row" style="align-items:baseline;gap:8px;"><div class="font-extrabold" style="font-size:36px;">${total.toLocaleString()}</div><span class="font-medium" style="color:var(--text-muted);">개사</span></div>
+          <p style="margin-top:12px;font-size:12px;color:var(--text-muted);">전체 관측기간 내내 데이터가 있는 고정 패널 — 기준월을 바꿔도 동일</p></div>
         <div class="card card-danger flex-col"><div class="flex-row" style="gap:8px;margin-bottom:16px;"><span>⚠️</span><span class="font-semibold" style="color:var(--text-muted);">고위험군 (G4, G5)</span></div>
           <div class="flex-row" style="align-items:baseline;gap:8px;"><div class="font-extrabold" style="font-size:36px;color:var(--danger);">${riskCount.toLocaleString()}</div><span class="font-medium">개사</span></div>
           <p style="margin-top:12px;font-size:14px;">전체 대비 ${riskRatio}% 비중</p></div>
