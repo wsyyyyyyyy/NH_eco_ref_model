@@ -13,7 +13,7 @@
 ### 1.2 등급별 부도율(PD) 부합성 (Calibration)
 기존 내부 등급과 예측된 AI 부도 발생 확률(PD)의 분포를 대조 분석하여, 등급 배정의 왜곡이 발생하지 않고 등급이 낮아질수록 예측 PD가 일관되게 상승하는 등급 부합성(Monotonicity)을 검증하였습니다.
 
-![등급별 PD 상관관계](file:///c:/Users/User/Downloads/eco_ref_model-main%20%281%29/eco_ref_model-main/docs/images/corr_grade_pd.png)
+![등급별 PD 상관관계](images/corr_grade_pd.png)
 
 ---
 
@@ -36,7 +36,7 @@
 * **AUC (Area Under the ROC Curve)**: **0.87 이상**으로, 무작위 분류(0.5) 대비 압도적인 변별력을 기록했습니다.
 * **KS 통계량 (Kolmogorov-Smirnov)**: 우량 집단과 불량 집단의 누적 분포 차이가 최대화되는 지점을 측정하여 모형의 변별 강도를 입증했습니다.
 
-![최종 임계구간 최적화](file:///c:/Users/User/Downloads/eco_ref_model-main%20%281%29/eco_ref_model-main/docs/images/threshold_optimization.png)
+![최종 임계구간 최적화](images/threshold_optimization.png)
 
 ---
 
