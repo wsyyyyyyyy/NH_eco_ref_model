@@ -33,13 +33,13 @@ graph TD
 ### 2.1 결측치 분석 (Missing Rate Analysis)
 모형 학습 전 변수별 결측 비율을 시각화하여, 대체(Imputation) 전략을 수립하였습니다. 재무제표가 누락된 영세 기업이나 특정 월에 누락된 비재무 변수들을 파악하였습니다.
 
-![결측치 비율](file:///c:/Users/User/Downloads/eco_ref_model-main%20%281%29/eco_ref_model-main/eda_pipeline/output/eda_plots/missing_rate.png)
+![결측치 비율](images/missing_rate.png)
 
 ### 2.2 부도 차주 트렌드 및 타겟 상관관계
 시간 경과에 따른 전체 차주 수와 부도 차주 비율의 시계열 추이를 분석하여, 특정 시점(예: 경기 침체기)의 데이터 스큐 현상을 확인하였습니다.
 
-![시계열 추이](file:///c:/Users/User/Downloads/eco_ref_model-main%20%281%29/eco_ref_model-main/eda_pipeline/output/eda_plots/timeseries_trends.png)
-![타겟 상관관계](file:///c:/Users/User/Downloads/eco_ref_model-main%20%281%29/eco_ref_model-main/eda_pipeline/output/eda_plots/target_correlation.png)
+![시계열 추이](images/timeseries_trends.png)
+![타겟 상관관계](images/target_correlation.png)
 
 ---
 
@@ -63,7 +63,7 @@ graph TD
 
 * **TTD (Time to Default) 분석 결과**: 부도가 발생한 기업들의 리드 타임을 분석하여 12개월 윈도우 설정의 비즈니스 타당성을 검증하였습니다.
 
-![TTD 분석](file:///c:/Users/User/Downloads/eco_ref_model-main%20%281%29/eco_ref_model-main/docs/images/ttd_analysis_raw_facts.png)
+![TTD 분석](images/ttd_analysis_raw_facts.png)
 
 ---
 
