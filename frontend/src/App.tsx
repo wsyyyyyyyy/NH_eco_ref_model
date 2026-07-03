@@ -76,8 +76,12 @@ function AppLayout() {
           ))}
         </nav>
 
-        {/* Logout */}
-        <div style={{padding: '24px 16px', borderTop: '1px solid var(--border)'}}>
+        {/* Team Credits & Logout */}
+        <div style={{padding: '16px', borderTop: '1px solid var(--border)'}}>
+          <div style={{padding: '12px', background: 'var(--bg-main)', borderRadius: '8px', marginBottom: '12px', fontSize: '11.5px', color: 'var(--text-muted)', lineHeight: '1.6', border: '1px solid var(--border)'}}>
+            <div style={{fontWeight: 700, color: 'var(--text-main)', marginBottom: '3px'}}>👑 팀장: 이재현 <span style={{fontSize: '10.5px', color: 'var(--primary)'}}>(기업은행)</span></div>
+            <div style={{fontWeight: 600}}>👥 팀원: 강병민<span style={{fontSize: '10px'}}>(부산)</span>·유인경<span style={{fontSize: '10px'}}>(농협)</span>·위세영<span style={{fontSize: '10px'}}>(농협)</span></div>
+          </div>
           <Link to="/" style={{textDecoration: 'none'}}>
             <div style={{
               display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px',
@@ -144,7 +148,9 @@ function AppLayout() {
 
         {/* Footer Status Bar */}
         <footer style={{height: '40px', backgroundColor: 'white', borderTop: '1px solid var(--border)', display: 'flex', alignItems: 'center', padding: '0 32px', flexShrink: 0}}>
-          <span className="font-medium" style={{fontSize: '13px', color: 'var(--text-muted)'}}>ECO Ref Model v2.0 (Powered by LightGBM)</span>
+          <span className="font-medium" style={{fontSize: '13px', color: 'var(--text-muted)'}}>
+            ⚡ SME 4.0 ERM Portal v2.0 | 👑 팀장: 이재현(기업은행) | 👥 팀원: 강병민(부산)·유인경(농협)·위세영(농협)
+          </span>
         </footer>
         
       </div>
