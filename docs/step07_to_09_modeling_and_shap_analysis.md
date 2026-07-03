@@ -22,13 +22,13 @@
 ### 2.1 글로벌 변수 중요도 (Global Feature Importance)
 전체 차주에 대해 어떤 변수가 부도 예측에 가장 큰 영향력을 미쳤는지 분석하였습니다. 상위 50개 주요 변수의 SHAP 가치를 정렬하여 시각화하였습니다.
 
-![SHAP Summary Plot](file:///c:/Users/User/Downloads/eco_ref_model-main%20%281%29/eco_ref_model-main/docs/images/shap_summary_top50.png)
+![SHAP Summary Plot](images/shap_summary_top50.png)
 
 ### 2.2 SHAP 의존성 분석 (Dependence Plot)
 특정 주요 변수(예: 매출액 증가율, 차입금 의존도)의 수치 변화에 따라 부도 위험 가중치가 비선형적으로 어떻게 변동하는지 미시 분석을 수행하였습니다.
 * **비즈니스 인사이트**: 차입금 의존도가 특정 임계점(Threshold)을 넘어서는 순간 부도 확률(SHAP Value)이 급격히 스파이크를 일으키는 임계 구간을 식별하여, 심사 한도 설정 시 중요한 가이드라인을 제공합니다.
 
-![SHAP Dependence Plot](file:///c:/Users/User/Downloads/eco_ref_model-main%20%281%29/eco_ref_model-main/docs/images/shap_dependence.png)
+![SHAP Dependence Plot](images/shap_dependence.png)
 
 ---
 
