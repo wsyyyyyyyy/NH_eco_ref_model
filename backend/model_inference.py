@@ -158,12 +158,29 @@ _GROWTH_COLS = [
 ]
 _GROWTH_COLS_MA3M = [c + '_ma3m' for c in _GROWTH_COLS]
 
+# 국내 증시(코스피) 관련 컬럼 -- 전역 SHAP 중요도 1위(KOSPI_log_ret)를 포함하지만
+# 기존 5개 슬라이더 어디에도 연동되어 있지 않았음.
+_KOSPI_COLS = ['KOSPI_log_ret', 'KOSPI_vol_m', 'KOSDAQ_vol_m_ma3m']
+
+# 글로벌 리스크(위험회피) 관련 컬럼 -- VIX 및 해외 증시.
+_GLOBAL_RISK_COLS = ['VIX_vol_m', 'DowJones_log_ret', 'NASDAQ_vol_m', 'Shanghai_Composite_log_ret_ma3m']
+
+# 원자재(유가 외 확장) -- 귀금속/농산물/천연가스/비철금속.
+_COMMODITY_EXT_COLS = [
+    'gold_log_ret_ma3m', 'corn_log_ret_ma3m', 'corn_vol_m', 'soybean_log_ret_ma3m',
+    'soybean_vol_m_ma3m', 'natural_gas_vol_m', 'natural_gas_vol_m_ma3m',
+    'copper_vol_m_ma3m', 'silver_vol_m_ma3m',
+]
+
 USD_KRW_REF_LEVEL = 1350.0  # approx won/dollar level, used to convert a won delta into a log-return shock
+EUR_KRW_REF_LEVEL = 1450.0  # approx won/euro level, used to convert a won delta into a log-return shock
 OIL_REF_LEVEL = 80.0        # approx USD/barrel level, used to convert a $ delta into a log-return shock
 
 
 def apply_macro_shock(df: pd.DataFrame, interest_rate: float, exchange_rate: float,
-                       inflation: float, oil_price: float, gdp_growth: float) -> pd.DataFrame:
+                       inflation: float, oil_price: float, gdp_growth: float,
+                       kospi_shock: float = 0.0, global_risk_shock: float = 0.0,
+                       commodity_shock: float = 0.0, eur_shock: float = 0.0) -> pd.DataFrame:
     """Returns a copy of df with macro feature columns shifted according to
     the requested scenario. Only columns present in df are touched."""
     shocked = df.copy()
@@ -173,8 +190,12 @@ def apply_macro_shock(df: pd.DataFrame, interest_rate: float, exchange_rate: flo
             if c in shocked.columns:
                 shocked[c] = shocked[c] + delta * damp
 
-    shift(_RATE_COLS, interest_rate)
-    shift(_RATE_COLS_MA3M, interest_rate, damp=0.6)
+    # interest_rate는 UI상 "bp" 단위(예: +100bp)지만 _RATE_COLS는 %p 단위 컬럼(예:
+    # base_rate_diff12 실측값 -0.23)이라, 100을 그대로 더하면 100%p라는 현실에
+    # 존재할 수 없는 충격이 가해짐 -- bp -> %p로 나눠서 변환한다.
+    interest_rate_pp = interest_rate / 100.0
+    shift(_RATE_COLS, interest_rate_pp)
+    shift(_RATE_COLS_MA3M, interest_rate_pp, damp=0.6)
 
     fx_log_ret = exchange_rate / USD_KRW_REF_LEVEL
     shift(['USD_KRW_log_ret'], fx_log_ret)
@@ -182,6 +203,14 @@ def apply_macro_shock(df: pd.DataFrame, interest_rate: float, exchange_rate: flo
     shift(['DXY_dollar_index_log_ret'], fx_log_ret, damp=0.5)
     if 'USD_KRW_vol_m' in shocked.columns:
         shocked['USD_KRW_vol_m'] = shocked['USD_KRW_vol_m'] + abs(fx_log_ret) * 0.5
+
+    # EUR_KRW_vol_m은 전역 SHAP 중요도 2위(KOSPI_log_ret 다음)인 만큼 원/달러와는
+    # 별도로 직접 조작 가능한 전용 슬라이더를 둔다.
+    eur_log_ret = eur_shock / EUR_KRW_REF_LEVEL
+    shift(['EUR_KRW_log_ret'], eur_log_ret)
+    shift(['EUR_KRW_log_ret_ma3m'], eur_log_ret, damp=0.6)
+    if 'EUR_KRW_vol_m' in shocked.columns:
+        shocked['EUR_KRW_vol_m'] = shocked['EUR_KRW_vol_m'] + abs(eur_log_ret) * 30.0
 
     shift(_CPI_COLS, inflation)
     shift(_CPI_COLS_MA3M, inflation, damp=0.6)
@@ -194,5 +223,39 @@ def apply_macro_shock(df: pd.DataFrame, interest_rate: float, exchange_rate: flo
 
     shift(_GROWTH_COLS, gdp_growth)
     shift(_GROWTH_COLS_MA3M, gdp_growth, damp=0.6)
+
+    # kospi_shock: 코스피 등락률(%) -- 예: -10 = 코스피 -10%
+    kospi_log_ret = kospi_shock / 100.0
+    shift(['KOSPI_log_ret'], kospi_log_ret)
+    if 'KOSPI_vol_m' in shocked.columns:
+        shocked['KOSPI_vol_m'] = shocked['KOSPI_vol_m'] + abs(kospi_log_ret) * 50.0
+    if 'KOSDAQ_vol_m_ma3m' in shocked.columns:
+        shocked['KOSDAQ_vol_m_ma3m'] = shocked['KOSDAQ_vol_m_ma3m'] + abs(kospi_log_ret) * 60.0
+
+    # global_risk_shock: VIX 포인트 변화 -- 예: +20 = VIX 20pt 급등(위험회피 국면)
+    if 'VIX_vol_m' in shocked.columns:
+        shocked['VIX_vol_m'] = shocked['VIX_vol_m'] + global_risk_shock
+    shift(['DowJones_log_ret'], -global_risk_shock * 0.005)
+    if 'NASDAQ_vol_m' in shocked.columns:
+        shocked['NASDAQ_vol_m'] = shocked['NASDAQ_vol_m'] + global_risk_shock * 0.3
+    shift(['Shanghai_Composite_log_ret_ma3m'], -global_risk_shock * 0.003)
+
+    # commodity_shock: 원자재 가격 등락률(%) -- 금·농산물·천연가스·비철금속에 함께 반영
+    commodity_log_ret = commodity_shock / 100.0
+    shift(['gold_log_ret_ma3m'], commodity_log_ret, damp=0.6)
+    shift(['corn_log_ret_ma3m'], commodity_log_ret, damp=0.6)
+    shift(['soybean_log_ret_ma3m'], commodity_log_ret, damp=0.6)
+    if 'corn_vol_m' in shocked.columns:
+        shocked['corn_vol_m'] = shocked['corn_vol_m'] + abs(commodity_log_ret) * 30.0
+    if 'soybean_vol_m_ma3m' in shocked.columns:
+        shocked['soybean_vol_m_ma3m'] = shocked['soybean_vol_m_ma3m'] + abs(commodity_log_ret) * 30.0
+    if 'natural_gas_vol_m' in shocked.columns:
+        shocked['natural_gas_vol_m'] = shocked['natural_gas_vol_m'] + abs(commodity_log_ret) * 30.0
+    if 'natural_gas_vol_m_ma3m' in shocked.columns:
+        shocked['natural_gas_vol_m_ma3m'] = shocked['natural_gas_vol_m_ma3m'] + abs(commodity_log_ret) * 20.0
+    if 'copper_vol_m_ma3m' in shocked.columns:
+        shocked['copper_vol_m_ma3m'] = shocked['copper_vol_m_ma3m'] + abs(commodity_log_ret) * 20.0
+    if 'silver_vol_m_ma3m' in shocked.columns:
+        shocked['silver_vol_m_ma3m'] = shocked['silver_vol_m_ma3m'] + abs(commodity_log_ret) * 20.0
 
     return shocked

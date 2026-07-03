@@ -9,7 +9,11 @@ export default function MacroSimulation() {
     exchangeRate: 0,
     inflation: 0,
     oilPrice: 0,
-    gdpGrowth: 0
+    gdpGrowth: 0,
+    kospiShock: 0,
+    globalRiskShock: 0,
+    commodityShock: 0,
+    eurShock: 0,
   });
   const [simulating, setSimulating] = useState(false);
   const [results, setResults] = useState<any[]>([]);
@@ -42,6 +46,10 @@ export default function MacroSimulation() {
           inflation: params.inflation,
           oil_price: params.oilPrice,
           gdp_growth: params.gdpGrowth,
+          kospi_shock: params.kospiShock,
+          global_risk_shock: params.globalRiskShock,
+          commodity_shock: params.commodityShock,
+          eur_shock: params.eurShock,
         }),
       })
         .then(res => res.json())
@@ -63,8 +71,12 @@ export default function MacroSimulation() {
       const infImpact = params.inflation * 0.042;
       const oilImpact = params.oilPrice * 0.025;
       const gdpImpact = params.gdpGrowth * -0.65;
+      const kospiImpact = params.kospiShock * -0.09;
+      const globalRiskImpact = params.globalRiskShock * 0.03;
+      const commodityImpact = params.commodityShock * 0.02;
+      const eurImpact = params.eurShock * 0.036;
 
-      const totalShock = intImpact + fxImpact + infImpact + oilImpact + gdpImpact;
+      const totalShock = intImpact + fxImpact + infImpact + oilImpact + gdpImpact + kospiImpact + globalRiskImpact + commodityImpact + eurImpact;
 
       const simResults = [
         { industry: '제조업', name: '제조업', baseRisk: 2.15, base: 2.15, sensitivity: 1.15, oldModelRisk: 1.80 },
@@ -143,7 +155,7 @@ export default function MacroSimulation() {
           >
             {useRealData ? '🔌 실모형 연동 중 (LightGBM v1.0)' : '🧪 목업 모드 (테스트)'}
           </button>
-          <button onClick={() => applyScenario('정상 상태', {interestRate: 0, exchangeRate: 0, inflation: 0, oilPrice: 0, gdpGrowth: 0})} className="btn btn-ghost">
+          <button onClick={() => applyScenario('정상 상태', {interestRate: 0, exchangeRate: 0, inflation: 0, oilPrice: 0, gdpGrowth: 0, kospiShock: 0, globalRiskShock: 0, commodityShock: 0, eurShock: 0})} className="btn btn-ghost">
             <RefreshCw size={18} /> 설정 초기화
           </button>
         </div>
@@ -158,7 +170,7 @@ export default function MacroSimulation() {
         </div>
         <div className="flex-row" style={{gap: '12px', flexWrap: 'wrap'}}>
           <button 
-            onClick={() => applyScenario('🔥 1997 IMF 외환위기', {interestRate: 80, exchangeRate: 80, inflation: 4.5, oilPrice: 15, gdpGrowth: -2.0})}
+            onClick={() => applyScenario('🔥 1997 IMF 외환위기', {interestRate: 80, exchangeRate: 80, inflation: 4.5, oilPrice: 15, gdpGrowth: -2.0, kospiShock: -50, globalRiskShock: 30, commodityShock: 0, eurShock: 60})}
             className="btn"
             style={{
               padding: '10px 16px',
@@ -176,7 +188,7 @@ export default function MacroSimulation() {
           </button>
           
           <button 
-            onClick={() => applyScenario('📉 2008 글로벌 금융위기', {interestRate: -40, exchangeRate: 50, inflation: 2.0, oilPrice: -35, gdpGrowth: -3.5})}
+            onClick={() => applyScenario('📉 2008 글로벌 금융위기', {interestRate: -40, exchangeRate: 50, inflation: 2.0, oilPrice: -35, gdpGrowth: -3.5, kospiShock: -45, globalRiskShock: 40, commodityShock: -20, eurShock: 45})}
             className="btn"
             style={{
               padding: '10px 16px',
@@ -194,7 +206,7 @@ export default function MacroSimulation() {
           </button>
 
           <button 
-            onClick={() => applyScenario('📈 2024 3고 스태그플레이션', {interestRate: 50, exchangeRate: 40, inflation: 3.5, oilPrice: 20, gdpGrowth: -0.8})}
+            onClick={() => applyScenario('📈 2024 3고 스태그플레이션', {interestRate: 50, exchangeRate: 40, inflation: 3.5, oilPrice: 20, gdpGrowth: -0.8, kospiShock: -10, globalRiskShock: 10, commodityShock: 25, eurShock: 25})}
             className="btn"
             style={{
               padding: '10px 16px',
@@ -212,7 +224,7 @@ export default function MacroSimulation() {
           </button>
 
           <button 
-            onClick={() => applyScenario('🌱 연착륙 및 금리인하 기대', {interestRate: -50, exchangeRate: -20, inflation: -1.5, oilPrice: -10, gdpGrowth: 1.2})}
+            onClick={() => applyScenario('🌱 연착륙 및 금리인하 기대', {interestRate: -50, exchangeRate: -20, inflation: -1.5, oilPrice: -10, gdpGrowth: 1.2, kospiShock: 10, globalRiskShock: -10, commodityShock: -5, eurShock: -15})}
             className="btn"
             style={{
               padding: '10px 16px',
@@ -262,6 +274,16 @@ export default function MacroSimulation() {
 
             <div>
               <div className="flex-row" style={{justifyContent: 'space-between', marginBottom: '8px'}}>
+                <span className="font-semibold" style={{fontSize: '14px'}}>유로 환율 (원/유로)</span>
+                <span className="font-bold" style={{color: params.eurShock > 0 ? 'var(--danger)' : params.eurShock < 0 ? 'var(--safe)' : 'var(--text-main)'}}>
+                  {params.eurShock > 0 ? `+${params.eurShock}` : params.eurShock} 원
+                </span>
+              </div>
+              <input type="range" min="-100" max="100" step="10" value={params.eurShock} onChange={e => { setSelectedScenario('사용자 맞춤 설정'); setParams({...params, eurShock: Number(e.target.value)}); }} className="range-slider" />
+            </div>
+
+            <div>
+              <div className="flex-row" style={{justifyContent: 'space-between', marginBottom: '8px'}}>
                 <span className="font-semibold" style={{fontSize: '14px'}}>물가 상승률</span>
                 <span className="font-bold" style={{color: params.inflation > 0 ? 'var(--danger)' : params.inflation < 0 ? 'var(--safe)' : 'var(--text-main)'}}>
                   {params.inflation > 0 ? `+${params.inflation}` : params.inflation} %p
@@ -288,6 +310,36 @@ export default function MacroSimulation() {
                 </span>
               </div>
               <input type="range" min="-4" max="3" step="0.2" value={params.gdpGrowth} onChange={e => { setSelectedScenario('사용자 맞춤 설정'); setParams({...params, gdpGrowth: Number(e.target.value)}); }} className="range-slider" />
+            </div>
+
+            <div>
+              <div className="flex-row" style={{justifyContent: 'space-between', marginBottom: '8px'}}>
+                <span className="font-semibold" style={{fontSize: '14px'}}>국내 증시 (KOSPI)</span>
+                <span className="font-bold" style={{color: params.kospiShock < 0 ? 'var(--danger)' : params.kospiShock > 0 ? 'var(--safe)' : 'var(--text-main)'}}>
+                  {params.kospiShock > 0 ? `+${params.kospiShock}` : params.kospiShock} %
+                </span>
+              </div>
+              <input type="range" min="-50" max="20" step="5" value={params.kospiShock} onChange={e => { setSelectedScenario('사용자 맞춤 설정'); setParams({...params, kospiShock: Number(e.target.value)}); }} className="range-slider" />
+            </div>
+
+            <div>
+              <div className="flex-row" style={{justifyContent: 'space-between', marginBottom: '8px'}}>
+                <span className="font-semibold" style={{fontSize: '14px'}}>글로벌 리스크 (VIX)</span>
+                <span className="font-bold" style={{color: params.globalRiskShock > 0 ? 'var(--danger)' : params.globalRiskShock < 0 ? 'var(--safe)' : 'var(--text-main)'}}>
+                  {params.globalRiskShock > 0 ? `+${params.globalRiskShock}` : params.globalRiskShock} pt
+                </span>
+              </div>
+              <input type="range" min="-15" max="40" step="5" value={params.globalRiskShock} onChange={e => { setSelectedScenario('사용자 맞춤 설정'); setParams({...params, globalRiskShock: Number(e.target.value)}); }} className="range-slider" />
+            </div>
+
+            <div>
+              <div className="flex-row" style={{justifyContent: 'space-between', marginBottom: '8px'}}>
+                <span className="font-semibold" style={{fontSize: '14px'}}>원자재 (금·농산물 등)</span>
+                <span className="font-bold" style={{color: params.commodityShock > 0 ? 'var(--danger)' : params.commodityShock < 0 ? 'var(--safe)' : 'var(--text-main)'}}>
+                  {params.commodityShock > 0 ? `+${params.commodityShock}` : params.commodityShock} %
+                </span>
+              </div>
+              <input type="range" min="-20" max="30" step="5" value={params.commodityShock} onChange={e => { setSelectedScenario('사용자 맞춤 설정'); setParams({...params, commodityShock: Number(e.target.value)}); }} className="range-slider" />
             </div>
           </div>
         </div>

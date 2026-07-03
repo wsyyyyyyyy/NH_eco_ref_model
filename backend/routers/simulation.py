@@ -11,6 +11,10 @@ class SimulationRequest(BaseModel):
     inflation: float = 0.0
     oil_price: float = 0.0
     gdp_growth: float = 0.0
+    kospi_shock: float = 0.0
+    global_risk_shock: float = 0.0
+    commodity_shock: float = 0.0
+    eur_shock: float = 0.0
 
 DISPLAY_INDUSTRIES = [
     '제조업', '도매 및 소매업', '건설업', '정보통신업',
@@ -30,6 +34,10 @@ def run_simulation(req: SimulationRequest):
         inflation=req.inflation,
         oil_price=req.oil_price,
         gdp_growth=req.gdp_growth,
+        kospi_shock=req.kospi_shock,
+        global_risk_shock=req.global_risk_shock,
+        commodity_shock=req.commodity_shock,
+        eur_shock=req.eur_shock,
     )
 
     features = model.feature_name()

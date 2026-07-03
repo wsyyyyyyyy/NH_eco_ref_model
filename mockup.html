@@ -487,7 +487,7 @@ const PAGE_TITLES = { global: '글로벌 뱅크 뷰', branch: '가상 지점 대
 let currentBaseYm = '202402';
 let branchState = { search: '', industry: '', nice: '', erm: '', tab: 'all', page: 1 };
 let monitoringState = { selectedBin: '70%+ (고위험)' };
-let simState = { interestRate: 0, exchangeRate: 0, inflation: 0, oilPrice: 0, gdpGrowth: 0, scenario: '정상 상태', tab: 'bar' };
+let simState = { interestRate: 0, exchangeRate: 0, inflation: 0, oilPrice: 0, gdpGrowth: 0, kospiShock: 0, globalRiskShock: 0, commodityShock: 0, eurShock: 0, scenario: '정상 상태', tab: 'bar' };
 
 function doLogin(e) {
   e.preventDefault();
@@ -1042,11 +1042,11 @@ const SIM_BASE_INDUSTRIES = [
   { industry: '전문, 과학 및 기술', baseRisk: 1.20, sensitivity: 0.70, oldModelRisk: 1.10 },
 ];
 const SIM_PRESETS = {
-  '정상 상태': {interestRate:0, exchangeRate:0, inflation:0, oilPrice:0, gdpGrowth:0},
-  '🔥 1997 IMF 외환위기': {interestRate:80, exchangeRate:80, inflation:4.5, oilPrice:15, gdpGrowth:-2.0},
-  '📉 2008 글로벌 금융위기': {interestRate:-40, exchangeRate:50, inflation:2.0, oilPrice:-35, gdpGrowth:-3.5},
-  '📈 2024 3고 스태그플레이션': {interestRate:50, exchangeRate:40, inflation:3.5, oilPrice:20, gdpGrowth:-0.8},
-  '🌱 연착륙 및 금리인하 기대': {interestRate:-50, exchangeRate:-20, inflation:-1.5, oilPrice:-10, gdpGrowth:1.2},
+  '정상 상태': {interestRate:0, exchangeRate:0, inflation:0, oilPrice:0, gdpGrowth:0, kospiShock:0, globalRiskShock:0, commodityShock:0, eurShock:0},
+  '🔥 1997 IMF 외환위기': {interestRate:80, exchangeRate:80, inflation:4.5, oilPrice:15, gdpGrowth:-2.0, kospiShock:-50, globalRiskShock:30, commodityShock:0, eurShock:60},
+  '📉 2008 글로벌 금융위기': {interestRate:-40, exchangeRate:50, inflation:2.0, oilPrice:-35, gdpGrowth:-3.5, kospiShock:-45, globalRiskShock:40, commodityShock:-20, eurShock:45},
+  '📈 2024 3고 스태그플레이션': {interestRate:50, exchangeRate:40, inflation:3.5, oilPrice:20, gdpGrowth:-0.8, kospiShock:-10, globalRiskShock:10, commodityShock:25, eurShock:25},
+  '🌱 연착륙 및 금리인하 기대': {interestRate:-50, exchangeRate:-20, inflation:-1.5, oilPrice:-10, gdpGrowth:1.2, kospiShock:10, globalRiskShock:-10, commodityShock:-5, eurShock:-15},
 };
 function applySimScenario(name) { simState = {...simState, ...SIM_PRESETS[name], scenario: name}; renderSimulation(); }
 function setSimParam(field, val) { simState[field] = Number(val); simState.scenario = '사용자 맞춤 설정'; renderSimulation(); }
@@ -1058,7 +1058,11 @@ function runSimCalc() {
   const infImpact = simState.inflation * 0.042;
   const oilImpact = simState.oilPrice * 0.025;
   const gdpImpact = simState.gdpGrowth * -0.65;
-  const totalShock = intImpact + fxImpact + infImpact + oilImpact + gdpImpact;
+  const kospiImpact = simState.kospiShock * -0.09;
+  const globalRiskImpact = simState.globalRiskShock * 0.03;
+  const commodityImpact = simState.commodityShock * 0.02;
+  const eurImpact = simState.eurShock * 0.036;
+  const totalShock = intImpact + fxImpact + infImpact + oilImpact + gdpImpact + kospiImpact + globalRiskImpact + commodityImpact + eurImpact;
   return SIM_BASE_INDUSTRIES.map(item => {
     const shockEffect = totalShock * item.sensitivity;
     const newRisk = Math.max(0.1, Number((item.baseRisk + shockEffect).toFixed(2)));
@@ -1077,7 +1081,8 @@ function heatColor(diff) {
 function heatText(diff) { return (diff > 1.0 || diff < -1.5) ? '#ffffff' : 'var(--text-main)'; }
 
 function sliderRow(label, field, min, max, step, unit, val) {
-  const color = (field==='gdpGrowth') ? (val<0?'var(--danger)':val>0?'var(--safe)':'var(--text-main)') : (val>0?'var(--danger)':val<0?'var(--safe)':'var(--text-main)');
+  const invertedFields = ['gdpGrowth', 'kospiShock'];
+  const color = invertedFields.includes(field) ? (val<0?'var(--danger)':val>0?'var(--safe)':'var(--text-main)') : (val>0?'var(--danger)':val<0?'var(--safe)':'var(--text-main)');
   return `<div>
     <div class="flex-row" style="justify-content:space-between;margin-bottom:8px;"><span class="font-semibold" style="font-size:14px;">${label}</span><span class="font-bold" style="color:${color};">${val>0?'+':''}${val} ${unit}</span></div>
     <input type="range" min="${min}" max="${max}" step="${step}" value="${val}" oninput="setSimParam('${field}', this.value)">
@@ -1149,9 +1154,13 @@ function renderSimulation() {
           <div class="card flex-col" style="gap:22px;">
             ${sliderRow('기준 금리','interestRate',-100,100,10,'bp', simState.interestRate)}
             ${sliderRow('환율 (원/달러)','exchangeRate',-100,100,10,'원', simState.exchangeRate)}
+            ${sliderRow('유로 환율 (원/유로)','eurShock',-100,100,10,'원', simState.eurShock)}
             ${sliderRow('물가 상승률','inflation',-3,5,0.5,'%p', simState.inflation)}
             ${sliderRow('국제 유가 (WTI)','oilPrice',-40,60,5,'$', simState.oilPrice)}
             ${sliderRow('실질 GDP 성장률','gdpGrowth',-4,3,0.2,'%p', simState.gdpGrowth)}
+            ${sliderRow('국내 증시 (KOSPI)','kospiShock',-50,20,5,'%', simState.kospiShock)}
+            ${sliderRow('글로벌 리스크 (VIX)','globalRiskShock',-15,40,5,'pt', simState.globalRiskShock)}
+            ${sliderRow('원자재 (금·농산물 등)','commodityShock',-20,30,5,'%', simState.commodityShock)}
           </div>
         </div>
         <div class="flex-col" style="gap:12px;">
