@@ -59,7 +59,7 @@
 - 통계적 지표인 **F2-Score의 최적 임계값(`0.3797`)**이 '10배 미탐 비용' 시나리오와 완벽히 일치함을 증명했으며, 0.27~0.38 사이의 Threshold를 통해 실무 오경보 피로도와 부도 방어율의 최적 밸런스 설정 가이드라인을 제시했습니다.
 
 ### 5. 핵심 성능 지표 검증 및 가상 지점 매핑 (`step13`)
-- **평가 지표 결과 (Valid):** ROC-AUC **0.9011**, Gini **80.2**, K-S **67.2**, PSI **0.1247**
+- **평가 지표 결과 (Valid):** ROC-AUC **0.9005**, Gini **80.1**, K-S **66.6**, PSI **0.1357** (2026-07-04 정규화 파라미터 재학습 반영, [step29](docs/step29_production_model_retrain_and_rescore.md) 참고)
 - 과거 AUROC 0.77 수준에 머물던 은행 내부 모형 대비 **압도적으로 정교한 예측력(0.9 돌파)**을 입증했습니다.
 - **데이터 활용 준비 완료:** 확보된 고도화 스코어링 데이터를 기반으로 전체 194만 건의 중소기업 데이터에 5개의 가상 지점(Virtual Branch, VB001~VB005) 맵핑(태깅)을 성공적으로 완료하여 현업 서비스 도입 준비를 마쳤습니다.
 
@@ -75,6 +75,14 @@
 2. **압도적인 조기 탐지 속도 (36.6%)**: 내부 모형이 뒤늦게 위험을 감지하여 B등급으로 하향 조정한 기업들에 대해, AI 모델이 이들보다 **평균 6.8개월 먼저 초고위험(G5) 상태임을 경고**했습니다.
 
 👉 **결론**: 본 예측 모델을 여신 심사 프로세스에 도입할 경우, 향후 발생할 막대한 충당금 손실을 방어할 수 있는 **반년(6.8개월)의 선제적 리스크 관리 골든타임**을 안정적으로 확보할 수 있습니다.
+
+> 위 63.4%/36.6%/6.8개월 수치는 `eda_pipeline/step11~12`의 별도 오프라인 분석 결과이며, 아래 §모델 검증 및 재학습(2026-07-04)에서 재학습한 모델 기준으로는 아직 재검증하지 않았습니다. 재학습 이후 실시간으로 재계산되는 벤 다이어그램/리드타임 수치는 [step29](docs/step29_production_model_retrain_and_rescore.md) §4를 참고하세요.
+
+---
+
+## 🔬 모델 검증 및 재학습 (Validation & Retraining, 2026-07-04)
+
+교수님 피드백에 따라 과적합·SHAP 변수 정제·다중공선성·워크포워드 CV·타 모델 비교 5가지를 검증([step28](docs/step28_model_validation_and_benchmarking.md))하고, 확인된 개선안(정규화 파라미터, Dev 기반 early stopping, Lean 모델 중복 변수 제거)을 실제 운영 모델에 반영해 전체 194만 행을 재채점했습니다([step29](docs/step29_production_model_retrain_and_rescore.md)). 분기별 재학습 런북과, 이미 구현되어 있던 실시간 PSI 드리프트 모니터링(Model Monitoring 페이지)을 활용한 운영 정책도 함께 정리했습니다.
 
 ---
 
@@ -115,7 +123,9 @@
 │   ├── step17_data_consistency_and_dedup_fixes.md      # Step 17 리스트/상세 정합성 및 중복행 제거
 │   ├── step18_borrower_detail_ux_and_ai_tips_structuring.md # Step 18 차주 상세 UX 개편 및 AI 팁 구조화
 │   ├── step19_gemini_reliability_and_real_shap_capability.md # Step 19 Gemini 안정화 및 실제 SHAP/역량진단
-│   └── step20_global_dashboard_real_trend_and_industry_matrix.md # Step 20 글로벌 뱅크 뷰 실데이터 전환
+│   ├── step20_global_dashboard_real_trend_and_industry_matrix.md # Step 20 글로벌 뱅크 뷰 실데이터 전환
+│   ├── step28_model_validation_and_benchmarking.md    # Step 28 과적합·다중공선성·워크포워드 CV·타 모델 비교 검증
+│   └── step29_production_model_retrain_and_rescore.md # Step 29 검증 결과 반영 재학습 + 전체 DB 재채점
 ├── frontend/                          # React 18 + Vite + Recharts 기반 실사용자 ERM 조기경보 웹 포털
 │   └── src/
 │       ├── config.ts                  # API_BASE_URL 등 환경설정
