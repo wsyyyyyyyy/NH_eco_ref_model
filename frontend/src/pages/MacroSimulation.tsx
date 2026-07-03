@@ -548,7 +548,7 @@ export default function MacroSimulation() {
                                 <span className="font-extrabold" style={{fontSize: '15px', color: '#b91c1c'}}>{item.newRisk}%</span>
                               </div>
                               <span style={{fontSize: '11px', fontWeight: 600, color: '#dc2626'}}>
-                                평시({item.baseRisk}%) 대비 ▲+{item.diff}%p 급증
+                                평시({item.baseRisk}%) 대비 {item.diff > 0 ? `▲+${item.diff}%p 급증` : item.diff < 0 ? `▼${item.diff}%p 감소 (절대 위험도 높음)` : '변동 없음 (절대 위험도 높음)'}
                               </span>
                             </div>
                           ))
