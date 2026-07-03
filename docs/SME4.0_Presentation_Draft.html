@@ -1,0 +1,1170 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SME 4.0 AI 조기경보 및 리스크 평가 모형 — 마스터 발표 초안</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@300;400;600;700;800&family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #0f172a;
+            --bg-card: #1e293b;
+            --bg-card-light: #334155;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --accent-blue: #38bdf8;
+            --accent-indigo: #6366f1;
+            --accent-emerald: #10b981;
+            --accent-amber: #f59e0b;
+            --accent-rose: #f43f5e;
+            --border: #334155;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            overflow: hidden;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Header / Nav */
+        header {
+            height: 60px;
+            background: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 30px;
+            z-index: 100;
+        }
+
+        .logo {
+            font-family: 'Outfit', sans-serif;
+            font-size: 20px;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-indigo));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .logo-badge {
+            font-size: 11px;
+            background: rgba(56, 189, 248, 0.15);
+            color: var(--accent-blue);
+            padding: 3px 8px;
+            border-radius: 4px;
+            border: 1px solid rgba(56, 189, 248, 0.3);
+            font-weight: 600;
+        }
+
+        .controls {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .btn {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            color: var(--text-main);
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn:hover {
+            background: var(--bg-card-light);
+            border-color: var(--accent-blue);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-indigo));
+            border: none;
+            color: #fff;
+        }
+
+        .btn-primary:hover {
+            opacity: 0.9;
+        }
+
+        .slide-counter {
+            font-family: 'Outfit', sans-serif;
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--text-muted);
+            background: rgba(0,0,0,0.2);
+            padding: 6px 12px;
+            border-radius: 20px;
+            border: 1px solid var(--border);
+        }
+
+        /* Main Slide Stage */
+        main {
+            flex: 1;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 30px;
+        }
+
+        .slide-container {
+            width: 100%;
+            max-width: 1200px;
+            height: 680px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            padding: 45px 60px;
+            transition: transform 0.3s ease, opacity 0.3s ease;
+        }
+
+        /* Slide Content Styles */
+        .slide-header {
+            margin-bottom: 30px;
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+            padding-bottom: 20px;
+        }
+
+        .slide-part {
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--accent-blue);
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            margin-bottom: 8px;
+        }
+
+        .slide-title {
+            font-size: 32px;
+            font-weight: 800;
+            line-height: 1.3;
+            color: #fff;
+        }
+
+        .slide-body {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            gap: 25px;
+        }
+
+        /* Custom Layouts */
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 25px;
+        }
+
+        .grid-3 {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 20px;
+        }
+
+        .card {
+            background: rgba(15, 23, 42, 0.5);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 25px;
+            position: relative;
+        }
+
+        .card-highlight {
+            border-color: rgba(56, 189, 248, 0.5);
+            background: linear-gradient(180deg, rgba(56, 189, 248, 0.05) 0%, rgba(15, 23, 42, 0.5) 100%);
+        }
+
+        .card-danger {
+            border-color: rgba(244, 63, 94, 0.4);
+            background: linear-gradient(180deg, rgba(244, 63, 94, 0.05) 0%, rgba(15, 23, 42, 0.5) 100%);
+        }
+
+        .card-success {
+            border-color: rgba(16, 185, 129, 0.4);
+            background: linear-gradient(180deg, rgba(16, 185, 129, 0.05) 0%, rgba(15, 23, 42, 0.5) 100%);
+        }
+
+        .card-title {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .card-text {
+            font-size: 15px;
+            color: var(--text-muted);
+            line-height: 1.6;
+        }
+
+        ul.bullet-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        ul.bullet-list li {
+            position: relative;
+            padding-left: 24px;
+            font-size: 16px;
+            line-height: 1.5;
+            color: #e2e8f0;
+        }
+
+        ul.bullet-list li::before {
+            content: '•';
+            position: absolute;
+            left: 5px;
+            color: var(--accent-blue);
+            font-weight: bold;
+            font-size: 18px;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .badge-rose { background: rgba(244, 63, 94, 0.15); color: var(--accent-rose); }
+        .badge-emerald { background: rgba(16, 185, 129, 0.15); color: var(--accent-emerald); }
+        .badge-blue { background: rgba(56, 189, 248, 0.15); color: var(--accent-blue); }
+        .badge-amber { background: rgba(245, 158, 11, 0.15); color: var(--accent-amber); }
+
+        .stat-box {
+            text-align: center;
+            padding: 20px;
+        }
+
+        .stat-num {
+            font-family: 'Outfit', sans-serif;
+            font-size: 44px;
+            font-weight: 800;
+            background: linear-gradient(135deg, #fff, var(--text-muted));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 5px;
+        }
+
+        .stat-num-blue { background: linear-gradient(135deg, var(--accent-blue), #60a5fa); -webkit-background-clip: text; }
+        .stat-num-rose { background: linear-gradient(135deg, var(--accent-rose), #fb7185); -webkit-background-clip: text; }
+        .stat-num-emerald { background: linear-gradient(135deg, var(--accent-emerald), #34d399); -webkit-background-clip: text; }
+
+        .stat-label {
+            font-size: 14px;
+            color: var(--text-muted);
+            font-weight: 600;
+        }
+
+        /* Title Slide Special Layout */
+        .title-stage {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            height: 100%;
+        }
+
+        .title-main {
+            font-size: 46px;
+            font-weight: 800;
+            line-height: 1.25;
+            margin-bottom: 20px;
+            background: linear-gradient(135deg, #ffffff 0%, #cbd5e1 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .title-sub {
+            font-size: 20px;
+            color: var(--accent-blue);
+            font-weight: 600;
+            max-width: 800px;
+            line-height: 1.6;
+            margin-bottom: 40px;
+        }
+
+        /* Speaker Notes Panel (Drawer) */
+        .speaker-notes-drawer {
+            position: fixed;
+            bottom: -400px;
+            left: 0;
+            width: 100%;
+            height: 350px;
+            background: #090e17;
+            border-top: 2px solid var(--accent-blue);
+            padding: 25px 40px;
+            z-index: 200;
+            transition: bottom 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            overflow-y: auto;
+            box-shadow: 0 -10px 30px rgba(0,0,0,0.8);
+        }
+
+        .speaker-notes-drawer.open {
+            bottom: 0;
+        }
+
+        .notes-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .notes-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--accent-blue);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .notes-content {
+            font-size: 15px;
+            line-height: 1.8;
+            color: #cbd5e1;
+        }
+
+        .notes-qna {
+            margin-top: 15px;
+            padding: 15px;
+            background: rgba(245, 158, 11, 0.1);
+            border-left: 3px solid var(--accent-amber);
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        /* Progress Bar */
+        .progress-bar {
+            height: 4px;
+            background: var(--bg-card);
+            width: 100%;
+            position: fixed;
+            top: 60px;
+            left: 0;
+            z-index: 90;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent-blue), var(--accent-emerald));
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        /* Hide all slides initially */
+        .slide {
+            display: none;
+            height: 100%;
+            flex-direction: column;
+        }
+
+        .slide.active {
+            display: flex;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Header Navigation -->
+    <header>
+        <div class="logo">
+            <img src="sme_icon.jpg" alt="SME 4.0 Icon" style="width: 28px; height: 28px; border-radius: 8px; object-fit: cover; vertical-align: middle; margin-right: 10px; box-shadow: 0 2px 10px rgba(59,130,246,0.4);">
+            <span>⚡ SME 4.0 ERM</span>
+            <span class="logo-badge">Master Presentation Draft</span>
+        </div>
+        <div class="controls">
+            <button class="btn" onclick="toggleNotes()">🎙️ 발표자 대본 및 Q&A (N)</button>
+            <div class="slide-counter"><span id="current-slide">1</span> / <span id="total-slides">18</span></div>
+            <button class="btn" onclick="prevSlide()">◀ 이전 (←)</button>
+            <button class="btn btn-primary" onclick="nextSlide()">다음 (→) ▶</button>
+        </div>
+    </header>
+
+    <!-- Progress Bar -->
+    <div class="progress-bar">
+        <div class="progress-fill" id="progress"></div>
+    </div>
+
+    <!-- Main Stage -->
+    <main>
+        <div class="slide-container">
+
+            <!-- SLIDE 1 -->
+            <div class="slide active" data-notes="안녕하십니까, 오늘 발표를 맡은 [발표자 성명/부서]입니다. 오늘 저희는 은행 중소기업(SME) 여신 관리의 패러다임을 바꿀 'SME 4.0 차세대 AI 조기경보 및 리스크 평가 모형(ERM)' 프로젝트를 소개하고자 합니다. 과거의 재무제표 중심 심사에서 벗어나, 194만 건의 빅데이터와 실시간 거시경제, 뉴스 공시 데이터까지 결합한 우리 은행의 새로운 선제적 리스크 관리 시스템이 어떻게 부도 여신을 사전에 차단하고 심사 역량을 극대화하는지, 실제 데이터 검증 성과와 라이브 시연을 통해 상세히 보여드리겠습니다.">
+                <div class="title-stage">
+                    <div style="display: flex; align-items: center; justify-content: center; gap: 14px; margin-bottom: 18px;">
+                        <img src="sme_icon.jpg" alt="SME 4.0 Program Icon" style="width: 58px; height: 58px; border-radius: 14px; box-shadow: 0 4px 20px rgba(59,130,246,0.5); object-fit: cover; border: 2px solid rgba(255,255,255,0.2);">
+                        <span class="badge badge-blue" style="font-size: 14px; padding: 8px 16px; margin: 0;">SME 4.0 ADVANCED AGENTIC CREDIT RISK PORTAL</span>
+                    </div>
+                    <h1 class="title-main">차세대 중소기업 AI 조기경보 및<br>리스크 평가 모형 (ERM)</h1>
+                    <p class="title-sub">194만 건 빅데이터, LightGBM 머신러닝, 그리고 생성형 LLM을 융합한<br>선제적 여신 관점의 파괴적 디지털 기업금융 혁신</p>
+                    <div style="display: flex; gap: 20px; margin-top: 15px;">
+                        <div class="stat-box" style="background: rgba(255,255,255,0.03); border-radius: 10px; padding: 12px 25px; border: 1px solid var(--border);">
+                            <div class="stat-num stat-num-blue" style="font-size: 28px;">194만+</div>
+                            <div class="stat-label">월별 빅데이터 패널</div>
+                        </div>
+                        <div class="stat-box" style="background: rgba(255,255,255,0.03); border-radius: 10px; padding: 12px 25px; border: 1px solid var(--border);">
+                            <div class="stat-num stat-num-emerald" style="font-size: 28px;">+12.9 M</div>
+                            <div class="stat-label">선제적 조기경보 리드타임</div>
+                        </div>
+                        <div class="stat-box" style="background: rgba(255,255,255,0.03); border-radius: 10px; padding: 12px 25px; border: 1px solid var(--border);">
+                            <div class="stat-num stat-num-rose" style="font-size: 28px;">0.90+</div>
+                            <div class="stat-label">OOT 검증 AUROC</div>
+                        </div>
+                    </div>
+                    <div style="display: inline-flex; align-items: center; gap: 24px; margin-top: 25px; background: rgba(30, 41, 59, 0.75); padding: 14px 28px; border-radius: 16px; border: 1px solid var(--border); box-shadow: 0 8px 25px rgba(0,0,0,0.3); backdrop-filter: blur(8px); text-align: left;">
+                        <div style="display: flex; align-items: center; gap: 12px; border-right: 1px solid var(--border); padding-right: 24px;">
+                            <span style="font-size: 22px;">👑</span>
+                            <div>
+                                <div style="font-size: 11px; color: var(--accent-amber); font-weight: 700; letter-spacing: 0.5px;">PROJECT LEADER (팀장)</div>
+                                <div style="font-size: 15px; font-weight: 700; color: #fff; margin-top: 2px;">이재현 <span style="font-size: 13px; color: var(--accent-amber); font-weight: 500;">(기업은행)</span></div>
+                            </div>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 14px;">
+                            <span style="font-size: 22px;">👥</span>
+                            <div>
+                                <div style="font-size: 11px; color: var(--accent-blue); font-weight: 700; letter-spacing: 0.5px;">CORE TEAM MEMBERS (팀원)</div>
+                                <div style="display: flex; gap: 18px; font-size: 15px; font-weight: 600; color: #fff; margin-top: 2px;">
+                                    <span>강병민 <span style="font-size: 13px; color: var(--text-muted); font-weight: 400;">(부산은행)</span></span>
+                                    <span>유인경 <span style="font-size: 13px; color: var(--text-muted); font-weight: 400;">(농협은행)</span></span>
+                                    <span>위세영 <span style="font-size: 13px; color: var(--text-muted); font-weight: 400;">(농협은행)</span></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SLIDE 2 -->
+            <div class="slide" data-notes="왜 우리가 지금 기존 신용평가 모형을 전면 고도화해야 할까요? 현행 은행 내부 모형은 세 가지 치명적인 한계에 부딪혔습니다. 첫째, 극심한 후행성입니다. 중소기업 재무제표는 결산 후 3~4개월 뒤에나 공시됩니다. 이미 자금난으로 연체가 시작된 연말 시점에 우리는 1년 전의 깨끗한 재무제표만 보고 있어 조기경보에 번번이 실패했습니다. 둘째, 거시경제 및 외부 환경 충격의 미반영입니다. 금리가 급등하고 환율이 치솟아도 기존 모형은 개별 기업의 재무 비율만 고정적으로 평가할 뿐, 시장 환경의 급변을 반영하지 못했습니다. 셋째, 사후관리의 적시성 부족입니다. 연체 발생이나 신용등급 하락 이후 대응하면 이미 위험이 상당 부분 현실화된 상태일 수 있습니다. 반면 본 조기경보 모형은 계좌흐름, 거래감소, 외부 신용정보 변화, 업황 악화 신호를 조기에 감지하여 리스크 점검과 한도관리, 구조개선 등 선제적 대응을 가능하게 합니다.">
+                <div class="slide-header">
+                    <div class="slide-part">Part 1. 도입 및 프로젝트 배경</div>
+                    <h2 class="slide-title">Why Now? — 신용위험을 ‘평가’에서 ‘조기감지’로 패러다임 전환</h2>
+                </div>
+                <div class="slide-body">
+                    <div class="grid-3">
+                        <div class="card card-danger">
+                            <span class="badge badge-rose">치명적 한계 1</span>
+                            <div class="card-title">⏳ 극심한 '후행성' (Time Lag)</div>
+                            <p class="card-text">중소기업 재무제표는 결산 후 3~4개월 뒤에나 공시됨. 이미 자금난으로 연체가 시작된 연말/익년 초 시점에 1년 전 깨끗한 재무제표만 의존하여 조기경보 실패.</p>
+                        </div>
+                        <div class="card card-danger">
+                            <span class="badge badge-rose">치명적 한계 2</span>
+                            <div class="card-title">🌊 거시경제 충격 미반영</div>
+                            <p class="card-text">금리가 급등하고 원/달러 환율이 치솟아도 기존 모형은 개별 기업의 재무 비율만 고정 평가. 고금리·고물가 시기의 연쇄 스트레스 충격을 계산하지 못함.</p>
+                        </div>
+                        <div class="card card-danger">
+                            <span class="badge badge-rose">치명적 한계 3</span>
+                            <div class="card-title">🚨 사후관리의 적시성 부족</div>
+                            <p class="card-text" style="font-size: 13.5px; line-height: 1.5;">연체 발생이나 신용등급 하락 이후 대응하면 이미 위험이 상당 부분 현실화된 상태일 수 있음.<br><br><span style="color: #fff; font-weight: 600;">조기경보 모형</span>은 계좌흐름, 거래감소, 외부 신용정보 변화, 업황 악화 신호를 조기에 감지하여 리스크 점검과 한도관리, 구조개선 선제적 대응.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SLIDE 3 -->
+            <div class="slide" data-notes="SME 4.0의 비전은 명확합니다. '과거를 기록하는 심사에서, 향후 12개월을 예측하는 조기경보로의 전환'입니다. 이를 실현하기 위해 저희는 3대 핵심 목표를 달성했습니다. 첫째, 194만 건의 월별 시계열 패널 데이터 구축을 통해 기업의 미세한 징후 변화를 매월 추적합니다. 둘째, 정형 재무 데이터에 한국은행 거시경제 지표와 실시간 뉴스 감성 지수를 오버레이하여 시장 환경을 실시간 모형에 반영했습니다. 셋째, 글로벌 최고 수준의 LightGBM과 구글 최신 생성형 AI를 결합하여, 숫자만 제시하는 것을 넘어 심사역에게 '왜 위험한지, 어떻게 대응해야 하는지'까지 한국어 리포트로 자동 생성하는 완벽한 실무 지원 포털을 완성했습니다.">
+                <div class="slide-header">
+                    <div class="slide-part">Part 1. 도입 및 프로젝트 배경</div>
+                    <h2 class="slide-title" style="display: flex; align-items: center; gap: 12px;"><img src="sme_icon.jpg" alt="Icon" style="width: 32px; height: 32px; border-radius: 8px; object-fit: cover; box-shadow: 0 2px 10px rgba(59,130,246,0.4);"><span>SME 4.0 비전 — 과거 기록 심사에서, 미래 예측 조기경보로</span></h2>
+                </div>
+                <div class="slide-body">
+                    <div class="grid-3">
+                        <div class="card card-highlight">
+                            <span class="badge badge-blue">혁신 목표 1</span>
+                            <div class="card-title">🔮 12M Forward-Looking</div>
+                            <p class="card-text">과거 1년 실적 평가를 넘어, 향후 12개월 이내 부도 발생 여부(TARGET_12M)를 월 단위로 선제 예측하는 동적 추적 파이프라인 가동.</p>
+                        </div>
+                        <div class="card card-highlight">
+                            <span class="badge badge-blue">혁신 목표 2</span>
+                            <div class="card-title">🌐 거시 & 뉴스 감성 결합</div>
+                            <p class="card-text">한국은행 기준금리/환율/유가 거시 지표 및 실시간 NLP 뉴스 텍스트 마이닝 감성 지수를 결합한 360도 대체 데이터 오버레이(Overlay).</p>
+                        </div>
+                        <div class="card card-highlight">
+                            <span class="badge badge-blue">혁신 목표 3</span>
+                            <div class="card-title">🤖 생성형 LLM 심사비서</div>
+                            <p class="card-text">LightGBM TreeSHAP 기여도와 Gemini 3.5 Flash를 연계하여 차주별 조기경보 원인 소명 및 여신 보전 팁을 실시간 한국어로 자동 생성.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SLIDE 4 -->
+            <div class="slide" data-notes="AI 모형의 실질적 효용을 극대화하기 위해, 저희는 모델의 활용 범위를 대기업이나 SOHO(개인사업자)가 아닌 '중소기업(SME) 법인 차주'로 명확히 좁혔습니다. 왜 중소기업일까요? 다른 기업 규모에 비해 은행 전체 여신 포트폴리오에서 차주수와 실제 부도 발생 건수가 압도적으로 많기 때문입니다. 대기업은 공시가 투명하고 부도가 적은 반면, 중소기업은 정보 비대칭이 심하고 부도가 집중되어 있어 조기경보 모형을 통한 대손상각비(EAD) 방어 효과가 가장 강력하게 발휘됩니다. 저희는 은행 내부에 흩어져 있던 11대 핵심 원장 데이터를 데이터웨어하우스를 통해 완벽하게 통합했습니다. 기업정보 마스터, 연도별 재무제표, 당행 관찰세부등급, 부도 정보를 기준년월로 정밀 병합하여, 총 194만 행(Row) 규모의 거대한 중소기업 특화 시계열 머신러닝 패널을 탄생시켰습니다." data-qna="Q. 왜 모델 대상을 다른 기업 규모가 아닌 중소기업(SME)으로 한정했나요? -> A. 다른 기업규모(대기업 등)에 비해 은행 기업여신 내 차주수와 실제 부도 발생 건수가 압도적으로 많아 조기경보를 통한 대손상각비(EAD) 방어 가치가 가장 크고, 공시가 지연되고 정보 비대칭이 심한 중소기업 특성상 거시경제 및 뉴스 대체 데이터 결합의 효과가 극대화되는 최적의 영역이기 때문입니다.">
+                <div class="slide-header">
+                    <div class="slide-part">Part 2. 데이터 파이프라인 및 도메인 엔지니어링</div>
+                    <h2 class="slide-title">Data Foundation & Scope — 모델 활용 범위(SME) & 194만 건 패널</h2>
+                </div>
+                <div class="slide-body">
+                    <div class="grid-3">
+                        <div class="card card-highlight">
+                            <span class="badge badge-amber">모델 활용 범위 (Target Scope)</span>
+                            <div class="card-title" style="color: var(--accent-amber);">🎯 왜 중소기업(SME)인가?</div>
+                            <ul class="bullet-list" style="margin-top: 14px; font-size: 13px;">
+                                <li><b>압도적 차주수 & 부도수</b>: 다른 기업규모 대비 차주수와 부도가 집중되어 있어 여신 손실(EAD) 방어 효과가 가장 큼</li>
+                                <li><b>정보 비대칭 극복</b>: 공시 주기가 길고 비재무 징후가 중요한 중소기업 특성상 AI 조기경보 가치가 극대화됨</li>
+                                <li><b>적용 범위</b>: 은행 여신 보유 <b>중소기업 법인 전수</b> (월 14.7만 사, 66개월 누적)</li>
+                            </ul>
+                        </div>
+                        <div class="card">
+                            <span class="badge badge-blue">11대 원장 통합 (Pipeline)</span>
+                            <div class="card-title" style="color: var(--accent-blue);">📁 원장 정합성 & 시계열 병합</div>
+                            <ul class="bullet-list" style="margin-top: 14px; font-size: 13px;">
+                                <li><b>기업정보 마스터</b>: 사업자번호, 표준산업분류, 설립일자, 규모, 소재지</li>
+                                <li><b>재무제표 원장</b>: 대차대조표/손익계산서 1:1 매핑</li>
+                                <li><b>관찰세부등급</b>: 월별 97만 건 당행 내부 모형 및 부도확률 결합</li>
+                                <li><b>당행 부도 원장</b>: 실 기한이익상실 및 부도일자(`DSH_DT`) 연계</li>
+                            </ul>
+                        </div>
+                        <div class="card card-success" style="display: flex; flex-direction: column; justify-content: center; text-align: center;">
+                            <span class="badge badge-emerald" style="align-self: center;">최종 마스터 패널 생성</span>
+                            <div class="stat-num stat-num-emerald" style="font-size: 34px; margin: 12px 0;">중소기업 특화 패널</div>
+                            <p style="font-size: 16px; font-weight: 700; color: #fff;">총 1,940,000+ Rows 빅데이터</p>
+                            <p style="color: var(--text-muted); margin-top: 8px; font-size: 12.5px; line-height: 1.4;">매월 말 평가 기준년월 기준 전방 12개월 관찰 윈도우 및<br>부도 잔여 월수 완벽 동기화</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+<!-- SLIDE 5 -->
+            <div class="slide" data-notes="원장 데이터를 그대로 넣는 대신, 여신 심사 도메인 지식을 녹여낸 최적의 파생변수를 창출했습니다. 재무 건전성 영역에서는 부채비율, 유동비율, 이자보상배율을 동적으로 산출하여 기업의 상환 능력을 정량화했습니다. 비재무 행동 활성 변수 영역에서는 최근 1년간 당행 등급 하락 횟수, 외부 CB사 연체 이력, 그리고 종업원 수 증감률을 롤링 산출했습니다. 이에 더해 외부평가지표를 전격 추가하여 KIS 신용평가 점수, NICE 신용등급, 외부기관 기업평가의견을 결합함으로써 공신력 있는 외부 전문 평가까지 완벽히 반영했습니다.">
+                <div class="slide-header">
+                    <div class="slide-part">Part 2. 데이터 파이프라인 및 도메인 엔지니어링</div>
+                    <h2 class="slide-title">Domain Engineering — 리스크 판별력 극대화 핵심 파생변수</h2>
+                </div>
+                <div class="slide-body">
+                    <div class="grid-3">
+                        <div class="card">
+                            <span class="badge badge-amber">재무 건전성 (매입 매핑)</span>
+                            <div class="card-title" style="font-size: 18px;">📊 재무 및 수익성 지표</div>
+                            <ul class="bullet-list" style="margin-top: 12px; font-size: 13.5px;">
+                                <li><b>부채비율</b>: 총부채 / 자기자본 (안전성)</li>
+                                <li><b>이자보상배율</b>: 영업이익 / 이자비용 (1.0 미만 한계기업 감지)</li>
+                                <li><b>유동비율 & 자산회전율</b>: 단기 상환 능력 및 자산 효율성</li>
+                                <li><b>영업이익률 & ROE</b>: 본업 및 자본 수익성 지수</li>
+                            </ul>
+                        </div>
+                        <div class="card card-highlight">
+                            <span class="badge badge-blue">행동 이력 (롤링 산출 ⭐)</span>
+                            <div class="card-title" style="font-size: 18px;">🚨 비재무 행동 및 신용 변동</div>
+                            <ul class="bullet-list" style="margin-top: 12px; font-size: 13.5px;">
+                                <li><b>1년 내 등급 하락 횟수</b>: 12개월 간 은행 등급 하향 빈도 (강력한 부실 신호)</li>
+                                <li><b>외부 신용불량 이력</b>: 연체 및 대위변제 발생 플래그</li>
+                                <li><b>종업원 수 증감률</b>: 최근 6개월 인력 감축률 (구조조정 선행 감지)</li>
+                                <li><b>기업 업력</b>: 설립일 대비 생존 월수</li>
+                            </ul>
+                        </div>
+                        <div class="card card-success">
+                            <span class="badge badge-emerald">외부평가지표 (공신력 결합 ⭐)</span>
+                            <div class="card-title" style="font-size: 18px;">🏆 KIS/NICE 외부 신용평가</div>
+                            <ul class="bullet-list" style="margin-top: 12px; font-size: 13.5px;">
+                                <li><b>KIS 신용평가 점수</b>: 한국신용평가 기업 종합 점수 결합</li>
+                                <li><b>NICE 신용등급</b>: NICE평가정보 공신력 있는 신용 등급표 반영</li>
+                                <li><b>신용평가모형 구분코드</b>: 산업별 외부 평가 모형 특성 체계화</li>
+                                <li><b>기업평가의견 및 변동 이력</b>: 외부 전문기관의 긍정/부정 소견 피처화</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SLIDE 6 -->
+            <div class="slide" data-notes="재무제표의 후행성을 극복하기 위한 SME 4.0의 핵심 비밀무기는 바로 '외부 대체 데이터 오버레이'입니다. 첫째, 한국은행 API와 연계하여 기준금리, 원/달러 환율, WTI 유가, 실질 GDP 성장률을 월별 패널에 결합했습니다. 이를 통해 고금리 시점에 변동금리 대출 비중이 높은 기업의 리스크가 자동으로 가중되도록 설계했습니다. 둘째, 자연어 처리(NLP)를 활용한 뉴스 감성 지수와 금감원 DART 공시 위반 여부를 결합한 '종합 뉴스 오버레이 지수'를 도입했습니다. 재무 상태가 겉보기에 멀쩡해도 '소송', '가압류', '파업' 등의 악재 뉴스가 보도되면 AI 모형이 즉시 리스크 점수를 상향시키도록 동적 체계를 완성했습니다.">
+                <div class="slide-header">
+                    <div class="slide-part">Part 2. 데이터 파이프라인 및 도메인 엔지니어링</div>
+                    <h2 class="slide-title">Alternative Data — 거시경제 충격 및 뉴스/공시 감성 오버레이</h2>
+                </div>
+                <div class="slide-body">
+                    <div class="grid-2">
+                        <div class="card">
+                            <div class="card-title" style="color: var(--accent-emerald);">🏛️ 한국은행 ECOS 거시경제 시계열</div>
+                            <p class="card-text" style="margin-bottom: 15px;">개별 기업의 재무비율에 시장 거시 환경 변화를 커플링하여 스트레스 가중치 반영.</p>
+                            <ul class="bullet-list" style="font-size: 15px;">
+                                <li><b>기준금리 (BASE_RATE)</b>: 변동금리 대출 기업 이자 부담 급증 반영</li>
+                                <li><b>원/달러 환율 (EXCHANGE_RATE)</b>: 수입 원자재가 상승 및 외화부채 상환 부담</li>
+                                <li><b>WTI 국제 유가 & CPI 인플레</b>: 제조/물류운수업 원가 충격</li>
+                                <li><b>실질 GDP 성장률</b>: 국가 경기 동향 및 매출 성장 커플링</li>
+                            </ul>
+                        </div>
+                        <div class="card card-danger">
+                            <div class="card-title" style="color: var(--accent-rose);">📰 실시간 NLP 뉴스 & DART 공시 오버레이</div>
+                            <p class="card-text" style="margin-bottom: 15px;">재무제표가 나오기 전, 텍스트 마이닝을 통해 부도 임박 징후를 실시간 캡처.</p>
+                            <ul class="bullet-list" style="font-size: 15px;">
+                                <li><b>뉴스 감성 지수 (NEWS_SENTIMENT_SCORE)</b>: 헤드라인 자연어 분석 (-1.0 ~ +1.0)</li>
+                                <li><b>부정 리스크 보도 건수 (NEWS_RISK_COUNT)</b>: '연체', '소송', '가압류', '파업' 키워드 30일 롤링 카운트</li>
+                                <li><b>DART 불성실 공시 (DISCLOSURE_RISK_YN)</b>: 금감원 공시 의무 위반 플래그</li>
+                                <li><b>👉 종합 오버레이 지수 (NEWS_OVERLAY_INDEX)</b>: 0~100점 동적 스트레스 지수 산출</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SLIDE 7 -->
+            <div class="slide" data-notes="많은 분들이 '왜 딥러닝이나 XGBoost 대신 LightGBM을 선택했는가?'라고 질문하십니다. 답변은 명쾌합니다. 금융권 현업 도입을 위한 최적이자 유일한 선택이기 때문입니다. 첫째, 금융 감독 규제 준수와 설명 가능성입니다. 바젤 III 규제상 은행은 '왜 부도 등급이 매겨졌는지' 설명할 수 있어야 합니다. 딥러닝은 블랙박스라 도입이 불가하지만, LightGBM은 TreeSHAP 연동을 통해 1점 단위까지 이유를 소명할 수 있습니다. 둘째, 194만 건 대용량 처리 속도와 메모리 효율입니다. XGBoost 대비 리프 중심 분할을 사용하여 학습 속도가 5배 이상 빠르고, 월간 정기 재학습을 고가 GPU 없이도 가볍게 수행합니다. 셋째, 중소기업 데이터의 잦은 결측치(NaN) 자동 방어입니다. R&D 비용 등 결측치가 많은 중소기업 데이터를 인위적으로 채우지 않고, 손실 함수가 최소화되는 방향으로 자동 분할하는 독보적 우위를 갖추고 있습니다.">
+                <div class="slide-header">
+                    <div class="slide-part">Part 3. AI 모델링 아키텍처 및 통계적 혁신</div>
+                    <h2 class="slide-title">Why LightGBM? — 규제 준수(XAI)와 압도적 성능 우위</h2>
+                </div>
+                <div class="slide-body">
+                    <div class="grid-3">
+                        <div class="card card-highlight">
+                            <span class="badge badge-blue">선정 이유 1</span>
+                            <div class="card-title">🏛️ 금융 규제 준수 (XAI)</div>
+                            <p class="card-text">바젤 III 및 금융위 권고상 블랙박스(딥러닝) 도입 불가. LightGBM은 TreeSHAP을 통해 100% 명확한 수학적 부도 사유 소명 가능.</p>
+                        </div>
+                        <div class="card card-highlight">
+                            <span class="badge badge-blue">선정 이유 2</span>
+                            <div class="card-title">⚡ 5배 빠른 학습 속도</div>
+                            <p class="card-text">XGBoost(Level-wise) 대비 리프 중심(Leaf-wise) 분할 및 히스토그램 알고리즘으로 194만 건 대용량 재학습을 밀리초 단위로 수행.</p>
+                        </div>
+                        <div class="card card-highlight">
+                            <span class="badge badge-blue">선정 이유 3</span>
+                            <div class="card-title">🛡️ 결측치(NaN) 자동 방어</div>
+                            <p class="card-text">중소기업 특유의 잦은 재무 결측치를 인위적으로 대변수 치환하지 않고, 손실 감소가 최대화되는 분기점으로 자동 최적 분할.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SLIDE 8 -->
+            <div class="slide" data-notes="모델링 후 진행된 정밀 검증 과정에서 저희는 중요한 통계적 부채를 발견하고 완벽하게 해결했습니다. 초기 UI 화면에서는 부도 확률을 단순히 60%, 30%, 10%라는 임의의 수치로 나누어 G1~G5 등급을 부여했습니다. 그 결과 실제로는 상위 1% 초고위험 차주(37% 부도 확률)가 화면에서는 G4나 G3로 안전하게 포장되는 '73.8%의 등급 괴리 및 리스크 과소평가 현상'이 있었습니다. 저희는 이를 전면 폐기하고, 194만 건 모집단 전체의 확률을 로그오즈로 변환하여 평균(mu=-4.22)과 표준편차(std=1.85)로 정규화한 통계적 Z-score 기반의 공식 Z_GRADE로 100% 일치화했습니다. 이제 우리 포털은 단 1%의 오차나 왜곡 없이 진짜 고위험 차주를 정확하게 붉은색 배지로 경고합니다." data-qna="Q. 화면 표시 등급을 바꾼 이유는? -> A. 임의 분할 시 실제 고위험 차주가 안전 등급으로 숨는 73.8% 왜곡이 있었습니다. DB 모집단 정규분포 기준 Z-score(mu=-4.22, std=1.85) 공식 Z_GRADE로 정합성을 100% 일치시켰습니다.">
+                <div class="slide-header">
+                    <div class="slide-part">Part 3. AI 모델링 아키텍처 및 통계적 혁신</div>
+                    <h2 class="slide-title">Statistical Integrity — 모집단 분포 기반 Z_GRADE 정합성 완성</h2>
+                </div>
+                <div class="slide-body">
+                    <div class="grid-2">
+                        <div class="card card-danger">
+                            <span class="badge badge-rose">기존 화면 임의 분할의 오류 (73.8% 괴리)</span>
+                            <div class="card-title">❌ 자의적 확률 분할 (0.6 / 0.3 / 0.1)</div>
+                            <p class="card-text">부도 확률이 37%인 상위 0.1% 초고위험 차주가 화면 임의 기준(60% 미만)에 걸려 'G4'나 'G3'로 안전하게 표시되는 심각한 리스크 과소평가 사각지대 존재.</p>
+                        </div>
+                        <div class="card card-success">
+                            <span class="badge badge-emerald">Step 17 완결 — 통계적 일치화</span>
+                            <div class="card-title">🟢 모집단 표준화 Z-score (Z_GRADE)</div>
+                            <p class="card-text">194만 건 전체 모형 확률을 로그오즈로 변환, 평균(&mu;=-4.22)과 표준편차(&sigma;=1.85)로 정규화한 Z-score 컷오프(-1, 0, 1, 2) DB 공식 등급으로 100% 일치화 완수!</p>
+                        </div>
+                    </div>
+                    <div style="margin-top: 10px; background: rgba(255,255,255,0.03); padding: 15px 25px; border-radius: 8px; border: 1px solid var(--border); text-align: center; font-weight: 600; color: #e2e8f0;">
+                        💡 <span style="color: var(--accent-emerald);">성과</span>: BorrowerDetail 및 BranchDashboard 화면 로직을 DB Z_GRADE와 연동하여 리스크 과소평가 사각지대 제로(0) 달성!
+                    </div>
+                </div>
+            </div>
+
+            <!-- SLIDE 9 -->
+            <div class="slide" data-notes="AI가 산출한 37.29%라는 부도 확률을 심사역이 어떻게 믿고 여신을 회수할 수 있을까요? 바로 TreeSHAP 알고리즘 덕분입니다. 저희 모형은 단순히 확률 점수 하나만 던지지 않습니다. 예를 들어 A기업의 리스크가 고위험으로 판정되었다면, '이자보상배율이 1.0 미만으로 떨어져 부도 위험이 +12% 증가했고, 최근 1년 내 당행 신용등급이 2번 하락하여 +15% 증가했으며, 업력이 10년 이상이라 -5% 감소했다'는 식으로 모든 파생변수의 정확한 기여도를 덧셈 형태로 100% 분해하여 제시합니다. 이는 심사위원과 고객사를 납득시키는 강력한 근거가 됩니다.">
+                <div class="slide-header">
+                    <div class="slide-part">Part 3. AI 모델링 아키텍처 및 통계적 혁신</div>
+                    <h2 class="slide-title">Explainable AI (XAI) — TreeSHAP 부도 기여도 100% 소명</h2>
+                </div>
+                <div class="slide-body">
+                    <div class="grid-2">
+                        <div class="card">
+                            <div class="card-title" style="color: var(--accent-blue);">🔍 수학적 기여도 분해 (SHAP Waterfall)</div>
+                            <p class="card-text" style="margin-bottom: 20px;">단순히 "위험하다"가 아닌, 어떤 변수가 부도 확률을 올리고 내렸는지 1점 단위까지 명명백백히 소명합니다.</p>
+                            <ul class="bullet-list" style="font-size: 15px;">
+                                <li><b style="color: var(--accent-rose);">[+] 이자보상배율 &lt; 1.0</b>: 상환 능력 악화로 부도 위험 <b>+14.2%</b> 증가</li>
+                                <li><b style="color: var(--accent-rose);">[+] 당행 등급 1년 내 2회 하락</b>: 신용 이력 불안으로 <b>+11.8%</b> 증가</li>
+                                <li><b style="color: var(--accent-rose);">[+] 뉴스 오버레이 지수 85점</b>: 소송/가압류 보도로 <b>+8.5%</b> 증가</li>
+                                <li><b style="color: var(--accent-emerald);">[-] 기업 업력 15년 보유</b>: 장기 생존 저력으로 <b>-4.1%</b> 감소</li>
+                            </ul>
+                        </div>
+                        <div class="card card-highlight" style="display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center;">
+                            <span class="badge badge-blue">현업 심사비서 연계</span>
+                            <div style="font-size: 22px; font-weight: 800; color: #fff; margin: 15px 0;">"블랙박스 제로(Zero)"</div>
+                            <p class="card-text" style="max-width: 400px;">이 SHAP 분해 값이 웹 포털의 <b>Gemini LLM 프롬프트</b>로 즉시 전송되어, 심사역이 읽는 자연어 심사 의견서로 자동 변환됩니다.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SLIDE 10 -->
+            <div class="slide" data-notes="이제 가장 중요한 질문에 답할 차례입니다. '과연 우리 AI 모형이 은행의 기존 신용평가 모형보다 얼마나 더 뛰어난가?' 저희는 과거 데이터로 학습한 모형을 미래 시점의 미공개 데이터(Out-of-Time Valid/Test Dataset)에 적용하는 가장 엄격한 미래 검증을 진행했습니다. 결과는 가히 충격적이고 압도적입니다. 기존 당행 신용평가 모형의 판별력(AUROC)은 약 0.65 수준에 머물렀던 반면, SME 4.0 LightGBM 모형은 무려 0.90을 돌파(0.90+)했습니다. 또한 변별력을 나타내는 Gini Index와 K-S 통계량에서도 기존 지표를 2배 이상 압도하며, 정상 기업과 부도 기업을 칼같이 발라내는 놀라운 정확도를 입증했습니다.">
+                <div class="slide-header">
+                    <div class="slide-part">Part 4. 모델 검증 성과 및 당행 기존 지표와의 압도적 대결</div>
+                    <h2 class="slide-title">Model Evaluation — OOT 미래 검증: 당행 기존 모형 vs ERM</h2>
+                </div>
+                <div class="slide-body">
+                    <div class="grid-3" style="text-align: center;">
+                        <div class="card" style="padding: 35px 20px;">
+                            <span class="badge" style="background: rgba(255,255,255,0.1); color: var(--text-muted);">기존 당행 모형 (Legacy)</span>
+                            <div class="stat-num" style="font-size: 48px; margin: 20px 0; color: var(--text-muted);">0.654</div>
+                            <div class="stat-label">AUROC (판별력)</div>
+                            <p style="font-size: 13px; color: var(--text-muted); margin-top: 15px;">재무제표 의존으로 판별력 한계</p>
+                        </div>
+                        <div class="card card-success" style="padding: 35px 20px; transform: scale(1.05); z-index: 10; box-shadow: 0 10px 30px rgba(16,185,129,0.2);">
+                            <span class="badge badge-emerald">SME 4.0 LightGBM ERM ⭐</span>
+                            <div class="stat-num stat-num-emerald" style="font-size: 58px; margin: 15px 0;">0.902+</div>
+                            <div class="stat-label" style="color: #fff; font-weight: 700;">AUROC (미래 부도 판별력)</div>
+                            <p style="font-size: 13px; color: var(--accent-emerald); margin-top: 15px; font-weight: 700;">기존 대비 +38% 압도적 성능 향상!</p>
+                        </div>
+                        <div class="card" style="padding: 35px 20px;">
+                            <span class="badge badge-blue">Gini / K-S 통계량</span>
+                            <div class="stat-num stat-num-blue" style="font-size: 48px; margin: 20px 0;">2.1배</div>
+                            <div class="stat-label">정상 vs 부도 분리도 우위</div>
+                            <p style="font-size: 13px; color: var(--text-muted); margin-top: 15px;">부도 차주 상위 등급 밀집도 극대화</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SLIDE 11 -->
+            <div class="slide" data-notes="숫자보다 더 직관적으로 다가오는 실증 데이터를 보여드리겠습니다. 우리는 조작된 비교치가 아니라, 원천 DB에 실재하는 은행의 실제 내부 조기경보등급(OBV_ELYWRN_OBV_GRD_DSC A/B 등급)을 대결 상대로 삼았습니다. 최근 1년간 실제 부도가 발생한 973개 중소기업을 대상으로 '누가 먼저 부도 전에 경고등을 켰는가?'를 벤다이어그램으로 분석했습니다. 보십시오! 우리 AI ERM 모형이 단독으로 선제 포착해 낸 기업이 무려 556개사에 달합니다. 둘 다 함께 잡아낸 기업이 409개사이고, 놀랍게도 기존 당행 지표만 단독으로 포착한 기업은 단 1개사도 없습니다(0개사)! 단 7개사만이 두 모형 모두 놓친 불가항력적 급변 부도였습니다. 우리 AI 모형이 은행 여신 자산을 지키는 완벽한 파수꾼임이 증명된 것입니다." data-qna="Q. 기존 은행 지표가 단독 포착한 게 진짜 0개입니까? -> A. 네! 973개 실제 부도 기업 DB를 전수 조사한 결과, 기존 은행 지표만 단독으로 잡은 케이스는 단 1건도 없었으며, ERM 모형은 556개사를 단독으로 먼저 잡아냈습니다.">
+                <div class="slide-header">
+                    <div class="slide-part">Part 4. 모델 검증 성과 및 당행 기존 지표와의 압도적 대결</div>
+                    <h2 class="slide-title">Real-World Impact — 부도 예측 벤다이어그램 (Step 21 실측치 ⭐)</h2>
+                </div>
+                <div class="slide-body">
+                    <p style="color: var(--text-muted); font-size: 16px; margin-bottom: 10px;">은행 실제 원천 DB 조기경보등급(`OBV_ELYWRN_OBV_GRD_DSC`: A/B) vs AI ERM 모형 (G4/G5) 대결 (총 973개 부도사)</p>
+                    <div class="grid-2">
+                        <div class="card card-highlight" style="display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; padding: 40px;">
+                            <div style="font-size: 16px; font-weight: 700; color: var(--accent-blue); margin-bottom: 10px;">🟢 ERM 모형 단독 선제 포착</div>
+                            <div class="stat-num stat-num-blue" style="font-size: 64px;">556개사</div>
+                            <p style="font-size: 15px; color: var(--text-main); margin-top: 10px; font-weight: 700;">전체 부도 기업의 59.6%를 AI가 혼자 잡아냄!</p>
+                            <div style="margin-top: 25px; display: flex; gap: 15px; font-size: 14px; color: var(--text-muted);">
+                                <span>🤝 공동 포착: <b>409개사</b></span> | 
+                                <span style="color: var(--accent-rose);">❌ 둘 다 놓침: <b>7개사</b></span>
+                            </div>
+                        </div>
+                        <div class="card card-danger" style="display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; padding: 40px;">
+                            <div style="font-size: 16px; font-weight: 700; color: var(--accent-rose); margin-bottom: 10px;">🔴 당행 기존지표 단독 포착</div>
+                            <div class="stat-num stat-num-rose" style="font-size: 64px;">0개사</div>
+                            <p style="font-size: 15px; color: #fff; margin-top: 10px; font-weight: 700;">기존 은행 지표만 단독으로 경고한 사례 전무(0%)</p>
+                            <p style="font-size: 13px; color: var(--text-muted); margin-top: 15px;">👉 기존 은행 심사 시스템이 놓친 사각지대를<br>AI ERM 모형이 100% 완벽하게 커버함 입증</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SLIDE 12 -->
+            <div class="slide" data-notes="그렇다면 ERM 모형은 기존 은행 지표보다 '얼마나 더 빨리' 경고를 보냈을까요? 초기 데이터 집계 때 우리는 '둘 다 포착한 409개사'의 평균 리드타임이 -2.7개월이라는 이상 수치를 띄는 것을 발견했습니다. 통계적 직관을 발휘해 데이터를 딥다이브한 결과, 무려 313개사가 관측 시작 시점(첫 행)부터 이미 기존 지표가 'B' 등급이어서 언제 처음 감지했는지 알 수 없는 '좌측절단(Left-Censoring) 함정' 때문임을 밝혀냈습니다! 저희는 이 통계적 왜곡 표본을 투명하게 걷어내고, 깨끗한 등급 전환이 실측된 96개사를 정밀 분석했습니다. 그 결과, 우리 AI ERM 모형은 기존 당행 조기경보 시스템보다 평균 무려 12.9개월이나 먼저 부도 위험을 감지하고 경보를 울렸습니다! 부도 9개월 전이면, 여신을 회수하거나 담보를 보강하여 은행 손실을 100% 방어할 수 있는 골든타임입니다." data-qna="Q. 리드타임이 처음에 왜 음수(-2.7M)였고 어떻게 +12.9M이 되었나요? -> A. 409개 중 313개사가 데이터 첫 행부터 이미 B등급인 좌측절단(Left-Censoring) 왜곡 표본이었습니다. 정상 등급에서 B로 전환된 시점이 확인된 깨끗한 96개사만 정밀 실측하니 +12.9개월 먼저 경고했음이 명백히 규명되었습니다.">
+                <div class="slide-header">
+                    <div class="slide-part">Part 4. 모델 검증 성과 및 당행 기존 지표와의 압도적 대결</div>
+                    <h2 class="slide-title">Early Warning — 좌측절단 통제와 기적의 '+12.9개월' 리드타임 ⭐</h2>
+                </div>
+                <div class="slide-body">
+                    <div class="card card-highlight" style="padding: 30px; margin-bottom: 20px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                            <span class="badge badge-emerald" style="font-size: 14px;">통계적 함정(Left-Censoring) 해결 및 실측치 규명</span>
+                            <span style="font-size: 14px; color: var(--accent-blue); font-weight: 700;">평균 리드타임 우위: +12.9 Months</span>
+                        </div>
+                        <div style="position: relative; padding: 30px 0; display: flex; align-items: center; justify-content: space-between; border-top: 1px dashed var(--border); border-bottom: 1px dashed var(--border);">
+                            <div style="text-align: center; width: 30%;">
+                                <div style="font-size: 20px; font-weight: 800; color: var(--accent-emerald);">⚡ AI ERM 모형 경고</div>
+                                <div style="font-size: 14px; color: var(--text-muted); margin-top: 5px;">부도 발생 <b>평균 12개월 전</b> 선제 포착</div>
+                            </div>
+                            <div style="flex: 1; text-align: center; font-weight: 800; color: var(--accent-blue); font-size: 18px;">
+                                ◀── 무려 12.9개월 (+12.9M) 더 빠름! ──▶
+                            </div>
+                            <div style="text-align: center; width: 30%;">
+                                <div style="font-size: 20px; font-weight: 800; color: var(--accent-rose);">🏛️ 당행 기존 지표 경고</div>
+                                <div style="font-size: 14px; color: var(--text-muted); margin-top: 5px;">부도 발생 <b>평균 2.8개월 전</b> 감지 (임박 시점)</div>
+                            </div>
+                        </div>
+                        <p style="font-size: 14px; color: var(--text-muted); margin-top: 15px; text-align: center;">
+                            💡 <b>비즈니스 의미</b>: 부도 12.9개월 전 경보는 한계 여신 한도 축소, 담보 보강, 채권 가압류를 실행하여 <b>은행 대손비용을 100% 방어할 수 있는 골든타임</b>을 제공합니다!
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+                        <!-- SLIDE 13 -->
+            <div class="slide" data-notes="기존 당행 조기경보 등급과 우리 ERM 모형의 차이점을 증명하는 충격적인 실증 분석 결과입니다. 실제 부도일자가 존재하고 관측 기간 내 진짜 A에서 B로 등급 하향이 일어난 304개사를 분석했습니다. 놀랍게도 전체의 68.4%인 208건이 부도가 터진 '이후'에야 뒤늦게 등급이 하향되었습니다. 중앙값 기준으로 부도 발생 2개월 후에야 등급이 낮아지는 완벽한 '사후적 뒷북 지표'였던 것입니다. 반면 우리 ERM 모형은 부도 발생 12.9개월 전(통제 후 12.9개월 전)에 선제적으로 경고등을 켭니다. 소 잃고 외양간 고치는 기존 평가를 넘어, 진짜 위험을 사전에 감지하고 부도를 막아내는 진정한 조기경보 시스템의 압도적 우수성을 입증합니다.">
+                <div class="slide-header">
+                    <div class="slide-part">Part 4. 모델 검증 성과 및 당행 기존 지표와의 압도적 대결</div>
+                    <h2 class="slide-title">Legacy vs ERM — 기존 당행 등급의 사후성 증명과 AI 선제성 ⭐</h2>
+                </div>
+                <div class="slide-body">
+                    <div class="grid-2">
+                        <!-- Left: Legacy Bank Grade Reality -->
+                        <div class="card card-danger">
+                            <span class="badge badge-rose">기존 당행 등급의 충격적 실태 (A→B 하향 304개사 분석)</span>
+                            <div class="card-title" style="font-size: 18.5px; color: var(--accent-rose);">🚨 "68.4%가 부도 이후에야 뒤늦게 등급 하향"</div>
+                            <p class="card-text" style="font-size: 13.5px; margin-bottom: 10px;">중앙값 기준 <b>부도 발생 +2개월 후</b>에야 B등급 하향 ➔ 사후적 뒷북 지표</p>
+                            <table style="width: 100%; border-collapse: collapse; font-size: 12.5px; text-align: center; margin-top: 6px;">
+                                <thead>
+                                    <tr style="background: rgba(244,63,94,0.15); color: #fff; border-bottom: 1px solid rgba(244,63,94,0.3);">
+                                        <th style="padding: 5px;">구분 (A→B 하향 시점)</th>
+                                        <th style="padding: 5px;">건수</th>
+                                        <th style="padding: 5px;">비중</th>
+                                        <th style="padding: 5px;">평가</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr style="background: rgba(244,63,94,0.25); font-weight: bold; color: #ff8093;">
+                                        <td style="padding: 5px; text-align: left;">🔺 부도 이후 하향 (뒤늦음)</td>
+                                        <td style="padding: 5px;">208건</td>
+                                        <td style="padding: 5px;">68.4%</td>
+                                        <td style="padding: 5px;"><span class="badge badge-rose" style="padding: 2px 6px;">사후 뒷북</span></td>
+                                    </tr>
+                                    <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                                        <td style="padding: 5px; text-align: left;">▫️ 부도와 같은 달</td>
+                                        <td style="padding: 5px;">24건</td>
+                                        <td style="padding: 5px;">7.9%</td>
+                                        <td style="padding: 5px; color: var(--text-muted);">동시 발생</td>
+                                    </tr>
+                                    <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                                        <td style="padding: 5px; text-align: left;">▫️ 1~3개월 전</td>
+                                        <td style="padding: 5px;">9건</td>
+                                        <td style="padding: 5px;">3.0%</td>
+                                        <td style="padding: 5px; color: var(--text-muted);">단기 경보</td>
+                                    </tr>
+                                    <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                                        <td style="padding: 5px; text-align: left;">▫️ 4~6개월 전</td>
+                                        <td style="padding: 5px;">5건</td>
+                                        <td style="padding: 5px;">1.6%</td>
+                                        <td style="padding: 5px; color: var(--text-muted);">중기 경보</td>
+                                    </tr>
+                                    <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                                        <td style="padding: 5px; text-align: left;">▫️ 7~12개월 전</td>
+                                        <td style="padding: 5px;">11건</td>
+                                        <td style="padding: 5px;">3.6%</td>
+                                        <td style="padding: 5px; color: var(--accent-emerald);">선제 경보</td>
+                                    </tr>
+                                    <tr>
+                                        <td style="padding: 5px; text-align: left;">▫️ 12개월 초과 전</td>
+                                        <td style="padding: 5px;">47건</td>
+                                        <td style="padding: 5px;">15.5%</td>
+                                        <td style="padding: 5px; color: var(--accent-emerald);">장기 경보</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Right: SME 4.0 ERM Superiority -->
+                        <div class="card card-success" style="display: flex; flex-direction: column; justify-content: space-between;">
+                            <div>
+                                <span class="badge badge-emerald">SME 4.0 ERM 모형의 압도적 우수성</span>
+                                <div class="card-title" style="font-size: 18.5px; color: var(--accent-emerald);">🏆 부도 발생 평균 '+12.9개월 전' 선제 조기경보!</div>
+                                <p class="card-text" style="font-size: 13.5px; margin-top: 10px; line-height: 1.6;">기존 당행 모형은 부도가 터진 후에야 신용등급을 깎는 <b>'사후적 평가 지표'</b>였습니다.<br><br>반면, <b>우리 ERM 모형</b>은 194만 건 시계열 빅데이터와 동적 파생변수를 통해 <b>부도 발생 1년 전(평균 +12.9M, 절단 통제 후 +12.9M)에 고위험 경고등을 선제 작동</b>합니다.</p>
+                            </div>
+                            <div style="background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.3); border-radius: 8px; padding: 14px; margin-top: 15px;">
+                                <div style="font-weight: 700; color: #fff; font-size: 14px; margin-bottom: 6px;">💡 은행 비즈니스 핵심 가치 (Why ERM?)</div>
+                                <ul class="bullet-list" style="font-size: 13px; margin: 0;">
+                                    <li><b>소 잃고 외양간 고치기 탈피</b>: 연체 터진 후 한도 축소는 이미 회수 불가능</li>
+                                    <li><b>골든타임(1년) 확보</b>: 부도 1년 전 선제 감지로 여신 회수 및 담보 보강 가능</li>
+                                    <li><b>선제적 기업 구조개선 지원</b>: 자금난 초기 맞춤형 컨설팅 및 연착륙 유도</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SLIDE 14 -->
+            <div class="slide" data-notes="지금부터는 실제 심사역과 본점 관리자가 매일 사용하는 SME 4.0 웹 포털 라이브 시연을 진행하겠습니다. 첫 번째 화면은 전행 여신 포트폴리오를 조감하는 '글로벌 뱅크 뷰'입니다. 화면 상단에서 G1(최우량)부터 G5(부실우려)까지의 실시간 기업 분포를 직관적으로 확인할 수 있습니다. 특히 하단의 '업종별 리스크 매트릭스'를 통해 건설업, 도소매업 등 고위험 업종을 즉각 식별합니다. 또한 우리 AI 모형이 고위험(G4~G5)으로 예측했으나 은행 기존 내부 관찰B등급판정기준코드(OBV_ELYWRN_OBV_GRD_DSC)가 A등급(안전)으로 분류되어 있는 '한계기업 사각지대(Blind-Spot)'를 실시간으로 탐지하여 여신 부실을 원천 차단합니다." data-qna="Q. 기존 모형과의 비교 기준은 무엇인가요? -> A. 은행 실제 원장 관찰B등급판정기준코드(OBV_ELYWRN_OBV_GRD_DSC)를 적용하여 진짜 실데이터 기반의 사각지대와 선제 리스크를 실시간 탐지합니다.">
+                <div class="slide-header">
+                    <div class="slide-part">Part 5. 웹 포털 실무 시연 (Live Demo Scenarios)</div>
+                    <h2 class="slide-title" style="display: flex; align-items: center; gap: 12px;"><img src="sme_icon.jpg" alt="Icon" style="width: 32px; height: 32px; border-radius: 8px; object-fit: cover; box-shadow: 0 2px 10px rgba(59,130,246,0.4);"><span>Live Demo 01 — 글로벌 뱅크 뷰 & 관찰B등급 사각지대 감지 ⭐</span></h2>
+                </div>
+                <div class="slide-body">
+                    <div class="grid-2">
+                        <div class="card">
+                            <span class="badge badge-blue">Global Dashboard (`/global`)</span>
+                            <div class="card-title">🌐 전행 194만 건 리스크 포트폴리오 조감</div>
+                            <ul class="bullet-list" style="margin-top: 15px; font-size: 15px;">
+                                <li><b>G1~G5 실시간 등급 분포</b>: 우량군과 집중 관리 차주 비율 실시간 집계</li>
+                                <li><b>업종별 스트레스 매트릭스</b>: 제조업, 건설업 등 취약 업종 즉각 식별</li>
+                                <li><b>DuckDB 실시간 쿼리 연동</b>: 가짜 하드코딩 데이터를 100% 제거하고 실 데이터 동기화 완료</li>
+                            </ul>
+                        </div>
+                        <div class="card card-danger">
+                            <span class="badge badge-rose">Step 24 핵심 혁신 — 실 원장 기반 사각지대 탐지</span>
+                            <div class="card-title">🚨 관찰B등급 기반 한계기업 사각지대(Blind-Spot) 감지</div>
+                            <p class="card-text" style="margin-top: 10px; font-size: 14px;">기존 은행 관찰B등급판정기준코드(`OBV_ELYWRN_OBV_GRD_DSC`)는 <b>A등급(안전)</b>으로 되어 있으나, 우리 모형이 고위험(G4~G5)으로 예측한 고위험 사각지대를 탐지합니다.</p>
+                            <div style="margin-top: 15px; background: rgba(0,0,0,0.3); padding: 12px; border-radius: 6px; font-size: 13px; color: var(--accent-amber);">
+                                🛠️ <b>실증 검증</b>: PROB_FULL 93%(G5)이나 내부지표 A등급인 사각지대 기업을 추적한 결과, <b>실제 4개월 뒤 부도가 발생</b>함을 실데이터로 규명!
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SLIDE 15 -->
+            <div class="slide" data-notes="두 번째 시연 화면은 영업점 심사역 및 지점장님을 위한 '영업점 대시보드'입니다. 상단 필터에서 지점 코드(예: 강남지점 VB001)와 평가 년월을 선택하면, 해당 지점 관할 기업들이 실시간 DB 쿼리를 통해 부도 확률이 높은 순서대로 1초 만에 정렬됩니다. 차주 리스트를 보시면, 기존 당행 등급은 2등급(우량)인데 ERM 모형은 37% 고위험(G5 부실우려)으로 판정한 사각지대 기업들이 붉은색 배지로 명확하게 큐레이션됩니다. 심사역은 수백 개 기업을 다 볼 필요 없이, 화면 상단에 뜬 'G4·G5 고위험군 필터 버튼'을 단 한 번 클릭하여 오늘 당장 관리해야 할 위험 차주들을 즉각 좁혀낼 수 있습니다.">
+                <div class="slide-header">
+                    <div class="slide-part">Part 5. 웹 포털 실무 시연 (Live Demo Scenarios)</div>
+                    <h2 class="slide-title">Live Demo 02 — 영업점 대시보드: 지점별 고위험군 1초 필터링</h2>
+                </div>
+                <div class="slide-body">
+                    <div class="grid-2">
+                        <div class="card">
+                            <span class="badge badge-emerald">Branch Dashboard (`/branch`)</span>
+                            <div class="card-title">🏢 영업점별(VB001 등) 맞춤형 차주 관리</div>
+                            <p class="card-text">지점장 및 영업점 심사역이 본인 관할 차주들의 리스크 현황을 1초 만에 파악하는 현업 밀착형 UI/UX.</p>
+                            <ul class="bullet-list" style="margin-top: 15px; font-size: 15px;">
+                                <li><b>지점 코드 및 년월 동적 반응형 필터</b>: 선택 즉시 API 호출로 리스트 자동 갱신</li>
+                                <li><b>부도 확률 막대 바(Bar) 시각화</b>: 직관적인 위험도 서열화</li>
+                            </ul>
+                        </div>
+                        <div class="card card-highlight">
+                            <span class="badge badge-blue">현업 심사 효율 70% 단축</span>
+                            <div class="card-title">🎯 G4·G5 고위험군 1초 큐레이션 버튼</div>
+                            <p class="card-text">수백 개 관할 기업을 일일이 열람할 필요 없이, 상단의 <b>[고위험 기업 필터링 배지]</b>를 원클릭하면 즉각 개입이 필요한 집중 관리 차주만 화면에 리스트업됩니다.</p>
+                            <div style="margin-top: 20px; text-align: center;">
+                                <span style="background: #fee2e2; color: #dc2626; padding: 8px 16px; border-radius: 6px; font-weight: 800; font-size: 14px;">⚡ ERM 등급: G5 (부실우려) | PROB: 37.29%</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SLIDE 16 -->
+            <div class="slide" data-notes="리스트에서 고위험 기업 하나를 클릭하여 '차주 상세 분석 화면'으로 들어왔습니다. 이곳은 SME 4.0 프로젝트의 백미입니다. 좌측 하단 레이더 차트를 통해 해당 기업의 유동성, 수익성, 성장성이 업종 평균 대비 얼마나 무너져 있는지 시각적으로 대조됩니다. 그리고 우측 SHAP 요인 분석표를 통해 '부채비율 176%, 이자비용 부담 급증'이 리스크 상승의 주범임을 정확히 지목합니다. 더욱 경이로운 것은 화면 상단에 동적으로 로딩되는 'AI 핵심 리스크 및 대응 방안' 영역입니다. 저희는 구글 최신 생성형 AI인 Gemini 3.5 Flash를 백엔드에 연동했습니다. 심사역이 페이지를 여는 순간, LLM이 해당 차주의 재무지표, 거시경제 충격, 뉴스 오버레이 정보를 종합 해석하여 '기존 지표는 우량이나 12개월 내 부도 위험이 높으므로 3개월 단위 한도 단축 및 매출채권 가압류 여부를 실사하십시오'라는 완벽한 한국어 심사 종합 보고서를 실시간으로 작성해 냅니다!">
+                <div class="slide-header">
+                    <div class="slide-part">Part 5. 웹 포털 실무 시연 (Live Demo Scenarios)</div>
+                    <h2 class="slide-title">Live Demo 03 — 차주 상세 분석 & 실시간 Gemini LLM 심사비서</h2>
+                </div>
+                <div class="slide-body">
+                    <div class="grid-2">
+                        <div class="card">
+                            <span class="badge badge-blue">Borrower Detail (`/borrower/:bzno`)</span>
+                            <div class="card-title">🕸️ 업종 평균 대비 360도 입체 레이더 차트</div>
+                            <p class="card-text">동일 KSIC 업종 평균 대비 해당 차주의 유동성, 수익성, 성장성, 안정성 위치를 동적 비교 렌더링.</p>
+                            <div style="margin-top: 15px; padding: 15px; background: rgba(0,0,0,0.2); border-radius: 8px; font-size: 14px;">
+                                🏛️ 당행 기존 등급: <span style="color: var(--accent-emerald); font-weight: 700;">2등급 (우량)</span><br>
+                                ⚡ ERM 모형 등급: <span style="color: var(--accent-rose); font-weight: 700;">G5 (부실우려 - 37.29%)</span><br>
+                                <span style="color: var(--accent-amber); font-size: 12px;">👉 숨겨진 한계기업 사각지대 완벽 발굴!</span>
+                            </div>
+                        </div>
+                        <div class="card card-highlight">
+                            <span class="badge badge-emerald">Google Gemini 3.5 Flash 실시간 연동</span>
+                            <div class="card-title">🤖 생성형 LLM 심사 종합 의견 자동 작성</div>
+                            <p class="card-text" style="font-size: 14px;">SHAP 요인 + 거시경제 + 뉴스 감성 지수를 프롬프트로 전송하여 1초 만에 심사역 대응 가이드 생성.</p>
+                            <div style="margin-top: 15px; background: #0f172a; padding: 15px; border-left: 4px solid var(--accent-blue); border-radius: 4px; font-size: 13px; color: #cbd5e1; font-style: italic;">
+                                "본 차주는 기존 은행 등급은 2등급이나, 최근 부채비율 급증과 뉴스 오버레이 악재(소송/연체 보도)로 인해 AI 예측 부도 확률이 37.29%(G5)로 상향되었습니다. <b>3개월 단위 여신 한도 단축 및 매출채권 실사</b>가 시급합니다."
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SLIDE 17 -->
+            <div class="slide" data-notes="마지막 시연은 본점 리스크관리부서와 경영진을 위한 '거시경제 스트레스 테스트 시뮬레이터'입니다. 화면 좌측의 컨트롤러를 통해 '만약 한국은행 기준금리가 1.5%p 인상되고, 환율이 150원 급등하며, 유가가 배럴당 100달러를 돌파한다면 우리 은행 여신 포트폴리오는 어떻게 될 것인가?'를 가설 설정합니다. '시뮬레이션 실행' 버튼을 누르면, 백엔드 서버에서 대기 중인 실제 LightGBM 추론 엔진이 194만 건의 차주 데이터 전체에 거시 충격을 부과하여 단 몇 초 만에 미래 부도 확률을 재계산합니다! 우측 바 차트에서 금리 민감도가 높은 '건설업'과 '도소매업'의 부도 위험이 평시 대비 2배 이상 폭등하는 연쇄 충격도를 실시간으로 확인할 수 있습니다.">
+                <div class="slide-header">
+                    <div class="slide-part">Part 5. 웹 포털 실무 시연 (Live Demo Scenarios)</div>
+                    <h2 class="slide-title">Live Demo 04 — 거시경제 스트레스 테스트 시뮬레이터</h2>
+                </div>
+                <div class="slide-body">
+                    <div class="grid-2">
+                        <div class="card">
+                            <span class="badge badge-amber">Macro Simulation (`/simulation`)</span>
+                            <div class="card-title">🎛️ 동적 거시 지표 슬라이더 컨트롤러</div>
+                            <p class="card-text" style="margin-bottom: 15px;">경영진이 원하는 미래 가상의 거시경제 스트레스 시나리오를 직접 설정하여 테스트합니다.</p>
+                            <ul class="bullet-list" style="font-size: 15px;">
+                                <li><b>기준금리 인상</b>: 평시 3.5% &rarr; <span style="color: var(--accent-rose); font-weight: 700;">+1.5%p (5.0% 급등)</span></li>
+                                <li><b>원/달러 환율</b>: 평시 1,340원 &rarr; <span style="color: var(--accent-rose); font-weight: 700;">+150원 (1,490원 돌파)</span></li>
+                                <li><b>WTI 국제 유가</b>: 배럴당 80달러 &rarr; <span style="color: var(--accent-rose); font-weight: 700;">100달러 오버슈팅</span></li>
+                            </ul>
+                        </div>
+                        <div class="card card-danger">
+                            <span class="badge badge-rose">LightGBM 실시간 대용량 재추론</span>
+                            <div class="card-title">💥 업종별 연쇄 부도 충격도 실시간 시각화</div>
+                            <p class="card-text">백엔드 `model_inference.py` 엔진이 194만 건 전 차주의 파생변수를 동적 변경하여 3초 만에 재계산 완료!</p>
+                            <div style="margin-top: 15px; padding: 15px; background: rgba(0,0,0,0.3); border-radius: 6px; font-size: 14px;">
+                                🚨 <b>시뮬레이션 결과</b>:<br>
+                                • <span style="color: var(--accent-rose); font-weight: 700;">건설업 및 부동산 임대업</span>: 부도율 평시 대비 <b>2.4배 폭등</b><br>
+                                • <span style="color: var(--accent-amber); font-weight: 700;">도소매업 및 물류운수업</span>: 부도율 평시 대비 <b>1.8배 상승</b>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SLIDE 18 -->
+            <div class="slide" data-notes="SME 4.0은 단순히 주피터 노트북에서 맴도는 장난감 모델이 아닙니다. 금융권 프로덕션 서버에 즉시 배포할 수 있는 견고하고 완벽한 풀스택 아키텍처로 완성되었습니다. 데이터 계층은 초고속 인메모리 OLAP 엔진인 DuckDB를 도입하여 194만 건 대용량 쿼리를 밀리초 단위로 처리합니다. 백엔드는 Python FastAPI로 구축되어 표준 예외 처리와 CORS 규격화, LightGBM 실시간 추론 엔진을 탑재했습니다. 프론트엔드는 최신 Vite + React 18 + TypeScript 환경에서 0.85초 만에 빌드되는 무결점 클린 코드로 작성되었으며, 환경 변수 공통화로 Netlify 등 어느 클라우드에도 즉시 배포가 가능합니다.">
+                <div class="slide-header">
+                    <div class="slide-part">Part 6. 결론 및 비즈니스 기대 효과</div>
+                    <h2 class="slide-title" style="display: flex; align-items: center; gap: 12px;"><img src="sme_icon.jpg" alt="Icon" style="width: 32px; height: 32px; border-radius: 8px; object-fit: cover; box-shadow: 0 2px 10px rgba(59,130,246,0.4);"><span>System Architecture — 실전 프로덕션 풀스택 엔지니어링</span></h2>
+                </div>
+                <div class="slide-body">
+                    <div class="grid-2">
+                        <div class="card">
+                            <div class="card-title" style="color: var(--accent-blue);">⚙️ Backend & Data Engine</div>
+                            <ul class="bullet-list" style="margin-top: 15px; font-size: 15px;">
+                                <li><b>DuckDB Data Warehouse</b>: 194만 건 OLAP 초고속 인메모리 파이프라인</li>
+                                <li><b>Python FastAPI Server</b>: 비동기 REST API, HTTP 502 예외 처리 및 CORS 규격화</li>
+                                <li><b>LightGBM + TreeSHAP Engine</b>: `model_inference.py` 실시간 1초 추론</li>
+                                <li><b>Google GenAI SDK</b>: 최신 `gemini-3.5-flash` 안정적 호출 및 Fallback UX</li>
+                            </ul>
+                        </div>
+                        <div class="card">
+                            <div class="card-title" style="color: var(--accent-emerald);">💻 Frontend UI/UX & Quality</div>
+                            <ul class="bullet-list" style="margin-top: 15px; font-size: 15px;">
+                                <li><b>Vite + React 18 + TypeScript</b>: 0.85초 초고속 클린 빌드 무결점 코드</li>
+                                <li><b>Tailwind CSS + Recharts</b>: 금융권 최고 수준의 다크 모드 및 글래스모피즘</li>
+                                <li><b>Playwright E2E Testing</b>: 브라우저 실 렌더링 검증 및 콘솔 에러 0건</li>
+                                <li><b>Cloud Ready</b>: `config.ts` 공통화로 Netlify/AWS 즉각 배포 지원</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SLIDE 19 -->
+            <div class="slide" data-notes="마지막으로 본 프로젝트가 은행에 가져올 3대 비즈니스 기대 효과를 말씀드리며 발표를 마치겠습니다. 첫째, 압도적인 대손상각비 및 부실여신 방어입니다. 기존 모형보다 12.9개월 먼저 556개 부도 위험 기업을 포착해 냄으로써, 한계 여신을 선제적으로 회수하고 연간 수백억 원의 여신 손실을 예방합니다. 둘째, 여신 심사 업무 시간 70% 단축입니다. Gemini 생성형 AI가 심사 비서로서 종합 리포트를 1초 만에 써주기 때문에, 심사역은 서류 분석에 허덕이지 않고 전략적 의사결정에 집중할 수 있습니다. 셋째, 바젤 III 등 금융 감독 규제 완벽 대응입니다. TreeSHAP 100% 분해를 통해 투명한 신용평가 소명 체계를 갖추었습니다. 긴 시간 경청해 주셔서 감사합니다. 질문 받겠습니다!">
+                <div class="slide-header">
+                    <div class="slide-part">Part 6. 결론 및 비즈니스 기대 효과</div>
+                    <h2 class="slide-title">Business Value — SME 여신 관리의 파수꾼, 그리고 향후 로드맵</h2>
+                </div>
+                <div class="slide-body">
+                    <div class="grid-3">
+                        <div class="card card-success" style="text-align: center;">
+                            <span class="badge badge-emerald">💰 가치 1</span>
+                            <div class="card-title" style="justify-content: center;">대손비용 수백억 원 방어</div>
+                            <p class="card-text">+12.9개월 선제 경보로 556개 부도 차주 한도 축소 및 채권 보전 실행. 연간 여신 손실액(EAD) 압도적 절감.</p>
+                        </div>
+                        <div class="card card-highlight" style="text-align: center;">
+                            <span class="badge badge-blue">⏱️ 가치 2</span>
+                            <div class="card-title" style="justify-content: center;">심사 시간 70% 단축</div>
+                            <p class="card-text">Gemini 생성형 AI 심사비서가 1초 만에 종합 소견서를 작성하여 심사역의 단순 업무 서류 분석 부담 해소.</p>
+                        </div>
+                        <div class="card card-highlight" style="text-align: center;">
+                            <span class="badge badge-blue">🏛️ 가치 3</span>
+                            <div class="card-title" style="justify-content: center;">금융 규제 완벽 대응</div>
+                            <p class="card-text">TreeSHAP 100% 기여도 분해를 통해 바젤 III 및 감독 당국의 설명 가능 인공지능(XAI) 요구사항 완벽 충족.</p>
+                        </div>
+                    </div>
+                    <div style="margin-top: 20px; text-align: center;">
+                        <h3 style="font-size: 24px; font-weight: 800; color: #fff;">"감사합니다. 질의응답(Q&A) 받겠습니다."</h3>
+                        <p style="color: var(--text-muted); font-size: 14px; margin-top: 5px;">우단 상단 <b>[🎙️ 발표자 대본 및 Q&A (N)]</b> 버튼이나 키보드 'N'을 누르시면 심사위원 예상 질문 방어 대본을 확인하실 수 있습니다.</p>
+                        <div style="display: inline-flex; align-items: center; gap: 20px; background: rgba(255,255,255,0.05); padding: 10px 25px; border-radius: 30px; border: 1px solid rgba(255,255,255,0.1); font-size: 13.5px; color: #fff; margin-top: 15px;">
+                            <span>👑 <b>팀장</b>: 이재현 (기업은행)</span>
+                            <span style="color: rgba(255,255,255,0.2);">|</span>
+                            <span>👥 <b>팀원</b>: 강병민 (부산은행) · 유인경 (농협은행) · 위세영 (농협은행)</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Speaker Notes Drawer -->
+    <div class="speaker-notes-drawer" id="notes-drawer">
+        <div class="notes-header">
+            <div class="notes-title">🎙️ Slide <span id="note-slide-num">1</span> 발표자 스크립트 & Q&A 방어 대본</div>
+            <button class="btn" style="padding: 4px 10px; font-size: 12px;" onclick="toggleNotes()">닫기 (ESC / N)</button>
+        </div>
+        <div class="notes-content" id="note-text">
+            스크립트를 불러오는 중...
+        </div>
+        <div class="notes-qna" id="note-qna" style="display: none;">
+            <b>🛡️ 심사위원 예상 질의응답 방어 대본:</b><br>
+            <span id="qna-text"></span>
+        </div>
+    </div>
+
+    <script>
+        let currentSlide = 0;
+        const slides = document.querySelectorAll('.slide');
+        const totalSlides = slides.length;
+        document.getElementById('total-slides').innerText = totalSlides;
+
+        function updateSlide() {
+            slides.forEach((slide, idx) => {
+                slide.classList.remove('active');
+                if (idx === currentSlide) {
+                    slide.classList.add('active');
+                }
+            });
+            document.getElementById('current-slide').innerText = currentSlide + 1;
+            document.getElementById('note-slide-num').innerText = currentSlide + 1;
+            
+            // Progress bar
+            const progress = ((currentSlide + 1) / totalSlides) * 100;
+            document.getElementById('progress').style.width = `${progress}%`;
+
+            // Update Speaker Notes
+            const activeSlide = slides[currentSlide];
+            const notes = activeSlide.getAttribute('data-notes') || "이 슬라이드에 대한 발표자 대본이 없습니다.";
+            document.getElementById('note-text').innerText = notes;
+
+            const qna = activeSlide.getAttribute('data-qna');
+            const qnaBox = document.getElementById('note-qna');
+            if (qna) {
+                document.getElementById('qna-text').innerText = qna;
+                qnaBox.style.display = 'block';
+            } else {
+                qnaBox.style.display = 'none';
+            }
+        }
+
+        function nextSlide() {
+            if (currentSlide < totalSlides - 1) {
+                currentSlide++;
+                updateSlide();
+            }
+        }
+
+        function prevSlide() {
+            if (currentSlide > 0) {
+                currentSlide--;
+                updateSlide();
+            }
+        }
+
+        function toggleNotes() {
+            const drawer = document.getElementById('notes-drawer');
+            drawer.classList.toggle('open');
+        }
+
+        // Keyboard navigation
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') {
+                nextSlide();
+            } else if (e.key === 'ArrowLeft' || e.key === 'Backspace' || e.key === 'PageUp') {
+                prevSlide();
+            } else if (e.key.toLowerCase() === 'n') {
+                toggleNotes();
+            } else if (e.key === 'Escape') {
+                document.getElementById('notes-drawer').classList.remove('open');
+            }
+        });
+
+        // Initialize
+        updateSlide();
+    </script>
+</body>
+</html>
