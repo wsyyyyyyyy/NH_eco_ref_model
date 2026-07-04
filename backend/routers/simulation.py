@@ -1,3 +1,5 @@
+import statistics
+
 from fastapi import APIRouter
 from pydantic import BaseModel
 
@@ -46,21 +48,25 @@ def run_simulation(req: SimulationRequest):
 
     industries = baseline['STD_INDS_CFC'].apply(get_industry_name)
 
+    # 산업별 대표 리스크는 평균(mean)이 아닌 중앙값(median)을 사용한다. 부도확률
+    # 분포가 극단적으로 오른쪽 꼬리가 긴(소수 초고위험 기업이 40~99%대) 형태라,
+    # 평균을 쓰면 전형적인 기업의 실제 체감 리스크(중앙값 기준 1~2%대)보다
+    # 훨씬 높게(업종 평균 5~12%대) 나와 3단 위험 매트릭스가 상시 "고위험"으로만
+    # 분류되는 문제가 있었다(재학습 전 모델도 동일 현상 확인, docs/step29 참고).
     agg = {}
     for ind, b, s in zip(industries, base_prob, shocked_prob):
         if ind not in agg:
-            agg[ind] = {'base_sum': 0.0, 'shock_sum': 0.0, 'count': 0}
-        agg[ind]['base_sum'] += b
-        agg[ind]['shock_sum'] += s
-        agg[ind]['count'] += 1
+            agg[ind] = {'base': [], 'shock': []}
+        agg[ind]['base'].append(b)
+        agg[ind]['shock'].append(s)
 
     results = []
     for ind in DISPLAY_INDUSTRIES:
-        if ind not in agg or agg[ind]['count'] == 0:
+        if ind not in agg or not agg[ind]['base']:
             continue
         stats = agg[ind]
-        base_risk = round(stats['base_sum'] / stats['count'] * 100, 2)
-        new_risk = round(stats['shock_sum'] / stats['count'] * 100, 2)
+        base_risk = round(statistics.median(stats['base']) * 100, 2)
+        new_risk = round(statistics.median(stats['shock']) * 100, 2)
         old_model_risk = round(base_risk * 0.15, 2)
         old_new_risk = round(old_model_risk + (new_risk - base_risk) * 0.15, 2)
         results.append({

@@ -35,9 +35,11 @@ window.fetch = async (input: RequestInfo | URL, init?: RequestInit): Promise<Res
   // 오직 우리 API 호출(/api/)에 대해서만 인터셉트 시도
   if (url.includes('/api/') || url.includes(API_BASE_URL)) {
     try {
-      // 1. 실제 백엔드 서버 호출 시도 (타임아웃 800ms 설정으로 빠르게 오프라인 감지)
+      // 1. 실제 백엔드 서버 호출 시도 (타임아웃 3000ms 설정 -- 800ms는 194만 행 DuckDB
+      // 집계 쿼리(예: /monitoring/drift)가 Promise.all로 동시에 여러 개 나갈 때
+      // 정상적으로 응답 중인데도 오프라인으로 오판해 잘못된 목업으로 빠지는 경우가 있었음)
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 800);
+      const timeoutId = setTimeout(() => controller.abort(), 3000);
       const res = await originalFetch(input, { ...init, signal: controller.signal });
       clearTimeout(timeoutId);
       if (res.ok) return res;
@@ -216,15 +218,38 @@ window.fetch = async (input: RequestInfo | URL, init?: RequestInit): Promise<Res
       return new Response(JSON.stringify(simPayload), { status: 200, headers: { 'Content-Type': 'application/json' } });
     }
 
-    // (7) 모형 모니터링 (/api/monitoring)
+    // (7) 모형 모니터링 (/api/monitoring/*) -- 4개 하위 엔드포인트가 서로 다른 응답
+    // 모양(object vs array)을 가지므로 반드시 경로별로 분기해야 한다. 예전에는 전부
+    // 동일한 flat object를 반환해 /drift, /pd_distribution, /borrowers처럼 배열을
+    // 기대하는 화면에서 recharts/map()이 깨지는 문제가 있었다.
+    if (url.includes('/monitoring/drift')) {
+      const driftPayload = [
+        { month: "21.01", psi: 0.0 }, { month: "22.01", psi: 0.32 }, { month: "23.01", psi: 0.28 },
+        { month: "24.01", psi: 0.19 }, { month: "25.01", psi: 0.15 }, { month: "26.01", psi: 0.11 },
+      ];
+      return new Response(JSON.stringify(driftPayload), { status: 200, headers: { 'Content-Type': 'application/json' } });
+    }
+    if (url.includes('/monitoring/pd_distribution')) {
+      const pdDistPayload = [
+        { bin: "0~10% (안전)", 기존모형: 62.0, ERM모형: 48.0 },
+        { bin: "10~30% (보통)", 기존모형: 25.0, ERM모형: 28.0 },
+        { bin: "30~50% (주의)", 기존모형: 8.0, ERM모형: 13.0 },
+        { bin: "50~70% (경고)", 기존모형: 3.5, ERM모형: 7.0 },
+        { bin: "70%+ (고위험)", 기존모형: 1.5, ERM모형: 4.0 },
+      ];
+      return new Response(JSON.stringify(pdDistPayload), { status: 200, headers: { 'Content-Type': 'application/json' } });
+    }
+    if (url.includes('/monitoring/borrowers')) {
+      const binBorrowersPayload = [
+        { id: "1000000000", name: getCompanyName(1000000000, 0), industry: "제조업", pd: 96.53, oldGrade: "BB+", oldPd: 14.32, ermGrade: "G5", isBlindSpot: true },
+        { id: "1000000001", name: getCompanyName(1000000001, 1), industry: "건설업", pd: 93.62, oldGrade: "BB+", oldPd: 14.04, ermGrade: "G5", isBlindSpot: false },
+      ];
+      return new Response(JSON.stringify(binBorrowersPayload), { status: 200, headers: { 'Content-Type': 'application/json' } });
+    }
     if (url.includes('/monitoring')) {
       const monPayload = {
-        auroc: 0.902,
-        ks_stat: 0.654,
-        gini_index: 0.804,
-        psi: 0.042,
-        status: "STABLE",
-        last_updated: "2026-07-03"
+        train_auc: 0.9958, valid_auc: 0.9005, train_gini: 0.9916, valid_gini: 0.801,
+        train_ks: 0.9425, valid_ks: 0.6663, total_psi: 0.1357,
       };
       return new Response(JSON.stringify(monPayload), { status: 200, headers: { 'Content-Type': 'application/json' } });
     }
