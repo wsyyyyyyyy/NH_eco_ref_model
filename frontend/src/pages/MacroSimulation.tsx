@@ -110,23 +110,31 @@ export default function MacroSimulation() {
     }, 250);
   };
 
+  // 중앙값(median) 기반 산업 리스크로 전환한 뒤(docs/step29 이후 백엔드 수정), 실측
+  // diff 범위가 실제로는 -0.1~+0.7%p 수준으로 훨씬 작아졌다(과거 절대 임계값은
+  // 2.0/1.0/0.3%p처럼 훨씬 큰 스케일 기준이라 대부분의 실제 시나리오에서 색이
+  // 거의 항상 무채색/연한 색으로만 나왔음). 실측 분포에 맞춰 임계값을 재조정.
   const getHeatmapColor = (diff: number) => {
-    if (diff > 2.0) return '#ef4444';      
-    if (diff > 1.0) return '#f87171';      
-    if (diff > 0.3) return '#fca5a5';      
-    if (diff > -0.3) return '#f1f5f9';     
-    if (diff > -1.0) return '#a7f3d0';     
-    return '#34d399';                      
+    if (diff > 0.5) return '#ef4444';
+    if (diff > 0.3) return '#f87171';
+    if (diff > 0.1) return '#fca5a5';
+    if (diff > -0.1) return '#f1f5f9';
+    if (diff > -0.3) return '#a7f3d0';
+    return '#34d399';
   };
 
   const getHeatmapTextColor = (diff: number) => {
-    if (diff > 1.0 || diff < -1.5) return '#ffffff';
+    if (diff > 0.3 || diff < -0.3) return '#ffffff';
     return 'var(--text-main)';
   };
 
-  const highRiskIndustries = results.filter(r => r.newRisk >= 4.5 || r.diff >= 2.0);
-  const midRiskIndustries = results.filter(r => (r.newRisk >= 2.5 && r.newRisk < 4.5) && r.diff < 2.0);
-  const safeIndustries = results.filter(r => r.newRisk < 2.5 && r.diff < 2.0);
+  // 3단 위험 매트릭스도 절대 부도율(newRisk)이 아닌 "이 충격으로 얼마나 증가했는가(diff)"
+  // 기준으로 분류한다 — 절대값 기준이었을 때는 median 전환 후 스케일이 작아져 항상
+  // "안정"으로만 분류되는 반대 문제가 생겼다. diff=0(충격 없음)이면 항상 안정으로
+  // 분류되는 것이 직관적이며, 시나리오별 민감도 차이도 더 선명하게 드러난다.
+  const highRiskIndustries = results.filter(r => r.diff >= 0.5);
+  const midRiskIndustries = results.filter(r => r.diff >= 0.2 && r.diff < 0.5);
+  const safeIndustries = results.filter(r => r.diff < 0.2);
 
   return (
     <div className="flex-col" style={{gap: '24px'}}>
@@ -482,8 +490,8 @@ export default function MacroSimulation() {
                         거시경제 충격에 따른 산업군별 민감도 매트릭스 (<strong style={{color: '#dc2626'}}>붉은색일수록 치명적 파급 효과</strong>)
                       </span>
                       <div className="flex-row" style={{gap: '10px', alignItems: 'center', fontSize: '11px', fontWeight: 600}}>
-                        <span style={{display: 'inline-block', width: '10px', height: '10px', backgroundColor: '#ef4444', borderRadius: '2px'}}></span> 고위험 (+2%p↑)
-                        <span style={{display: 'inline-block', width: '10px', height: '10px', backgroundColor: '#fca5a5', borderRadius: '2px'}}></span> 주의 (+0.3%p↑)
+                        <span style={{display: 'inline-block', width: '10px', height: '10px', backgroundColor: '#ef4444', borderRadius: '2px'}}></span> 고위험 (+0.5%p↑)
+                        <span style={{display: 'inline-block', width: '10px', height: '10px', backgroundColor: '#fca5a5', borderRadius: '2px'}}></span> 주의 (+0.1%p↑)
                         <span style={{display: 'inline-block', width: '10px', height: '10px', backgroundColor: '#10b981', borderRadius: '2px'}}></span> 위험 감소
                       </div>
                     </div>
@@ -529,7 +537,7 @@ export default function MacroSimulation() {
                 {activeTab === 'tier' && (
                   <div className="flex-col" style={{gap: '14px', height: '100%'}}>
                     <span className="font-medium" style={{fontSize: '13px', color: 'var(--text-muted)'}}>
-                      충격 후 부도 위험도 기준 산업군 자동 분류 매트릭스 (<strong style={{color: 'var(--danger)'}}>고위험 4.5%+</strong> / <strong style={{color: 'var(--warning)'}}>주의 2.5%+</strong> / <strong style={{color: 'var(--safe)'}}>안정 &lt;2.5%</strong>)
+                      충격 전후 부도율 증가폭(diff) 기준 산업군 자동 분류 매트릭스 (<strong style={{color: 'var(--danger)'}}>고위험 +0.5%p 이상 증가</strong> / <strong style={{color: 'var(--warning)'}}>주의 +0.2%p 이상 증가</strong> / <strong style={{color: 'var(--safe)'}}>안정 +0.2%p 미만</strong>)
                     </span>
                     <div style={{display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px', flex: 1}}>
                       {/* High Risk Tier */}
