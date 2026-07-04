@@ -1,57 +1,9 @@
 import { useEffect, useState } from 'react';
-import { BarChart, Bar, ScatterChart, Scatter, XAxis, YAxis, Tooltip as RechartsTooltip, ResponsiveContainer, CartesianGrid, ZAxis, LabelList, Cell } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, Tooltip as RechartsTooltip, ResponsiveContainer, CartesianGrid, Cell } from 'recharts';
 import { AlertTriangle, CheckCircle, TrendingUp, Users, BarChart as BarChartIcon } from 'lucide-react';
 import { getIndustryName } from '../utils/industry';
 import { globalMock } from '../utils/mockData';
 import { API_BASE_URL } from '../config';
-
-const COLORS = ['#ef4444', '#f97316', '#8b5cf6', '#3b82f6', '#10b981', '#ec4899', '#06b6d4', '#eab308'];
-
-const formatShortName = (name: string) => {
-  if (!name) return '';
-  if (name.includes('농업')) return '농·임·어업';
-  if (name.includes('도매')) return '도소매업';
-  if (name.includes('숙박')) return '숙박음식업';
-  if (name.includes('전기')) return '전기가스업';
-  if (name.includes('사업시설')) return '사업지원';
-  if (name.includes('전문')) return '전문과학기술';
-  if (name.includes('출판') || name.includes('정보통신')) return '정보통신업';
-  if (name.includes('운수')) return '운수창고업';
-  return name;
-};
-
-const CustomScatterLabel = (props: any) => {
-  const { x, y, value, index } = props;
-  if (typeof x !== 'number' || typeof y !== 'number') return null;
-  // 인덱스에 따라 라벨을 상/하/좌/우로 지그재그 분산 배치하여 버블 및 글씨 간 겹침 완벽 방지
-  const positions = [
-    { dx: 0, dy: -20, anchor: 'middle' },
-    { dx: 0, dy: 28, anchor: 'middle' },
-    { dx: 24, dy: 4, anchor: 'start' },
-    { dx: -24, dy: 4, anchor: 'end' },
-    { dx: 18, dy: -18, anchor: 'start' },
-    { dx: -18, dy: 22, anchor: 'end' },
-    { dx: 0, dy: -32, anchor: 'middle' },
-    { dx: 0, dy: 38, anchor: 'middle' }
-  ];
-  const pos = positions[index % positions.length];
-  return (
-    <text 
-      x={x + pos.dx} 
-      y={y + pos.dy} 
-      textAnchor={pos.anchor as any} 
-      fill="#0f172a" 
-      fontSize={13} 
-      fontWeight={800}
-      style={{
-        textShadow: '2px 0 0 #fff, -2px 0 0 #fff, 0 2px 0 #fff, 0 -2px 0 #fff, 1px 1px #fff, -1px -1px #fff, 1px -1px #fff, -1px 1px #fff',
-        pointerEvents: 'none'
-      }}
-    >
-      {value}
-    </text>
-  );
-};
 
 // 벤다이어그램 안 라벨 대신, 영역 안쪽 점(dot)에서 바깥 뱃지로 이어지는 리더라인 + 색상 강조 뱃지.
 const VennBadge = ({ dot, to, align = 'start', label, value, color, bg }: any) => {
@@ -155,24 +107,6 @@ export default function GlobalDashboard({ baseYm = '202402' }: { baseYm?: string
       fetch(`${API_BASE_URL}/api/dashboard/summary?base_ym=${baseYm}`)
         .then(res => res.json())
         .then(d => {
-          if (d.top_risk_industries) {
-            const grouped: Record<string, any> = {};
-            d.top_risk_industries.forEach((ind: any) => {
-              const name = getIndustryName(ind.industry);
-              if (!grouped[name]) {
-                grouped[name] = { industry: name, total: 0, risk_cnt: 0 };
-              }
-              grouped[name].total += ind.total;
-              grouped[name].risk_cnt += ind.risk_cnt;
-            });
-            d.top_risk_industries = Object.values(grouped)
-              .map((g: any) => ({
-                ...g,
-                risk_ratio: Number(((g.risk_cnt / g.total) * 100).toFixed(1))
-              }))
-              .sort((a: any, b: any) => b.risk_cnt - a.risk_cnt)
-              .slice(0, 10);
-          }
           setData(d);
           setLoading(false);
         })
@@ -193,23 +127,6 @@ export default function GlobalDashboard({ baseYm = '202402' }: { baseYm?: string
               d.grade_distribution.forEach((g: any) => g.cnt = Math.floor(g.cnt * 0.90));
           }
 
-          if (d.top_risk_industries) {
-              const grouped: Record<string, any> = {};
-              d.top_risk_industries.forEach((ind: any) => {
-                  const name = getIndustryName(ind.industry);
-                  if (!grouped[name]) {
-                      grouped[name] = { industry: name, total: 0, risk_cnt: 0 };
-                  }
-                  grouped[name].total += ind.total;
-                  grouped[name].risk_cnt += ind.risk_cnt;
-              });
-              d.top_risk_industries = Object.values(grouped)
-                  .map((g: any) => ({
-                      ...g,
-                      risk_ratio: Number(((g.risk_cnt / g.total) * 100).toFixed(1))
-                  }))
-                  .sort((a: any, b: any) => b.risk_cnt - a.risk_cnt);
-          }
           setData(d);
           setLoading(false);
       }, 200);
@@ -222,21 +139,6 @@ export default function GlobalDashboard({ baseYm = '202402' }: { baseYm?: string
   const safeCount = data.total_companies - data.risk_companies;
   const riskRatio = ((data.risk_companies / data.total_companies) * 100).toFixed(1);
 
-  // 기준년월의 업종별 실제 고위험 비율과 기업수를 활용한 업종 리스크 매트릭스.
-  // X축(기존 평가 위험도)은 legacy_risk_pct(OLD_PROB = PROB_FULL * 0.15 업종 평균) 실측값.
-  const scatterData = (data.top_risk_industries || []).slice(0, 8).map((ind: any, idx: number) => {
-    const shortName = formatShortName(ind.industry);
-    const yVal = Number(ind.risk_ratio.toFixed(1));
-    const xVal = Number((ind.legacy_risk_pct ?? 0).toFixed(2));
-    return {
-      name: shortName,
-      fullName: ind.industry,
-      x: Math.max(3.0, Math.min(24.0, xVal)), // X축 3~24% 범위 내 분산 배치
-      y: yVal, // Y축 실제 ERM 고위험 비율
-      z: Math.max(300, ind.total), // 버블 크기
-      color: COLORS[idx % COLORS.length]
-    };
-  });
 
   return (
     <div className="flex-col" style={{gap: '24px'}}>
@@ -303,56 +205,6 @@ export default function GlobalDashboard({ baseYm = '202402' }: { baseYm?: string
           </div>
         </div>
       </div>
-
-      <div className="flex-col" style={{gap: '12px'}}>
-        <div className="flex-row" style={{gap: '8px'}}>
-          <TrendingUp size={20} color="var(--primary)" />
-          <h2 className="font-semibold" style={{margin: 0}}>업종별 리스크 매트릭스</h2>
-        </div>
-        <div className="card">
-          <div style={{width: '100%', height: '340px'}}>
-              <ResponsiveContainer width="100%" height="100%">
-                <ScatterChart margin={{ top: 35, right: 35, left: -10, bottom: 20 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                  <XAxis type="number" dataKey="x" name="기존 평가 위험도" unit="%" domain={[0, (dataMax: number) => Math.ceil(dataMax * 1.25 * 10) / 10]} tick={{fill: 'var(--text-muted)', fontSize: 12, fontWeight: 600}} axisLine={{stroke: '#e5e7eb'}} tickLine={false} />
-                  <YAxis type="number" dataKey="y" name="ERM 고위험률" unit="%" domain={[0, (dataMax: number) => Math.max(35, Math.ceil(dataMax * 1.25))]} tick={{fill: 'var(--text-muted)', fontSize: 12, fontWeight: 600}} axisLine={{stroke: '#e5e7eb'}} tickLine={false} />
-                  <ZAxis type="number" dataKey="z" range={[280, 950]} name="기업 수" />
-                  <RechartsTooltip 
-                    cursor={{strokeDasharray: '3 3'}} 
-                    content={({ active, payload }) => {
-                      if (active && payload && payload.length) {
-                        const d = payload[0].payload;
-                        return (
-                          <div style={{backgroundColor: 'rgba(255, 255, 255, 0.98)', border: '1px solid var(--border)', borderRadius: '8px', padding: '12px', boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)'}}>
-                            <p className="font-bold" style={{margin: '0 0 8px 0', fontSize: '15px', color: d.color || 'var(--text-main)', borderBottom: '1px solid var(--border)', paddingBottom: '6px'}}>
-                              {d.fullName || d.name}
-                            </p>
-                            <p className="font-medium" style={{margin: '0 0 4px 0', fontSize: '13px', color: 'var(--text-muted)'}}>
-                              기존 평가 위험도: <span style={{color: 'var(--text-main)', fontWeight: 700}}>{d.x}%</span>
-                            </p>
-                            <p className="font-medium" style={{margin: '0 0 4px 0', fontSize: '13px', color: 'var(--text-muted)'}}>
-                              ERM 고위험률: <span style={{color: d.color || 'var(--danger)', fontWeight: 700}}>{d.y}%</span>
-                            </p>
-                            <p className="font-medium" style={{margin: 0, fontSize: '13px', color: 'var(--text-muted)'}}>
-                              해당 업종 기업 수: <span style={{color: 'var(--text-main)', fontWeight: 700}}>{d.z}개사</span>
-                            </p>
-                          </div>
-                        );
-                      }
-                      return null;
-                    }}
-                  />
-                  <Scatter name="업종" data={scatterData}>
-                    {scatterData.map((entry: any, idx: number) => (
-                      <Cell key={`cell-${idx}`} fill={entry.color} fillOpacity={0.75} stroke={entry.color} strokeWidth={2} />
-                    ))}
-                    <LabelList dataKey="name" content={CustomScatterLabel} />
-                  </Scatter>
-                </ScatterChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
-        </div>
 
       {/* 신규 추가: 예측 성공/실패 벤다이어그램 + 등급 분포 (같은 행에 나란히 배치) */}
         <div className="grid-2" style={{marginTop: '12px'}}>
