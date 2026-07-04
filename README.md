@@ -80,9 +80,24 @@
 
 ---
 
-## 🔬 모델 검증 및 재학습 (Validation & Retraining, 2026-07-04)
+## 🔬 모델 심화 검증 및 프로덕션 재학습 (Validation & Retraining, 2026-07-04)
 
-교수님 피드백에 따라 과적합·SHAP 변수 정제·다중공선성·워크포워드 CV·타 모델 비교 5가지를 검증([step28](docs/step28_model_validation_and_benchmarking.md))하고, 확인된 개선안(정규화 파라미터, Dev 기반 early stopping, Lean 모델 중복 변수 제거)을 실제 운영 모델에 반영해 전체 194만 행을 재채점했습니다([step29](docs/step29_production_model_retrain_and_rescore.md)). 분기별 재학습 런북과, 이미 구현되어 있던 실시간 PSI 드리프트 모니터링(Model Monitoring 페이지)을 활용한 운영 정책도 함께 정리했습니다.
+프로젝트 1차 완료 후, 교수님 및 심사위원 피드백에 대응하여 모델링 방법론의 정당성을 7대 주제로 철저히 검증하고([step28](docs/step28_model_validation_and_benchmarking.md)), 그 검증 결론을 반영해 실제 서비스 운영 모델의 재학습 및 `portal.duckdb` 내 194만 행 전체 패널의 재채점을 완수했습니다([step29](docs/step29_production_model_retrain_and_rescore.md)).
+
+### 1. 교수님 피드백 대응 7대 심화 검증 (`step28`)
+- **① 과적합(Overfitting) 진단 & 정규화**: Train 마지막 3개월을 전용 **Dev 셋(2023.10~12)으로 분리**하여 Early Stopping이 Valid 셋을 훔쳐보는 누수(Leakage)를 원천 차단했습니다. 여기에 LightGBM 정규화 파라미터(`num_leaves=15`, `min_child_samples=100`, `reg_alpha/lambda=1.0`)를 적용해 Train AUC를 0.96대로 억제하면서 순수 Hold-out Valid AUC는 오히려 상승하는 진정한 일반화 성능을 달성했습니다.
+- **② SHAP 안정성 & 다중공선성(VIF) 검증**: Train vs Valid 및 3회 부트스트랩 샘플링 간 상위 30/50개 변수의 **스피어만 상관계수가 >0.98**로 극도로 높은 순위 안정성을 입증했습니다. 상위 30개 변수 간 상관관계 분석 결과 VIF 다이어트가 중복을 이미 성공적으로 필터링했음을 확인했습니다.
+- **③ 변수 수 축소(Ablation) & Lean(80) 모델 타당성**: Top 20/30/50/80/100 변수 셋 비교 실험을 통해 Top 20/30은 예측력 손실이 발생함을 실증하고, **현재의 Lean(80) 모델이 예측력과 경량화의 최적 균형점**임을 입증했습니다.
+- **④ 14-Fold Walk-Forward 시계열 교차검증**: 6개월 롤링 단위의 14-Fold CV를 수행하여 테스트 폴드 AUC가 평균 0.90~0.92로 시간 경과에 따른 성능 열화(Drift)가 없음을 검증했습니다. 최근 구간의 표면적 지표 저하는 구조적 우측 절단(Right-censoring)에 따른 자연적 현상임을 규명했습니다.
+- **⑤ 타 ML 알고리즘 벤치마크**: Logistic Regression(0.814), Random Forest(0.887), XGBoost(0.898)와 정면 비교하여 비선형성과 결측치가 많은 SME 재무 데이터에서 LightGBM(0.901)이 압도적인 속도와 최고 예측력을 동시에 달성함을 증명했습니다.
+- **⑥ [추가검증] 순수 3-Way Split 검증**: Train/Valid/Test를 완전히 독립된 시간축(2021~23 / 2024 / 2025~26H1)으로 분리 실험하여 고정 모델의 18개월 이상 경과 시 열화(0.880)를 확인하고, **분기/반기 주기적 재학습 정책 필요성**을 실증했습니다.
+- **⑦ [추가검증] 228개 변수 전수 VIF 진단**: 원천 지표와 3개월 이동평균(`_ma3`) 동반 편입에 따른 고공선성을 규명하고, 현재 서비스 중인 Lean(80) 모델 내에서도 VIF 무한대 중복 3개 변수(`EUR_KRW_ma3` 등)를 식별하여 Step 29 제거 대상으로 확정했습니다.
+
+### 2. 프로덕션 모델 재학습 및 194만 행 DB 전수 재채점 (`step29`)
+- **① 실제 운영 LightGBM 모델 파라미터 적용 및 재학습**: Full 모델(230개)에 정규화 및 Dev 셋 Early Stopping을 적용해 정직한 순수 Hold-out Valid AUC **0.9005**, Gini **80.1**, K-S **66.6**, PSI **0.1357**을 달성했습니다. Lean 모델은 무한대 VIF 중복 3개 변수를 삭제하여 **77개 변수로 경량화**했음에도 Valid AUC **0.9023**을 기록했습니다.
+- **② 194만 행(`corporate_panel`) In-Place 전수 재채점**: 원천 CSV 재로딩 없이 `portal.duckdb` 내 1,944,418행 전체 피처를 직접 읽어 신규 모델로 재채점하는 파이프라인(`database/rescore_full_model.py`)을 구현해 `PROB_FULL`, `Z_SCORE`, `Z_GRADE`를 100% 갱신했습니다.
+- **③ Z-Score 정규화 및 16단계 등급 컷오프 갱신**: 신규 재학습 확률 분포의 실제 평균(`-3.4560`)과 표준편차(`2.0123`)로 정규화 공식을 교체하고, `backend/grade_mapping.py`의 16단계 `PROB_CUTOFFS` 상수를 재산출하여 E2E 정합성을 완결했습니다.
+- **④ E2E 서비스 검증 및 운영 런북 수립**: 포털 전 화면(대시보드 KPI, 예측 벤 다이어그램, 차주 상세, 매크로 시뮬레이션 등)에 대한 E2E 정합성 검증을 완료하고, 분기별 PSI 모니터링 기반 재학습 실행 매뉴얼(Runbook)을 수립했습니다.
 
 ---
 
@@ -106,6 +121,11 @@
 ### 4. 글로벌 뱅크 뷰 실데이터 전환 (`step20`)
 - 전사 KPI, 등급분포, PD-LAG 실질 부도율 추이(`/api/dashboard/trend`), 업종별 리스크 매트릭스 산점도까지 남아있던 마지막 가짜 수식(mock)을 실제 월별 집계·실현 부도율(`IS_BUDO_12M`)로 전면 교체하여, 포털 전 화면이 end-to-end로 실데이터와 연동됨을 확인.
 
+### 5. "기존 모형" 비교 로직 실데이터화 및 매크로 시뮬레이션 고도화 (`step21` ~ `step27`)
+- **예측 벤 다이어그램 및 리드타임 실측화 (`step21`, `step22`, `step24`)**: 실제 당행 부도일(`DSH_DT`)과 기존 레거시 PD(`RZVL_POD`), 내부등급(`OBV_ELYWRN_OBV_GRD_DSC`) 실측 필드로 전면 교체하여 벤 다이어그램(ERM+내부 403건, ERM 단독 547건)과 평균 11.3개월의 선행 리드타임을 실시간 SQL로 집계했습니다. 왜곡 착시가 있던 PD-LAG 차트는 과감히 삭제했습니다.
+- **SHAP 중요도 기반 매크로 시뮬레이션 확장 (`step25`)**: 기준금리, 환율(USD/EUR), 유가, CPI, KOSPI, VIX, 원자재 등 SHAP 상위 거시 지표 9종 슬라이더 신설 및 단위 스케일/부호 버그 완벽 수정.
+- **균형 패널 설계 검증 및 보안/UX 완결 (`step23`, `step26`, `step27`)**: 글로벌 대시보드 기업 수 KPI가 불변하는 원인이 66개월 완전 균형 패널(Balanced Panel) 설계임을 실증하고, `/api/auth/login` 실제 계정 검증 엔드포인트 및 독립 실행형 목업(`mockup.html`) 제작, 하드코딩 점검 완수.
+
 ---
 
 ## 📂 리포지토리 파일 구조 (File Structure)
@@ -124,6 +144,13 @@
 │   ├── step18_borrower_detail_ux_and_ai_tips_structuring.md # Step 18 차주 상세 UX 개편 및 AI 팁 구조화
 │   ├── step19_gemini_reliability_and_real_shap_capability.md # Step 19 Gemini 안정화 및 실제 SHAP/역량진단
 │   ├── step20_global_dashboard_real_trend_and_industry_matrix.md # Step 20 글로벌 뱅크 뷰 실데이터 전환
+│   ├── step21_censoring_fix_and_prediction_venn.md    # Step 21 우측 절단 처리 및 예측 벤 다이어그램 도입
+│   ├── step22_prediction_venn_layout_polish.md        # Step 22 벤 다이어그램 레이아웃 및 툴팁 정리
+│   ├── step23_standalone_mockup_html.md               # Step 23 독립 실행형 목업 제작
+│   ├── step24_real_legacy_pod_and_default_date.md     # Step 24 실측 레거시 PD·부도일 도입 및 사각지대 실필드화
+│   ├── step25_macro_simulation_shap_driven_expansion.md # Step 25 SHAP 중요도 기반 매크로 시뮬레이션 9종 확장
+│   ├── step26_total_company_count_clarification.md    # Step 26 전체 기업 수 KPI 불변 원인 규명 (균형패널 검증)
+│   ├── step27_hardcoding_audit_auth_and_footer.md     # Step 27 하드코딩 점검, 로그인 인증 도입, 푸터 정리
 │   ├── step28_model_validation_and_benchmarking.md    # Step 28 과적합·다중공선성·워크포워드 CV·타 모델 비교 검증
 │   └── step29_production_model_retrain_and_rescore.md # Step 29 검증 결과 반영 재학습 + 전체 DB 재채점
 ├── frontend/                          # React 18 + Vite + Recharts 기반 실사용자 ERM 조기경보 웹 포털
@@ -152,6 +179,14 @@
 │   ├── step11_compare_internal.py     # 은행 내부 A/B 등급 변별력 비교 분석
 │   ├── step12_walkthrough_v3...       # OOT Z-score, Lean 비용, F2-score 고도화 검증
 │   ├── step13_performance_metrics.py  # ROC-AUC, Gini, K-S, PSI 최종 성능 지표 추출
+│   ├── step14_overfit_diagnostics.py  # 과적합 진단 및 Dev 셋 Early Stopping 실험
+│   ├── step15_shap_stability_check.py # SHAP 순위 안정성 및 중복 변수 상관관계 검증
+│   ├── step16_topN_feature_ablation.py# 변수 수 축소(Top N) 및 Lean 모델 타당성 검증
+│   ├── step17_walkforward_cv.py       # 14-Fold 워크포워드 시계열 교차검증
+│   ├── step18_model_benchmark.py      # LogReg, RF, XGBoost 타 ML 모델 벤치마크
+│   ├── step20_true_3way_split_check.py# 순수 3-Way Split (Train/Valid/Test) 검증
+│   ├── step21_full_multicollinearity_check.py # 228개 변수 전수 VIF 다중공선성 진단
+│   ├── step23_retrain_production_models.py    # 프로덕션 Full/Lean LightGBM 최종 재학습
 │   ├── output/                        # 데이터 중간 산출물 및 시각화 이미지 (Git Ignore 처리)
 │   └── 업종코드-표준산업분류 연계표... # 한글 업종 매핑용 국세청 사전 데이터
 ```
