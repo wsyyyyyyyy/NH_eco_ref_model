@@ -136,6 +136,15 @@ export default function MacroSimulation() {
   const midRiskIndustries = results.filter(r => r.diff >= 0.2 && r.diff < 0.5);
   const safeIndustries = results.filter(r => r.diff < 0.2);
 
+  // 하단 진단 문구는 고정 텍스트가 아니라 실제 시뮬레이션 결과(results)에서 매번 다시 계산한다.
+  // "AI"가 매 슬라이더 조작마다 실시간으로 문장을 생성하는 것(LLM 호출)은 지연시간·비용 때문에
+  // 부적합해 택하지 않았고, 대신 실제 계산된 diff/등급 데이터를 그대로 반영하는 규칙 기반
+  // 동적 문구로 대체했다 — 이전에는 실제 결과와 무관하게 "건설업/부동산업"이라는 고정 문장이
+  // 항상 출력되고 있었다.
+  const mostSensitive = results.length > 0
+    ? results.reduce((max, r) => (r.diff > max.diff ? r : max), results[0])
+    : null;
+
   return (
     <div className="flex-col" style={{gap: '24px'}}>
       <div className="flex-row" style={{justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px'}}>
@@ -638,7 +647,17 @@ export default function MacroSimulation() {
                 <div className="flex-row" style={{gap: '10px', background: 'var(--bg-main)', padding: '12px 16px', borderRadius: '8px', alignItems: 'flex-start', borderLeft: '4px solid var(--primary)', marginTop: '8px'}}>
                   <Info size={18} color="var(--primary)" style={{flexShrink: 0, marginTop: '1px'}} />
                   <span className="font-regular" style={{color: 'var(--text-muted)', fontSize: '13px', lineHeight: 1.4}}>
-                    <strong>💡 AI 거시경제 스트레스 진단:</strong> 금리 및 환율 상승 시 대출 잔액과 PF 비중이 높은 <strong>건설업/부동산업</strong>이 가장 민감하게 반응합니다. 고위험군으로 분류된 업종에 대해서는 영업점 신규 여신 한도 심사를 자동으로 강화하도록 권장합니다.
+                    <strong>💡 시뮬레이션 결과 기반 진단:</strong>{' '}
+                    {mostSensitive && mostSensitive.diff > 0 ? (
+                      <>
+                        현재 시나리오 기준 <strong>{mostSensitive.industry}</strong>이 평시({mostSensitive.baseRisk}%) 대비 <strong>+{mostSensitive.diff.toFixed(2)}%p</strong>로 가장 민감하게 반응합니다(적용 후 {mostSensitive.newRisk}%).
+                        {highRiskIndustries.length > 0
+                          ? ` 고위험군으로 분류된 ${highRiskIndustries.length}개 업종(${highRiskIndustries.map(r => r.industry).join(', ')})에 대해서는 영업점 신규 여신 한도 심사를 강화하는 것을 권장합니다.`
+                          : ' 다만 이번 시나리오에서는 고위험(diff +0.5%p 이상) 기준을 넘는 업종은 없습니다.'}
+                      </>
+                    ) : (
+                      '현재 설정된 충격 시나리오에서는 뚜렷하게 위험이 증가하는 업종이 감지되지 않았습니다. 좌측 슬라이더나 상단 시나리오 프리셋으로 충격 강도를 높여 다시 확인해보세요.'
+                    )}
                   </span>
                 </div>
               </>
