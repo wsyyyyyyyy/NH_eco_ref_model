@@ -99,7 +99,7 @@ def main(data_dir: str, output_dir: str) -> None:
     if "SPLIT" in panel.columns:
         for split in ["TRAIN", "VALID"]:
             sub = panel[panel["SPLIT"] == split]
-            default_rate = sub["IS_BUDO_YN"].mean() * 100 if "IS_BUDO_YN" in sub.columns else 0
+            default_rate = sub["IS_BUDO_IN_SPINE_YN"].mean() * 100 if "IS_BUDO_IN_SPINE_YN" in sub.columns else 0
             log.info("    %s: %d rows, 부도율: %.4f%%", split, len(sub), default_rate)
 
     # ──────────────────────────────────────────────────────────────────
@@ -123,9 +123,12 @@ def main(data_dir: str, output_dir: str) -> None:
     log.info("  [DONE] 전체 파이프라인 완료 — 총 소요: %.1fs", total_elapsed)
     log.info("")
     log.info("  📁 출력 파일 목록:")
-    log.info("    nh_panel_full.csv  — 전체 패널 (TRAIN + VALID)")
-    log.info("    nh_panel_train.csv — 학습용 (2021~2023)")
-    log.info("    nh_panel_valid.csv — 검증용 (2024~)")
+    from eda_pipeline import config as _cfg
+    _tr, _va = _cfg.split_paths()
+    log.info("    %s  — 전체 패널 (TRAIN + VALID, spine_mode=%s)",
+             _cfg.panel_path().name, _cfg.SPINE_MODE)
+    log.info("    %s — 학습용 (2021~2023)", _tr.name)
+    log.info("    %s — 검증용 (2024~2025-05)", _va.name)
     log.info("    eda_report.html    — EDA 분석 리포트 (브라우저에서 열기)")
     log.info("    eda_stats_summary.csv — 기술통계 요약")
     log.info("    eda_plots/         — 개별 분석 이미지")

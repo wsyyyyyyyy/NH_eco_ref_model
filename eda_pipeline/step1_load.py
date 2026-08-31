@@ -338,15 +338,27 @@ class RawLoader:
                                   .str.strip())
 
     def _fill_external_grade_missing(self) -> None:
-        """CG01 NaN → -1, C302 NaN → 'Missing' + 서열 인코딩."""
+        """CG01 / C302 의 결측을 NaN 으로 유지한다.
+
+        과거에는 CG01 을 -1, C302 서열을 -1/-2/-3 으로 채웠다. 그러나 이 둘은
+        순서형 점수·등급이라 -1 이 '정보 없음' 이 아니라 실제 수치로 학습된다.
+        평가 이력이 없는 영세기업이 점수 축의 극단값을 갖게 되어 스플릿이 왜곡된다.
+        (CG01_KIS_SCORE 는 기존 모델 gain 2위이고 14.81% 가 -1 이었다.)
+
+        STAGE 3 [3-5] 의 유형 3(진짜 결측) 원칙대로 NaN 을 유지하고,
+        step5 가 CG01_MISSING_YN / C302_MISSING_YN 플래그를 만든다.
+        LightGBM 은 NaN 을 스플릿에서 네이티브로 처리한다.
+        """
         if "cg01" in self.frames:
             df = self.frames["cg01"]
             df["KIS_LS_FNA_MKS"] = pd.to_numeric(df["KIS_LS_FNA_MKS"], errors="coerce")
-            df["KIS_LS_FNA_MKS"] = df["KIS_LS_FNA_MKS"].fillna(-1).astype(int)
         if "c302" in self.frames:
             df = self.frames["c302"]
+            # 등급 문자열은 'Missing' 으로 남긴다 (step2 의 D/NR/R 플래그가 참조한다).
             df["CRI_GRD"] = df["CRI_GRD"].fillna("Missing")
-            df["CRI_GRD_ORD"] = df["CRI_GRD"].map(CRI_ORDINAL).fillna(-1).astype(int)
+            _ord = df["CRI_GRD"].map(CRI_ORDINAL)
+            # Missing(-1) / NR(-2) / R(-3) 은 서열이 아니므로 NaN 으로 둔다.
+            df["CRI_GRD_ORD"] = _ord.where(_ord > 0)
 
     def _process_ac12(self) -> None:
         """외화부채: NaN → 0, 기타통화 파생변수 생성."""
@@ -397,7 +409,11 @@ class RawLoader:
         부도정보: TARGET 컬럼 생성.
         - IS_DEFAULT: 부도 발생 여부 (DSH_DT 존재 = 1)
         - DEFAULT_YM: 부도 발생 월 (YYYYMM 문자열)
-        - IS_RECOVERED: 정상화 여부 (NMLZ_YN = 'Y')
+        - IS_RECOVERED: 정상화 여부 (NMLZ_YN)
+        - RECOVER_DT / RECOVER_YM: 정상화 일자 / 월
+
+        주의: NMLZ_YN 의 실제 값은 '0' / '1' 이다. 'Y' / 'N' 이 아니다.
+              과거 'Y' 비교 방식은 정상화 152건을 전부 미정상화로 판정했다.
         """
         if "budo" not in self.frames:
             return
@@ -407,5 +423,15 @@ class RawLoader:
             lambda d: d.strftime("%Y%m") if pd.notna(d) else None
         )
         if "NMLZ_YN" in df.columns:
-            df["IS_RECOVERED"] = (df["NMLZ_YN"].astype(str).str.strip().str.upper() == "Y").astype(int)
-        log.info("  BUDO Target 생성 — 부도 건수: %d", df["IS_DEFAULT"].sum())
+            _nz = df["NMLZ_YN"].astype(str).str.strip().str.upper()
+            df["IS_RECOVERED"] = _nz.isin(["1", "Y"]).astype(int)
+        if "NMLZ_DT" in df.columns:
+            df["RECOVER_DT"] = df["NMLZ_DT"]
+            df["RECOVER_YM"] = df["RECOVER_DT"].apply(
+                lambda d: d.strftime("%Y%m") if pd.notna(d) else None
+            )
+        log.info("  BUDO Target 생성 — 부도 건수: %d  |  정상화 건수: %d (기업 %d사)",
+                 df["IS_DEFAULT"].sum(),
+                 int(df.get("IS_RECOVERED", pd.Series(dtype=int)).sum()),
+                 df.loc[df.get("IS_RECOVERED", 0) == 1, "V_BZNO"].nunique()
+                 if "IS_RECOVERED" in df.columns else 0)

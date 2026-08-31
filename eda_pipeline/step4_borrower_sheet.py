@@ -28,35 +28,39 @@ import pandas as pd
 log = logging.getLogger(__name__)
 
 # ── JEMU 계정코드 → 한글명 매핑 ────────────────────────────────────
+# ※ 아래 매핑은 input/가상사업자_JEMU_재무데이터v.txt 0행(한글 논리명)을 직접 대조해
+#   정정한 것이다. 과거 매핑은 118100 부터 한 칸씩 밀려 28개 중 21개가 틀려 있었다.
+#   (예: 191204 를 'ROE' 로, 191208 을 '매출채권회전율' 로 표기)
+#   표시 라벨만 바로잡았으며 계산 로직은 원천 헤더와 이미 일치하므로 손대지 않았다.
 JEMU_COL_MAP: Dict[str, str] = {
-    "112000": "유동자산",
-    "114000": "비유동자산",
+    "112000": "유동자산(계)",
+    "114000": "비유동자산(계)",
     "115000": "자산총계",
-    "116000": "유동부채",
-    "117000": "비유동부채",
+    "116000": "유동부채(계)",
+    "117000": "비유동부채(계)",
     "118000": "부채총계",
-    "118100": "유동부채(재)",
-    "118900": "비유동부채(재)",
-    "121000": "자본총계",
-    "123000": "자본금",
-    "125000": "매출액",
-    "125100": "제품매출",
-    "126000": "영업이익",
-    "128000": "당기순이익",
-    "129000": "EBITDA",
-    "191104": "유동비율",
-    "191105": "부채비율",
-    "191108": "자기자본비율",
-    "191110": "영업이익률",
-    "191204": "ROE",
-    "191207": "총자산회전율",
-    "191208": "매출채권회전율",
-    "191210": "재고자산회전율",
-    "191310": "이자보상배율",
-    "191502": "매출액증가율",
-    "191503": "영업이익증가율",
-    "191505": "자산증가율",
-    "191506": "자본증가율",
+    "118100": "자본금",
+    "118900": "자본총계",
+    "121000": "매출액",
+    "123000": "매출총이익(손실)",
+    "125000": "영업이익(손실)",
+    "125100": "영업외수익",
+    "126000": "영업외비용",
+    "128000": "법인세비용차감전계속사업이익(손실)",
+    "129000": "당기순이익(손실)",
+    "191104": "매출액증가율",
+    "191105": "순이익증가율",
+    "191108": "영업이익증가율",
+    "191110": "재고자산증가율",
+    "191204": "매출액영업이익율",
+    "191207": "이자보상배율(배)",
+    "191208": "자기자본순이익율",
+    "191210": "총자본순이익율",
+    "191310": "EBITDA이자보상배율(배)",
+    "191502": "매출채권회전율",
+    "191503": "영업자산회전율",
+    "191505": "재고자산회전율",
+    "191506": "총자본회전율",
 }
 
 
@@ -70,8 +74,10 @@ class BorrowerSheetBuilder:
         self,
         frames: Dict[str, pd.DataFrame],
         output_dir: str | Path = "eda_pipeline/output",
+        write_kr: bool = False,
     ) -> None:
         self.frames = frames
+        self.write_kr = write_kr
         self.output_dir = Path(output_dir)
         self.output_dir.mkdir(parents=True, exist_ok=True)
 
@@ -185,8 +191,10 @@ class BorrowerSheetBuilder:
             budo["IS_DEFAULT"] = budo["DSH_DT_DT"].notna().astype(int)
 
         if "NMLZ_YN" in budo.columns:
+            # NMLZ_YN 의 실제 값은 '0' / '1' 이다. 'Y' 비교는 정상화 152건을 전부
+            # 미정상화로 판정한다 (step1_load.py 와 동일한 버그였다).
             budo["IS_RECOVERED"] = (
-                budo["NMLZ_YN"].astype(str).str.strip().str.upper() == "Y"
+                budo["NMLZ_YN"].astype(str).str.strip().str.upper().isin(["1", "Y"])
             ).astype(int)
 
         if "NMLZ_DT" in budo.columns:
@@ -326,10 +334,11 @@ class BorrowerSheetBuilder:
                 denom = prev_jemu[c].replace(0, np.nan).abs()
                 yoy[c] = (latest_jemu[c] - prev_jemu[c]) / denom * 100
 
-        # 컬럼명 (한글 매핑 적용)
+        # 컬럼명은 계정 코드를 유지한다. 한글 라벨은 JEMU_COL_MAP 을 참조해
+        # 사람이 읽는 리포트에서만 적용하고, 필요하면 _kr.csv 로 병행 출력한다.
+        # (한글 컬럼명은 인코딩 문제를 일으킬 수 있다.)
         def _jemu_name(code: str, suffix: str) -> str:
-            label = JEMU_COL_MAP.get(code, code)
-            return f"JEMU_{label}_{suffix}"
+            return f"JEMU_{code}_{suffix}"
 
         latest_cols_renamed = {c: _jemu_name(c, "LATEST") for c in num_cols}
         yoy_cols_renamed    = {c: _jemu_name(c, "YOY")    for c in num_cols}
@@ -719,6 +728,23 @@ class BorrowerSheetBuilder:
     def _save(self, sheet: pd.DataFrame) -> None:
         out = self.output_dir / "nh_borrower_sheet.csv"
         sheet.to_csv(out, index=False, encoding="utf-8-sig")
+
+        # 엑셀로 여는 사용자를 위한 한글 헤더 병행본. 기본값 off (30MB 중복 산출).
+        # 컬럼명 규칙: JEMU_<코드>_<접미사> -> JEMU_<한글라벨>_<접미사>
+        if not self.write_kr:
+            return
+
+        import re as _re
+
+        def _kr(col: str) -> str:
+            m = _re.fullmatch(r"JEMU_(\d{6})_(.+)", col)
+            if m and m.group(1) in JEMU_COL_MAP:
+                return f"JEMU_{JEMU_COL_MAP[m.group(1)]}_{m.group(2)}"
+            return col
+
+        kr_path = self.output_dir / "nh_borrower_sheet_kr.csv"
+        sheet.rename(columns=_kr).to_csv(kr_path, index=False, encoding="utf-8-sig")
+        log.info("  한글 헤더 병행본: %s", kr_path.name)
         log.info("  저장: %s  (%d rows x %d cols, %.1f MB)",
                  out, len(sheet), len(sheet.columns),
                  out.stat().st_size / 1024 / 1024)

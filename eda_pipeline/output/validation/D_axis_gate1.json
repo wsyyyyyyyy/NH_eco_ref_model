@@ -1,0 +1,696 @@
+{
+  "panel": "nh_panel_macro_12m_obv_none_real.parquet",
+  "macro_source": "model_input_monthly_cleaned.csv",
+  "criteria_revision": "R1",
+  "macro_lag_months_step6": 0,
+  "n_panel_macro": 91,
+  "interactions_8": [
+    "fx_shock_x_export",
+    "fx_vol_x_fxdebt",
+    "eur_shock_x_export",
+    "rate_shock_x_leverage",
+    "credit_spread_x_lev",
+    "liq_spread_x_shortdebt",
+    "oil_shock_x_inv",
+    "bsi_x_industry"
+  ],
+  "interactions_hybrid": [
+    "fx_shock_x_export_hybrid",
+    "eur_shock_x_export_hybrid"
+  ],
+  "all_pass": true,
+  "checks": [
+    {
+      "id": "G1-1",
+      "name": "거시 원천 첫 행 <= 2021-01",
+      "pass": true,
+      "detail": "첫 행 202101 / 마지막 202605 / 65개월 x 178컬럼"
+    },
+    {
+      "id": "G1-2",
+      "name": "거시 원천 NaN 0개",
+      "pass": true,
+      "detail": "NaN 0개 (impute_data Phase5 assert 와 동일 기준)"
+    },
+    {
+      "id": "G1-3",
+      "name": "거시 조인 후 행수 == 조인 전",
+      "pass": true,
+      "detail": "조인 전 948,214 -> 조인 후 948,214 / (V_BZNO, BASE_YM) 중복 0건"
+    },
+    {
+      "id": "G1-4",
+      "name": "2021년 거시 값 != 2022-01 값 (bfill 누수)",
+      "pass": true,
+      "detail": "거시 91개 중 2022-01 과 값이 같은 개수 (2021년 각 월)\n  202101:0  202102:0  202103:0  202104:0  202105:0  202106:0  202107:0  202108:0  202109:0  202110:0  202111:1  202112:1\n원천 CSV 대비 최대 절대차 0.000e+00 (0 이면 조인 후 어떤 채움도 일어나지 않았다는 뜻)"
+    },
+    {
+      "id": "G1-5",
+      "name": "충격!=0 인 달에서 상호작용 8종 분산 > 0 [개정 R1]",
+      "pass": true,
+      "detail": "fx_shock_x_export            판정 50/50  충격0  0개월( 0.00%/V 0.00%)  노출도공백  3개월(4.90%)  std중앙 0.00413939  OK\nfx_vol_x_fxdebt              판정 53/53  충격0  0개월( 0.00%/V 0.00%)  노출도공백  0개월(0.00%)  std중앙 6.48785e-05  OK\neur_shock_x_export           판정 50/50  충격0  0개월( 0.00%/V 0.00%)  노출도공백  3개월(4.90%)  std중앙 0.00227635  OK\nrate_shock_x_leverage        판정 41/41  충격0 12개월(22.67%/V53.14%)  노출도공백  0개월(0.00%)  std중앙 0.16054  OK\ncredit_spread_x_lev          판정 53/53  충격0  0개월( 0.00%/V 0.00%)  노출도공백  0개월(0.00%)  std중앙 0.0672012  OK\nliq_spread_x_shortdebt       판정 53/53  충격0  0개월( 0.00%/V 0.00%)  노출도공백  0개월(0.00%)  std중앙 0.0737438  OK\noil_shock_x_inv              판정 53/53  충격0  0개월( 0.00%/V 0.00%)  노출도공백  0개월(0.00%)  std중앙 0.0189191  OK\nbsi_x_industry               판정 52/52  충격0  1개월( 1.92%/V 5.83%)  노출도공백  0개월(0.00%)  std중앙 5.68325  OK\nfx_shock_x_export_hybrid     판정 53/53  충격0  0개월( 0.00%/V 0.00%)  노출도공백  0개월(0.00%)  std중앙 0.00150492  OK  (하이브리드, 8종 외)\neur_shock_x_export_hybrid    판정 53/53  충격0  0개월( 0.00%/V 0.00%)  노출도공백  0개월(0.00%)  std중앙 0.000927184  OK  (하이브리드, 8종 외)"
+    },
+    {
+      "id": "G1-5b",
+      "name": "충격 0 인 달 개수/행비율 기록 [개정 R1 신설]",
+      "pass": true,
+      "detail": "상호작용                            충격0월      행%   Valid행%      노출공백월      행%\nfx_shock_x_export                  0   0.00%     0.00%          3   4.90%\nfx_vol_x_fxdebt                    0   0.00%     0.00%          0   0.00%\neur_shock_x_export                 0   0.00%     0.00%          3   4.90%\nrate_shock_x_leverage             12  22.67%    53.14%          0   0.00%\ncredit_spread_x_lev                0   0.00%     0.00%          0   0.00%\nliq_spread_x_shortdebt             0   0.00%     0.00%          0   0.00%\noil_shock_x_inv                    0   0.00%     0.00%          0   0.00%\nbsi_x_industry                     1   1.92%     5.83%          0   0.00%\nfx_shock_x_export_hybrid           0   0.00%     0.00%          0   0.00%\neur_shock_x_export_hybrid          0   0.00%     0.00%          0   0.00%\n  fx_shock_x_export 노출도공백 월: ['202101', '202102', '202103']\n  eur_shock_x_export 노출도공백 월: ['202101', '202102', '202103']\n  rate_shock_x_leverage 충격0 월: ['202107', '202108', '202109', '202403', '202404', '202405', '202406', '202407', '202408', '202409', '202410', '202411']\n  bsi_x_industry 충격0 월: ['202412']"
+    },
+    {
+      "id": "G1-6",
+      "name": "연도 내 월별 변동 0 인 거시 변수 없음",
+      "pass": true,
+      "detail": "거시 91개 중 모든 연도에서 월별 변동 0 인 컬럼: 0개"
+    },
+    {
+      "id": "G1-7",
+      "name": "Group A 총 시차 = 0개월 (공표 시차만 적용)",
+      "pass": true,
+      "detail": "KOSPI_log_ret            Group A       실측 시차 0개월 (기대 0) 잔차 4.213e-17  OK\nUSD_KRW_log_ret          Group A       실측 시차 0개월 (기대 0) 잔차 5.047e-17  OK\ncredit_spread_diff12     Group A(파생)   실측 시차 0개월 (기대 0) 잔차 3.630e-17  OK\nCPI_core_yoy             Group B       실측 시차 1개월 (기대 1) 잔차 1.265e-16  OK\nM2_broad_money_yoy       Group B       실측 시차 1개월 (기대 1) 잔차 9.437e-16  OK\nbase_rate_diff12         Group C       실측 시차 2개월 (기대 2) 잔차 0.000e+00  OK\nBSI_mfg_biz_yoy          Group C       실측 시차 2개월 (기대 2) 잔차 1.586e-16  OK\nstep6 추가 시차 MACRO_LAG_MONTHS = 0\n-> 패널 기준 총 시차: Group A 0개월 / Group B 1 / Group C 2"
+    }
+  ],
+  "g1_5_detail": {
+    "per_interaction": [
+      {
+        "interaction": "fx_shock_x_export",
+        "macro": "USD_KRW_log_ret",
+        "exposure": "exp_fx",
+        "core8": true,
+        "n_months": 53,
+        "n_judged": 50,
+        "n_var_pos": 50,
+        "failed_months": [],
+        "zero_shock_months": [],
+        "n_zero_shock": 0,
+        "zero_shock_rows": 0,
+        "zero_shock_row_pct": 0.0,
+        "zero_shock_rows_valid": 0,
+        "zero_shock_row_pct_valid": 0.0,
+        "exposure_empty_months": [
+          "202101",
+          "202102",
+          "202103"
+        ],
+        "n_exposure_empty": 3,
+        "exposure_empty_rows": 46448,
+        "exposure_empty_row_pct": 4.9,
+        "std_median": 0.00413939478024446,
+        "missing_pct": 89.51281039934024,
+        "pass": true
+      },
+      {
+        "interaction": "fx_vol_x_fxdebt",
+        "macro": "USD_KRW_vol_m",
+        "exposure": "exp_fx_dbt",
+        "core8": true,
+        "n_months": 53,
+        "n_judged": 53,
+        "n_var_pos": 53,
+        "failed_months": [],
+        "zero_shock_months": [],
+        "n_zero_shock": 0,
+        "zero_shock_rows": 0,
+        "zero_shock_row_pct": 0.0,
+        "zero_shock_rows_valid": 0,
+        "zero_shock_row_pct_valid": 0.0,
+        "exposure_empty_months": [],
+        "n_exposure_empty": 0,
+        "exposure_empty_rows": 0,
+        "exposure_empty_row_pct": 0.0,
+        "std_median": 6.487848386415134e-05,
+        "missing_pct": 5.280769952774373,
+        "pass": true
+      },
+      {
+        "interaction": "eur_shock_x_export",
+        "macro": "EUR_KRW_log_ret",
+        "exposure": "exp_fx",
+        "core8": true,
+        "n_months": 53,
+        "n_judged": 50,
+        "n_var_pos": 50,
+        "failed_months": [],
+        "zero_shock_months": [],
+        "n_zero_shock": 0,
+        "zero_shock_rows": 0,
+        "zero_shock_row_pct": 0.0,
+        "zero_shock_rows_valid": 0,
+        "zero_shock_row_pct_valid": 0.0,
+        "exposure_empty_months": [
+          "202101",
+          "202102",
+          "202103"
+        ],
+        "n_exposure_empty": 3,
+        "exposure_empty_rows": 46448,
+        "exposure_empty_row_pct": 4.9,
+        "std_median": 0.002276349893014027,
+        "missing_pct": 89.51281039934024,
+        "pass": true
+      },
+      {
+        "interaction": "rate_shock_x_leverage",
+        "macro": "base_rate_diff12",
+        "exposure": "exp_rate",
+        "core8": true,
+        "n_months": 53,
+        "n_judged": 41,
+        "n_var_pos": 41,
+        "failed_months": [],
+        "zero_shock_months": [
+          "202107",
+          "202108",
+          "202109",
+          "202403",
+          "202404",
+          "202405",
+          "202406",
+          "202407",
+          "202408",
+          "202409",
+          "202410",
+          "202411"
+        ],
+        "n_zero_shock": 12,
+        "zero_shock_rows": 214948,
+        "zero_shock_row_pct": 22.67,
+        "zero_shock_rows_valid": 165967,
+        "zero_shock_row_pct_valid": 53.14,
+        "exposure_empty_months": [],
+        "n_exposure_empty": 0,
+        "exposure_empty_rows": 0,
+        "exposure_empty_row_pct": 0.0,
+        "std_median": 0.16053975004744125,
+        "missing_pct": 5.280769952774373,
+        "pass": true
+      },
+      {
+        "interaction": "credit_spread_x_lev",
+        "macro": "credit_spread_diff12",
+        "exposure": "exp_rate",
+        "core8": true,
+        "n_months": 53,
+        "n_judged": 53,
+        "n_var_pos": 53,
+        "failed_months": [],
+        "zero_shock_months": [],
+        "n_zero_shock": 0,
+        "zero_shock_rows": 0,
+        "zero_shock_row_pct": 0.0,
+        "zero_shock_rows_valid": 0,
+        "zero_shock_row_pct_valid": 0.0,
+        "exposure_empty_months": [],
+        "n_exposure_empty": 0,
+        "exposure_empty_rows": 0,
+        "exposure_empty_row_pct": 0.0,
+        "std_median": 0.06720121261317802,
+        "missing_pct": 5.280769952774373,
+        "pass": true
+      },
+      {
+        "interaction": "liq_spread_x_shortdebt",
+        "macro": "liquidity_spread_diff12",
+        "exposure": "exp_liq",
+        "core8": true,
+        "n_months": 53,
+        "n_judged": 53,
+        "n_var_pos": 53,
+        "failed_months": [],
+        "zero_shock_months": [],
+        "n_zero_shock": 0,
+        "zero_shock_rows": 0,
+        "zero_shock_row_pct": 0.0,
+        "zero_shock_rows_valid": 0,
+        "zero_shock_row_pct_valid": 0.0,
+        "exposure_empty_months": [],
+        "n_exposure_empty": 0,
+        "exposure_empty_rows": 0,
+        "exposure_empty_row_pct": 0.0,
+        "std_median": 0.07374382740535104,
+        "missing_pct": 5.324009137177894,
+        "pass": true
+      },
+      {
+        "interaction": "oil_shock_x_inv",
+        "macro": "WTI_crude_oil_log_ret",
+        "exposure": "exp_inv",
+        "core8": true,
+        "n_months": 53,
+        "n_judged": 53,
+        "n_var_pos": 53,
+        "failed_months": [],
+        "zero_shock_months": [],
+        "n_zero_shock": 0,
+        "zero_shock_rows": 0,
+        "zero_shock_row_pct": 0.0,
+        "zero_shock_rows_valid": 0,
+        "zero_shock_row_pct_valid": 0.0,
+        "exposure_empty_months": [],
+        "n_exposure_empty": 0,
+        "exposure_empty_rows": 0,
+        "exposure_empty_row_pct": 0.0,
+        "std_median": 0.018919137095581694,
+        "missing_pct": 5.7059904198841185,
+        "pass": true
+      },
+      {
+        "interaction": "bsi_x_industry",
+        "macro": "BSI_mfg_biz_yoy",
+        "exposure": "is_manufacturing",
+        "core8": true,
+        "n_months": 53,
+        "n_judged": 52,
+        "n_var_pos": 52,
+        "failed_months": [],
+        "zero_shock_months": [
+          "202412"
+        ],
+        "n_zero_shock": 1,
+        "zero_shock_rows": 18221,
+        "zero_shock_row_pct": 1.92,
+        "zero_shock_rows_valid": 18221,
+        "zero_shock_row_pct_valid": 5.83,
+        "exposure_empty_months": [],
+        "n_exposure_empty": 0,
+        "exposure_empty_rows": 0,
+        "exposure_empty_row_pct": 0.0,
+        "std_median": 5.683253915533224,
+        "missing_pct": 0.08574013882942036,
+        "pass": true
+      },
+      {
+        "interaction": "fx_shock_x_export_hybrid",
+        "macro": "USD_KRW_log_ret",
+        "exposure": "exp_fx_hybrid",
+        "core8": false,
+        "n_months": 53,
+        "n_judged": 53,
+        "n_var_pos": 53,
+        "failed_months": [],
+        "zero_shock_months": [],
+        "n_zero_shock": 0,
+        "zero_shock_rows": 0,
+        "zero_shock_row_pct": 0.0,
+        "zero_shock_rows_valid": 0,
+        "zero_shock_row_pct_valid": 0.0,
+        "exposure_empty_months": [],
+        "n_exposure_empty": 0,
+        "exposure_empty_rows": 0,
+        "exposure_empty_row_pct": 0.0,
+        "std_median": 0.001504922142600727,
+        "missing_pct": 11.042127620980075,
+        "pass": true
+      },
+      {
+        "interaction": "eur_shock_x_export_hybrid",
+        "macro": "EUR_KRW_log_ret",
+        "exposure": "exp_fx_hybrid",
+        "core8": false,
+        "n_months": 53,
+        "n_judged": 53,
+        "n_var_pos": 53,
+        "failed_months": [],
+        "zero_shock_months": [],
+        "n_zero_shock": 0,
+        "zero_shock_rows": 0,
+        "zero_shock_row_pct": 0.0,
+        "zero_shock_rows_valid": 0,
+        "zero_shock_row_pct_valid": 0.0,
+        "exposure_empty_months": [],
+        "n_exposure_empty": 0,
+        "exposure_empty_rows": 0,
+        "exposure_empty_row_pct": 0.0,
+        "std_median": 0.0009271842862011033,
+        "missing_pct": 11.042127620980075,
+        "pass": true
+      }
+    ]
+  },
+  "rate_channel": {
+    "monthly": [
+      {
+        "BASE_YM": "202101",
+        "base_rate_diff12": -0.75,
+        "credit_spread_diff12": -0.8039999999999998,
+        "liquidity_spread_diff12": 0.062
+      },
+      {
+        "BASE_YM": "202102",
+        "base_rate_diff12": -0.75,
+        "credit_spread_diff12": -1.067,
+        "liquidity_spread_diff12": 0.0479999999999999
+      },
+      {
+        "BASE_YM": "202103",
+        "base_rate_diff12": -0.75,
+        "credit_spread_diff12": -0.805,
+        "liquidity_spread_diff12": -0.8050000000000002
+      },
+      {
+        "BASE_YM": "202104",
+        "base_rate_diff12": -0.75,
+        "credit_spread_diff12": -0.8400000000000002,
+        "liquidity_spread_diff12": -0.7849999999999999
+      },
+      {
+        "BASE_YM": "202105",
+        "base_rate_diff12": -0.25,
+        "credit_spread_diff12": -0.8639999999999997,
+        "liquidity_spread_diff12": -0.5350000000000001
+      },
+      {
+        "BASE_YM": "202106",
+        "base_rate_diff12": -0.25,
+        "credit_spread_diff12": -0.48,
+        "liquidity_spread_diff12": -0.525
+      },
+      {
+        "BASE_YM": "202107",
+        "base_rate_diff12": 0.0,
+        "credit_spread_diff12": -0.3,
+        "liquidity_spread_diff12": -0.543
+      },
+      {
+        "BASE_YM": "202108",
+        "base_rate_diff12": 0.0,
+        "credit_spread_diff12": -0.0539999999999998,
+        "liquidity_spread_diff12": -0.359
+      },
+      {
+        "BASE_YM": "202109",
+        "base_rate_diff12": 0.0,
+        "credit_spread_diff12": -0.3790000000000001,
+        "liquidity_spread_diff12": -0.0850000000000001
+      },
+      {
+        "BASE_YM": "202110",
+        "base_rate_diff12": 0.25,
+        "credit_spread_diff12": -0.2990000000000002,
+        "liquidity_spread_diff12": -0.1240000000000001
+      },
+      {
+        "BASE_YM": "202111",
+        "base_rate_diff12": 0.25,
+        "credit_spread_diff12": 0.022,
+        "liquidity_spread_diff12": 0.04
+      },
+      {
+        "BASE_YM": "202112",
+        "base_rate_diff12": 0.25,
+        "credit_spread_diff12": 0.0720000000000001,
+        "liquidity_spread_diff12": 0.14
+      },
+      {
+        "BASE_YM": "202201",
+        "base_rate_diff12": 0.5,
+        "credit_spread_diff12": -0.0249999999999999,
+        "liquidity_spread_diff12": -0.1109999999999999
+      },
+      {
+        "BASE_YM": "202202",
+        "base_rate_diff12": 0.5,
+        "credit_spread_diff12": 0.1149999999999999,
+        "liquidity_spread_diff12": -0.0640000000000001
+      },
+      {
+        "BASE_YM": "202203",
+        "base_rate_diff12": 0.75,
+        "credit_spread_diff12": 0.213,
+        "liquidity_spread_diff12": -0.127
+      },
+      {
+        "BASE_YM": "202204",
+        "base_rate_diff12": 0.75,
+        "credit_spread_diff12": 0.2140000000000002,
+        "liquidity_spread_diff12": -0.0810000000000001
+      },
+      {
+        "BASE_YM": "202205",
+        "base_rate_diff12": 0.75,
+        "credit_spread_diff12": 0.3829999999999995,
+        "liquidity_spread_diff12": -0.0989999999999999
+      },
+      {
+        "BASE_YM": "202206",
+        "base_rate_diff12": 1.0,
+        "credit_spread_diff12": 0.4819999999999997,
+        "liquidity_spread_diff12": 0.1079999999999998
+      },
+      {
+        "BASE_YM": "202207",
+        "base_rate_diff12": 1.25,
+        "credit_spread_diff12": 0.7130000000000004,
+        "liquidity_spread_diff12": 0.207
+      },
+      {
+        "BASE_YM": "202208",
+        "base_rate_diff12": 1.25,
+        "credit_spread_diff12": 0.3949999999999996,
+        "liquidity_spread_diff12": 0.0779999999999996
+      },
+      {
+        "BASE_YM": "202209",
+        "base_rate_diff12": 1.75,
+        "credit_spread_diff12": 0.427,
+        "liquidity_spread_diff12": 0.0759999999999997
+      },
+      {
+        "BASE_YM": "202210",
+        "base_rate_diff12": 1.75,
+        "credit_spread_diff12": 0.7060000000000002,
+        "liquidity_spread_diff12": 1.0719999999999998
+      },
+      {
+        "BASE_YM": "202211",
+        "base_rate_diff12": 1.75,
+        "credit_spread_diff12": 0.9790000000000004,
+        "liquidity_spread_diff12": 1.7400000000000002
+      },
+      {
+        "BASE_YM": "202212",
+        "base_rate_diff12": 2.25,
+        "credit_spread_diff12": 0.943,
+        "liquidity_spread_diff12": 1.171
+      },
+      {
+        "BASE_YM": "202301",
+        "base_rate_diff12": 2.25,
+        "credit_spread_diff12": 1.3149999999999995,
+        "liquidity_spread_diff12": 0.7200000000000002
+      },
+      {
+        "BASE_YM": "202302",
+        "base_rate_diff12": 2.25,
+        "credit_spread_diff12": 1.12,
+        "liquidity_spread_diff12": 0.0499999999999998
+      },
+      {
+        "BASE_YM": "202303",
+        "base_rate_diff12": 2.25,
+        "credit_spread_diff12": 1.088,
+        "liquidity_spread_diff12": 0.3539999999999998
+      },
+      {
+        "BASE_YM": "202304",
+        "base_rate_diff12": 2.25,
+        "credit_spread_diff12": 1.1930000000000005,
+        "liquidity_spread_diff12": 0.3439999999999998
+      },
+      {
+        "BASE_YM": "202305",
+        "base_rate_diff12": 2.25,
+        "credit_spread_diff12": 1.1710000000000005,
+        "liquidity_spread_diff12": 0.0939999999999996
+      },
+      {
+        "BASE_YM": "202306",
+        "base_rate_diff12": 2.0,
+        "credit_spread_diff12": 0.5430000000000006,
+        "liquidity_spread_diff12": 0.0029999999999996
+      },
+      {
+        "BASE_YM": "202307",
+        "base_rate_diff12": 1.75,
+        "credit_spread_diff12": -0.0130000000000003,
+        "liquidity_spread_diff12": -0.1159999999999996
+      },
+      {
+        "BASE_YM": "202308",
+        "base_rate_diff12": 1.75,
+        "credit_spread_diff12": 0.1320000000000001,
+        "liquidity_spread_diff12": 0.0330000000000003
+      },
+      {
+        "BASE_YM": "202309",
+        "base_rate_diff12": 1.25,
+        "credit_spread_diff12": 0.3449999999999997,
+        "liquidity_spread_diff12": -0.0359999999999995
+      },
+      {
+        "BASE_YM": "202310",
+        "base_rate_diff12": 1.0,
+        "credit_spread_diff12": -0.1259999999999999,
+        "liquidity_spread_diff12": -0.6949999999999994
+      },
+      {
+        "BASE_YM": "202311",
+        "base_rate_diff12": 1.0,
+        "credit_spread_diff12": -0.104,
+        "liquidity_spread_diff12": -1.4409999999999998
+      },
+      {
+        "BASE_YM": "202312",
+        "base_rate_diff12": 0.5,
+        "credit_spread_diff12": 0.2080000000000001,
+        "liquidity_spread_diff12": -0.8879999999999999
+      },
+      {
+        "BASE_YM": "202401",
+        "base_rate_diff12": 0.25,
+        "credit_spread_diff12": -0.201,
+        "liquidity_spread_diff12": -0.2259999999999999
+      },
+      {
+        "BASE_YM": "202402",
+        "base_rate_diff12": 0.25,
+        "credit_spread_diff12": 0.0729999999999999,
+        "liquidity_spread_diff12": 0.3290000000000006
+      },
+      {
+        "BASE_YM": "202403",
+        "base_rate_diff12": 0.0,
+        "credit_spread_diff12": 0.0369999999999999,
+        "liquidity_spread_diff12": 0.0490000000000003
+      },
+      {
+        "BASE_YM": "202404",
+        "base_rate_diff12": 0.0,
+        "credit_spread_diff12": -0.1070000000000002,
+        "liquidity_spread_diff12": 0.0060000000000002
+      },
+      {
+        "BASE_YM": "202405",
+        "base_rate_diff12": 0.0,
+        "credit_spread_diff12": -0.1759999999999997,
+        "liquidity_spread_diff12": 0.2890000000000001
+      },
+      {
+        "BASE_YM": "202406",
+        "base_rate_diff12": 0.0,
+        "credit_spread_diff12": 0.1739999999999995,
+        "liquidity_spread_diff12": 0.2550000000000003
+      },
+      {
+        "BASE_YM": "202407",
+        "base_rate_diff12": 0.0,
+        "credit_spread_diff12": 0.326,
+        "liquidity_spread_diff12": 0.1269999999999993
+      },
+      {
+        "BASE_YM": "202408",
+        "base_rate_diff12": 0.0,
+        "credit_spread_diff12": 0.2930000000000001,
+        "liquidity_spread_diff12": -0.1080000000000001
+      },
+      {
+        "BASE_YM": "202409",
+        "base_rate_diff12": 0.0,
+        "credit_spread_diff12": 0.2030000000000003,
+        "liquidity_spread_diff12": 0.012
+      },
+      {
+        "BASE_YM": "202410",
+        "base_rate_diff12": 0.0,
+        "credit_spread_diff12": 0.3599999999999999,
+        "liquidity_spread_diff12": -0.2410000000000005
+      },
+      {
+        "BASE_YM": "202411",
+        "base_rate_diff12": 0.0,
+        "credit_spread_diff12": 0.0739999999999998,
+        "liquidity_spread_diff12": -0.3630000000000004
+      },
+      {
+        "BASE_YM": "202412",
+        "base_rate_diff12": -0.25,
+        "credit_spread_diff12": -0.4180000000000001,
+        "liquidity_spread_diff12": -0.2270000000000003
+      },
+      {
+        "BASE_YM": "202501",
+        "base_rate_diff12": -0.5,
+        "credit_spread_diff12": -0.2189999999999998,
+        "liquidity_spread_diff12": -0.5040000000000004
+      },
+      {
+        "BASE_YM": "202502",
+        "base_rate_diff12": -0.5,
+        "credit_spread_diff12": -0.1069999999999997,
+        "liquidity_spread_diff12": -0.5240000000000005
+      },
+      {
+        "BASE_YM": "202503",
+        "base_rate_diff12": -0.5,
+        "credit_spread_diff12": -0.1349999999999998,
+        "liquidity_spread_diff12": -0.4180000000000001
+      },
+      {
+        "BASE_YM": "202504",
+        "base_rate_diff12": -0.75,
+        "credit_spread_diff12": -0.0030000000000001,
+        "liquidity_spread_diff12": -0.3259999999999996
+      },
+      {
+        "BASE_YM": "202505",
+        "base_rate_diff12": -0.75,
+        "credit_spread_diff12": -0.3420000000000005,
+        "liquidity_spread_diff12": -0.4909999999999996
+      }
+    ],
+    "summary": {
+      "base_rate_diff12": {
+        "n_zero_months": 12,
+        "n_months": 53,
+        "zero_months": [
+          "202107",
+          "202108",
+          "202109",
+          "202403",
+          "202404",
+          "202405",
+          "202406",
+          "202407",
+          "202408",
+          "202409",
+          "202410",
+          "202411"
+        ],
+        "zero_row_pct": 22.67,
+        "zero_row_pct_valid": 53.14,
+        "abs_median": 0.75,
+        "min": -0.75,
+        "max": 2.25
+      },
+      "credit_spread_diff12": {
+        "n_zero_months": 0,
+        "n_months": 53,
+        "zero_months": [],
+        "zero_row_pct": 0.0,
+        "zero_row_pct_valid": 0.0,
+        "abs_median": 0.3,
+        "min": -1.067,
+        "max": 1.3149999999999995
+      },
+      "liquidity_spread_diff12": {
+        "n_zero_months": 0,
+        "n_months": 53,
+        "zero_months": [],
+        "zero_row_pct": 0.0,
+        "zero_row_pct_valid": 0.0,
+        "abs_median": 0.2259999999999999,
+        "min": -1.4409999999999998,
+        "max": 1.7400000000000002
+      }
+    }
+  }
+}

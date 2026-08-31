@@ -14,8 +14,15 @@ from eda_pipeline.step1_load import RawLoader
 from eda_pipeline.step4_borrower_sheet import BorrowerSheetBuilder
 
 if __name__ == "__main__":
+    import argparse
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--kr", action="store_true",
+                    help="한글 헤더 병행본(nh_borrower_sheet_kr.csv)도 함께 생성")
+    args = ap.parse_args()
+
     frames = RawLoader(data_dir="input").load_all()
-    sheet  = BorrowerSheetBuilder(frames, output_dir="eda_pipeline/output").build()
+    sheet  = BorrowerSheetBuilder(frames, output_dir="eda_pipeline/output",
+                                  write_kr=args.kr).build()
     print(f"\n=== 완료 ===")
     print(f"Shape : {sheet.shape}")
     print(f"부도율: {sheet['IS_DEFAULT'].mean()*100:.4f}%")

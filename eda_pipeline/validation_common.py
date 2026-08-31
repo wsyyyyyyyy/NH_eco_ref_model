@@ -1,26 +1,47 @@
-"""Shared data-loading and metric utilities for the model validation suite (docs/step28).
+"""모델 검증 스위트(docs/step28) 공통 로더/지표 유틸.
 
-All experiments here read from database/portal.duckdb's corporate_panel table instead of
-the 6.76GB source CSV (eda_pipeline/output/nh_panel_macro_12m.csv is not present in this
-checkout, and free RAM on this machine is too tight to load the raw CSV with pandas anyway).
-corporate_panel contains the exact same 1,944,418-row population and TRAIN/VALID SPLIT
-boundary that produced eda_pipeline/output/lgbm_12m_model.txt, so pulling only the needed
-columns through DuckDB (push-down projection, FLOAT cast) reproduces the original pipeline
-without the memory blowup of loading the full CSV.
+패널은 6.76GB 원본 CSV 대신 DuckDB 의 corporate_panel 테이블에서 읽는다.
+필요한 컬럼만 push-down projection + FLOAT 캐스트로 당겨오므로 메모리가 견딘다.
+
+DB 는 두 개가 병존한다.
+  legacy(portal.duckdb)    구 스키마. lgbm_12m_model.txt 를 만든 모집단 그대로.
+                           S0(기존 파이프라인 재현) 평가에만 쓴다. 읽기 전용.
+  v2(portal_v2.duckdb)     신 스키마. STAGE 5 까지의 패널 정정이 반영된 기본 DB.
+                           S1~S9 가 여기를 본다.
+어느 쪽도 이 모듈에서 쓰지 않는다. 연결은 예외 없이 read_only=True 다.
+경로는 전부 eda_pipeline/config.py 를 경유한다.
 """
 import gc
 import os
+import sys
+from pathlib import Path
 
-import duckdb
+_PROJECT_ROOT = Path(__file__).resolve().parent.parent
+if str(_PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(_PROJECT_ROOT))
+
 import lightgbm as lgb
 import numpy as np
 from scipy.stats import ks_2samp
 from sklearn.metrics import roc_auc_score
 
-DB_PATH = 'C:/Users/User/model_kbm/database/portal.duckdb'
-FULL_MODEL_PATH = 'C:/Users/User/model_kbm/eda_pipeline/output/lgbm_12m_model.txt'
-LEAN_MODEL_PATH = 'C:/Users/User/model_kbm/eda_pipeline/output/lgbm_12m_lean_model.txt'
-OUTPUT_DIR = 'C:/Users/User/model_kbm/eda_pipeline/output/validation'
+from eda_pipeline import config
+
+# 경로는 전부 config 경유다. 하드코딩 절대경로를 두지 않는다
+# (예전 값은 C:/Users/User/model_kbm/... 로, 이 계정에서는 열리지 않았다).
+#
+# DB 는 구/신 스키마가 병존한다. 기본값은 신 스키마(portal_v2.duckdb)이고,
+# S0(기존 파이프라인 재현)만 which='legacy' 로 구 스키마를 본다.
+# 없는 파일로 조용히 폴백하지 않는다 — config.require_db 가 예외를 던진다.
+DB_PATH = config.DB_PATH                      # = config.DB_PATH_V2
+DB_PATH_LEGACY = config.DB_PATH_LEGACY
+DB_PATH_V2 = config.DB_PATH_V2
+
+# legacy 2건은 읽기 전용 보호 대상이다 (config.PROTECTED_MODELS).
+FULL_MODEL_PATH = config.MODEL_PATH_LEGACY_FULL
+LEAN_MODEL_PATH = config.MODEL_PATH_LEGACY_LEAN
+
+OUTPUT_DIR = str(config.VALIDATION_DIR)
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
 # Only OBV_ELYWRN_OBV_GRD_DSC is a true categorical feature in the production model (A/B).
@@ -32,26 +53,30 @@ CATEGORICAL_COLS = ['OBV_ELYWRN_OBV_GRD_DSC']
 # same VALID split it later reports as the final metric. To get an unbiased read, we carve a
 # Dev slice out of the tail of TRAIN for early stopping and keep VALID untouched until the
 # very last, single evaluation call.
-DEV_START, DEV_END = 202310, 202312   # last 3 months of TRAIN
-TRAIN_END = 202312                     # inclusive, matches production TRAIN boundary
-VALID_START = 202401                   # matches production VALID boundary (true holdout)
+# 경계는 eda_pipeline/split_spec.py 한 곳에만 둔다 (step7 / Ablation 러너와 공유).
+from eda_pipeline.split_spec import (DEV_START_INT as DEV_START,
+                                     DEV_END_INT as DEV_END,
+                                     TRAIN_END_INT as TRAIN_END,
+                                     VALID_START_INT as VALID_START)
 
 
 def full_feature_list():
-    return lgb.Booster(model_file=FULL_MODEL_PATH).feature_name()
+    return lgb.Booster(model_file=str(FULL_MODEL_PATH)).feature_name()
 
 
 def lean_feature_list():
-    return lgb.Booster(model_file=LEAN_MODEL_PATH).feature_name()
+    return lgb.Booster(model_file=str(LEAN_MODEL_PATH)).feature_name()
 
 
-def load_panel(feature_cols, base_ym_min=None, base_ym_max=None):
+def load_panel(feature_cols, base_ym_min=None, base_ym_max=None, which='v2'):
     """Pull V_BZNO/BASE_YM/SPLIT/IS_BUDO_12M + feature_cols from corporate_panel.
+
+    which: 'v2'(신 스키마, S1~S9 기본) | 'legacy'(구 스키마, S0 전용).
 
     Numeric feature columns are cast to FLOAT (4-byte) in SQL so the pandas frame that comes
     back is roughly half the size of the DOUBLE-precision source columns.
     """
-    con = duckdb.connect(DB_PATH, read_only=True)
+    con = config.connect_db(which)          # read_only=True. 예외 없다.
     select_parts = ['V_BZNO', 'BASE_YM', 'SPLIT', 'IS_BUDO_12M']
     for c in feature_cols:
         if c in CATEGORICAL_COLS:
@@ -64,7 +89,7 @@ def load_panel(feature_cols, base_ym_min=None, base_ym_max=None):
     if base_ym_max is not None:
         where.append(f'BASE_YM <= {base_ym_max}')
     where_sql = f"WHERE {' AND '.join(where)}" if where else ''
-    sql = f'SELECT {", ".join(select_parts)} FROM corporate_panel {where_sql}'
+    sql = f'SELECT {", ".join(select_parts)} FROM {config.PANEL_TABLE} {where_sql}'
     df = con.execute(sql).fetchdf()
     con.close()
     for c in CATEGORICAL_COLS:

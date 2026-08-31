@@ -40,7 +40,12 @@ def get_borrowers(branch_code: str = "VB001", base_ym: str = "202402", page: int
 def get_borrower_financials(bzno: str, base_ym: Optional[str] = None, years: int = 3, db=Depends(get_db)):
     """Last N distinct annual financial-statement vintages for a borrower.
 
-    JEMU_* columns (자본총계/총자산/매출액/영업이익 등) come from yearly
+    JEMU_* columns (자본총계/총자산/매출액/영업이익) come from yearly
+    NOTE: 계정 코드는 input/가상사업자_JEMU_재무데이터v.txt 의 0행(한글 논리명)이
+    정본이다. 과거 이 파일은 118100 부터 한 칸씩 밀린 매핑을 써서
+    'capital' 에 매출액(121000)을, 'revenue' 에 영업이익(125000)을 넣고 있었다.
+    아래 매핑이 원천 헤더 기준으로 정정된 것이다.
+      118900 자본총계 / 115000 자산총계 / 121000 매출액 / 125000 영업이익(손실)
     financial statements re-joined onto the monthly panel, so the same value
     repeats for ~12 months until the next fiscal year's statement lands
     (verified directly against the DB). Each vintage is labeled by the year
@@ -68,10 +73,10 @@ def get_borrower_financials(bzno: str, base_ym: Optional[str] = None, years: int
                 MIN(BASE_YM) AS vintage_start,
                 arg_max(PROB_FULL, BASE_YM) AS PROB_FULL,
                 arg_max(CG01_KIS_SCORE, BASE_YM) AS CG01_KIS_SCORE,
-                JEMU_121000, JEMU_115000, JEMU_125000, JEMU_126000
+                JEMU_118900, JEMU_115000, JEMU_121000, JEMU_125000
             FROM {panel}
             WHERE 1=1 {cutoff}
-            GROUP BY JEMU_121000, JEMU_115000, JEMU_125000, JEMU_126000
+            GROUP BY JEMU_118900, JEMU_115000, JEMU_121000, JEMU_125000
         ),
         yearly AS (
             SELECT *,
@@ -95,10 +100,10 @@ def get_borrower_financials(bzno: str, base_ym: Optional[str] = None, years: int
         records.append({
             'year': vintage_start_str[:4],
             'base_ym': vintage_start_str,
-            'capital': row['JEMU_121000'],
-            'total_assets': row['JEMU_115000'],
-            'revenue': row['JEMU_125000'],
-            'operating_profit': row['JEMU_126000'],
+            'capital': row['JEMU_118900'],          # 자본총계
+            'total_assets': row['JEMU_115000'],     # 자산총계
+            'revenue': row['JEMU_121000'],          # 매출액
+            'operating_profit': row['JEMU_125000'], # 영업이익(손실)
             'kis_score': row['CG01_KIS_SCORE'],
             'nice_grade': prob_to_grade(row['PROB_FULL']),
         })
@@ -143,6 +148,45 @@ def get_borrower_capability(bzno: str, base_ym: Optional[str] = None, db=Depends
     """5-axis capability diagnostic (활동성/수익성/안정성/성장성/규모) for the
     borrower vs. its industry (KSIC division) peers in the same month.
 
+    축 매핑은 input/가상사업자_JEMU_재무데이터v.txt 0행(한글 논리명)을 정본으로 정정했다.
+    과거에는 118100 부터 한 칸 밀린 라벨을 보고 축을 짰기 때문에 11축 중 10축이
+    의도한 지표와 다른 계정을 참조하고 있었다 (예: pr_roe 가 매출액영업이익율을 참조).
+
+    정정 내역:
+      pr_asset_turnover      191207 -> 191506_val  (총자본회전율 = 매출액/평균자산)
+      pr_receivable_turnover 191208 -> 191502_val  (매출채권회전율)
+      pr_inventory_turnover  191210 -> 191505_val  (재고자산회전율)
+      pr_op_margin           191110 -> 191204_val  (매출액영업이익율)
+      pr_roe                 191204 -> 191208_val  (자기자본순이익율)
+      pr_interest_coverage   191310 -> 191207_val  (이자보상배율)
+      pr_revenue_growth      191502 -> 191104_val  (매출액증가율)
+      pr_debt_ratio_inv      191105 -> -JEMU_debt_ratio  (원계정 재계산, 아래 주석 참조)
+      pr_current_ratio       (신규) -> JEMU_current_ratio (유동비율 = 유동자산/유동부채)
+      pr_capital_growth      축 제거. 191506 은 자본증가율이 아니고, 원천에 자본증가율이
+                             없다. 191105(순이익증가율)로 대체하면 sentinel 이 24.5%라
+                             축의 1/4 이 비어 오히려 오해를 부른다.
+      pr_assets              115000 유지 (원래 정상)
+
+    _val 접미사는 jemu_sentinel 이 sentinel(10000~10003, ±9999.99)을 제거한 연속값이다.
+    원본 컬럼을 그대로 PERCENT_RANK 하면 10001 이 최상위로 랭크된다.
+
+    안정성 축에서 자기자본비율(118900/115000)은 제외했다. 부채비율 역수(118900/118000)와
+    분자가 같아 정보가 거의 중복되고, 자본잠식이면 두 축이 단일 원인으로 동시에 최하위가
+    되어 이중 감점이 발생하기 때문이다. 대신 유동비율(112000/116000)을 넣는다.
+    분모가 자본총계와 무관해 자본잠식과 독립적이고(자본잠식 행에서도 99.70% 계산 가능),
+    단기 지급능력이라는 다른 차원을 커버한다.
+    세 번째 축인 이자보상배율(191207)도 자본총계와 무관하다(자본잠식 행 비결측 96.26%).
+
+    자본잠식 자체는 모델에서 capital_impaired 플래그(부도 배수 2.55)로 이미 잡히므로
+    차트에서 이중 강조할 필요가 없다. 차트에서는 별도 배지로 표시하는 것이 맞다(승인 대기).
+
+    pr_debt_ratio_inv 는 1/debt_ratio 대신 -debt_ratio 로 정렬한다.
+    PERCENT_RANK 는 순서만 보므로 debt_ratio > 0 구간에서 둘은 동일하고,
+    부채 0(무차입) 인 경우 1/0 이 정의되지 않는 문제를 피할 수 있다.
+    자본잠식(자본총계 <= 0, 2.55%)은 jemu_sentinel 이 debt_ratio 를 NULL 로 만든다.
+    NULLS FIRST 로 최하위에 두어 "부채비율 0 인 우량기업"으로 보이지 않게 한다.
+    (자본잠식은 부도 배수 2.55 의 최강 신호다.)
+
     Each axis is the average PERCENT_RANK() of the borrower's real JEMU_*
     financial ratios against every company in the same division/month
     (0~100, 50 = median). This replaces the previous fully hardcoded
@@ -162,16 +206,17 @@ def get_borrower_capability(bzno: str, base_ym: Optional[str] = None, db=Depends
             SELECT
                 V_BZNO,
                 {division_expr} AS division,
-                PERCENT_RANK() OVER (ORDER BY JEMU_191207) AS pr_asset_turnover,
-                PERCENT_RANK() OVER (ORDER BY JEMU_191208) AS pr_receivable_turnover,
-                PERCENT_RANK() OVER (ORDER BY JEMU_191210) AS pr_inventory_turnover,
-                PERCENT_RANK() OVER (ORDER BY JEMU_191110) AS pr_op_margin,
-                PERCENT_RANK() OVER (ORDER BY JEMU_191204) AS pr_roe,
-                PERCENT_RANK() OVER (ORDER BY -JEMU_191105) AS pr_debt_ratio_inv,
-                PERCENT_RANK() OVER (ORDER BY JEMU_191108) AS pr_equity_ratio,
-                PERCENT_RANK() OVER (ORDER BY JEMU_191310) AS pr_interest_coverage,
-                PERCENT_RANK() OVER (ORDER BY JEMU_191502) AS pr_revenue_growth,
-                PERCENT_RANK() OVER (ORDER BY JEMU_191506) AS pr_capital_growth,
+                PERCENT_RANK() OVER (ORDER BY JEMU_191506_val) AS pr_asset_turnover,
+                PERCENT_RANK() OVER (ORDER BY JEMU_191502_val) AS pr_receivable_turnover,
+                PERCENT_RANK() OVER (ORDER BY JEMU_191505_val) AS pr_inventory_turnover,
+                PERCENT_RANK() OVER (ORDER BY JEMU_191204_val) AS pr_op_margin,
+                PERCENT_RANK() OVER (ORDER BY JEMU_191208_val) AS pr_roe,
+                PERCENT_RANK() OVER (
+                    ORDER BY -JEMU_debt_ratio NULLS FIRST) AS pr_debt_ratio_inv,
+                PERCENT_RANK() OVER (
+                    ORDER BY JEMU_current_ratio NULLS FIRST) AS pr_current_ratio,
+                PERCENT_RANK() OVER (ORDER BY JEMU_191207_val) AS pr_interest_coverage,
+                PERCENT_RANK() OVER (ORDER BY JEMU_191104_val) AS pr_revenue_growth,
                 PERCENT_RANK() OVER (ORDER BY JEMU_115000) AS pr_assets
             FROM {panel}
         ),
@@ -180,8 +225,8 @@ def get_borrower_capability(bzno: str, base_ym: Optional[str] = None, db=Depends
                 V_BZNO, division,
                 (pr_asset_turnover + pr_receivable_turnover + pr_inventory_turnover) / 3.0 * 100 AS activity,
                 (pr_op_margin + pr_roe) / 2.0 * 100 AS profitability,
-                (pr_debt_ratio_inv + pr_equity_ratio + pr_interest_coverage) / 3.0 * 100 AS stability,
-                (pr_revenue_growth + pr_capital_growth) / 2.0 * 100 AS growth,
+                (pr_debt_ratio_inv + pr_current_ratio + pr_interest_coverage) / 3.0 * 100 AS stability,
+                pr_revenue_growth * 100 AS growth,   -- pr_capital_growth 축 제거
                 pr_assets * 100 AS scale
             FROM ranked
         )

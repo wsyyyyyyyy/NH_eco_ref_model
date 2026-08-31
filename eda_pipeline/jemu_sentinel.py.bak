@@ -1,0 +1,285 @@
+"""
+======================================================================
+JEMU sentinel 해독 & 재무비율 재계산
+======================================================================
+JEMU 재무데이터의 증가율/비율 컬럼에는 연속값이 아닌 sentinel 코드가 섞여 있다.
+그대로 모델에 넣으면 10001 이 "증가율 10001%" 로 학습된다.
+
+  10001 = 흑자 -> 적자 전환   (전기 + / 당기 -)
+  10002 = 적자 지속           (전기 - / 당기 -)
+  10003 = 적자 -> 흑자 전환   (전기 - / 당기 +)
+  10000 = 산출불가 (분모 0)
+  ±9999.99 = 상하한 캡 (실제값이 ±10000 을 넘음)
+
+★ 10000 은 결측이 아니라 실체가 있다.
+  - 이자보상배율(191207)=10000 → 이자비용 0 = 무차입 기업 (건전 신호)
+  - 재고자산회전율(191505)=10000 → 재고자산 0 = 서비스/용역업 (업종 특성)
+  -1 이나 결측으로 뭉개면 무차입 우량기업과 재무 미제출 기업이 같은 값이 된다.
+
+★ 예외: 매출액증가율(191104)의 10001~10003 은 부호패턴이 맞지 않는다.
+  매출액은 음수가 거의 없어 흑/적자 코드가 성립할 수 없다(실측 일치율 2~13%).
+  소스 산출 오류로 보고 결측 처리한다. 단 191104 의 10000(전기매출=0)은 유효하다(98%).
+
+사용법:
+    from eda_pipeline.jemu_sentinel import decode_jemu
+    jemu = decode_jemu(frames["jemu"])            # 원천 컬럼명 (191104 ...)
+    panel = decode_jemu(panel, prefix="JEMU_")    # 패널 컬럼명 (JEMU_191104 ...)
+"""
+
+from __future__ import annotations
+
+import logging
+from typing import Iterable, Sequence
+
+import numpy as np
+import pandas as pd
+
+log = logging.getLogger(__name__)
+
+# ── sentinel 코드 ───────────────────────────────────────────────────
+TURN_NEG = 10001   # 흑자 -> 적자
+CONT_NEG = 10002   # 적자 지속
+TURN_POS = 10003   # 적자 -> 흑자
+UNDEF = 10000      # 분모 0 -> 산출불가
+CAP_ABS = 9999.99  # 상하한 캡
+VAL_LIMIT = 9999   # 연속값으로 인정하는 절대값 상한
+
+# ── 대상 컬럼 ───────────────────────────────────────────────────────
+GROWTH_COLS: Sequence[str] = ("191104", "191105", "191108", "191110")
+RATIO_COLS: Sequence[str] = ("191204", "191207", "191208", "191210", "191310",
+                             "191502", "191503", "191505", "191506")
+
+# 흑/적자 전환 코드가 성립하지 않는 컬럼. 해당 코드는 결측 처리한다.
+NO_TURN_CODE_COLS = frozenset({"191104"})
+
+# ── 원계정 ──────────────────────────────────────────────────────────
+CUR_ASSET = "112000"   # 유동자산(계)
+TOT_ASSET = "115000"   # 자산총계
+CUR_LIAB = "116000"    # 유동부채(계)
+TOT_LIAB = "118000"    # 부채총계
+TOT_EQUITY = "118900"  # 자본총계
+SALES = "121000"       # 매출액
+OP_INCOME = "125000"   # 영업이익(손실)
+NET_INCOME = "129000"  # 당기순이익(손실)
+
+
+def _num(df: pd.DataFrame, col: str) -> pd.Series:
+    """컬럼을 수치형으로. 없으면 전부 NaN."""
+    if col not in df.columns:
+        return pd.Series(np.nan, index=df.index, dtype="float64")
+    return pd.to_numeric(df[col], errors="coerce")
+
+
+def _safe_div(num: pd.Series, den: pd.Series,
+              invalid: pd.Series | None = None) -> pd.Series:
+    """0 나눗셈과 inf 를 NaN 으로 만든다. invalid 가 True 인 곳도 NaN."""
+    d = den.where((den != 0) & den.notna())
+    out = (num / d).replace([np.inf, -np.inf], np.nan)
+    if invalid is not None:
+        out = out.mask(invalid.fillna(False))
+    return out
+
+
+# ====================================================================
+# 4-1 증가율 컬럼 분해
+# ====================================================================
+
+def decode_growth(df: pd.DataFrame,
+                  cols: Iterable[str] = GROWTH_COLS,
+                  prefix: str = "") -> pd.DataFrame:
+    """증가율 컬럼을 연속값 + sentinel 플래그 6종으로 분해한다.
+
+    각 컬럼 <c> 에 대해 아래를 만든다.
+        <c>_val       연속값 (|x| < 9999 인 것만, 나머지 NaN)
+        <c>_turn_neg  10001  흑자 -> 적자
+        <c>_cont_neg  10002  적자 지속
+        <c>_turn_pos  10003  적자 -> 흑자
+        <c>_undef     10000  산출불가
+        <c>_capped    |x| == 9999.99  상하한 캡
+
+    NO_TURN_CODE_COLS(191104)의 전환 코드는 부호패턴이 맞지 않으므로
+    _val 과 전환 플래그 3종을 모두 NaN 으로 둔다. 값이 틀렸다는 사실만 남기고
+    0(전환 없음)으로 단정하지 않는다.
+    """
+    out = df.copy()
+    for c in cols:
+        src = f"{prefix}{c}"
+        if src not in out.columns:
+            log.warning("decode_growth: %s 없음 — 건너뜀", src)
+            continue
+        v = _num(out, src)
+
+        out[f"{src}_val"] = v.where(v.abs() < VAL_LIMIT)
+        out[f"{src}_undef"] = (v == UNDEF).astype("float64")
+        out[f"{src}_capped"] = (v.abs() == CAP_ABS).astype("float64")
+
+        turn = {"turn_neg": TURN_NEG, "cont_neg": CONT_NEG, "turn_pos": TURN_POS}
+        bogus = v.isin([TURN_NEG, CONT_NEG, TURN_POS]) if c in NO_TURN_CODE_COLS \
+            else pd.Series(False, index=out.index)
+        for name, code in turn.items():
+            out[f"{src}_{name}"] = (v == code).astype("float64").mask(bogus)
+        if c in NO_TURN_CODE_COLS and int(bogus.sum()):
+            log.info("  %s: 성립하지 않는 전환코드 %d건 → 결측 처리",
+                     src, int(bogus.sum()))
+    return out
+
+
+# ====================================================================
+# 4-2 비율 컬럼 분해
+# ====================================================================
+
+def decode_ratio(df: pd.DataFrame,
+                 cols: Iterable[str] = RATIO_COLS,
+                 prefix: str = "") -> pd.DataFrame:
+    """비율 컬럼을 연속값 + undef/capped 로 분해한다."""
+    out = df.copy()
+    for c in cols:
+        src = f"{prefix}{c}"
+        if src not in out.columns:
+            log.warning("decode_ratio: %s 없음 — 건너뜀", src)
+            continue
+        v = _num(out, src)
+        out[f"{src}_val"] = v.where(v.abs() < VAL_LIMIT)
+        out[f"{src}_undef"] = (v == UNDEF).astype("float64")
+        out[f"{src}_capped"] = (v.abs() == CAP_ABS).astype("float64")
+    return out
+
+
+# ====================================================================
+# 4-3 구조 플래그 (10000 의 실체 보존)
+# ====================================================================
+
+def add_structure_flags(df: pd.DataFrame, prefix: str = "") -> pd.DataFrame:
+    """10000 이 뜻하는 기업 구조를 명시적 플래그로 남긴다.
+
+        is_debt_free      191207 == 10000  이자비용 0 → 무차입
+        is_inventory_free 191505 == 10000  재고자산 0 → 서비스/용역업
+        is_no_prev_sales  191104 == 10000  전기 매출 0 → 휴면 / 신설
+    """
+    out = df.copy()
+    spec = {
+        f"{prefix}is_debt_free": f"{prefix}191207",
+        f"{prefix}is_inventory_free": f"{prefix}191505",
+        f"{prefix}is_no_prev_sales": f"{prefix}191104",
+    }
+    for flag, src in spec.items():
+        if src not in out.columns:
+            log.warning("add_structure_flags: %s 없음 — %s 생략", src, flag)
+            continue
+        out[flag] = (_num(out, src) == UNDEF).astype("float64")
+    return out
+
+
+# ====================================================================
+# 4-4 원계정 직접 재계산 (sentinel 없는 클린 버전)
+# ====================================================================
+
+def compute_clean_ratios(df: pd.DataFrame, prefix: str = "") -> pd.DataFrame:
+    """원계정에서 재무비율을 직접 계산한다. sentinel 이 섞이지 않는다.
+
+        debt_ratio        부채총계 / 자본총계     (자본잠식이면 NaN)
+        debt_dependency   부채총계 / 자산총계
+        op_margin         영업이익 / 매출액       (매출 0 이면 NaN)
+        roa               당기순이익 / 자산총계
+        roe               당기순이익 / 자본총계   (자본잠식이면 NaN)
+        current_ratio     유동자산 / 유동부채
+
+    분모 이상은 플래그로 남긴다.
+        capital_impaired  자본총계 <= 0 (실측 2.55%)
+        no_sales          매출액 == 0   (실측 1.31%)
+    """
+    out = df.copy()
+    p = prefix
+    eq = _num(out, f"{p}{TOT_EQUITY}")
+    sales = _num(out, f"{p}{SALES}")
+
+    impaired = eq <= 0
+    no_sales = sales == 0
+    out[f"{p}capital_impaired"] = impaired.astype("float64")
+    out[f"{p}no_sales"] = no_sales.astype("float64")
+
+    out[f"{p}debt_ratio"] = _safe_div(_num(out, f"{p}{TOT_LIAB}"), eq, impaired)
+    out[f"{p}debt_dependency"] = _safe_div(_num(out, f"{p}{TOT_LIAB}"),
+                                           _num(out, f"{p}{TOT_ASSET}"))
+    out[f"{p}op_margin"] = _safe_div(_num(out, f"{p}{OP_INCOME}"), sales, no_sales)
+    out[f"{p}roa"] = _safe_div(_num(out, f"{p}{NET_INCOME}"),
+                               _num(out, f"{p}{TOT_ASSET}"))
+    out[f"{p}roe"] = _safe_div(_num(out, f"{p}{NET_INCOME}"), eq, impaired)
+    out[f"{p}current_ratio"] = _safe_div(_num(out, f"{p}{CUR_ASSET}"),
+                                         _num(out, f"{p}{CUR_LIAB}"))
+    return out
+
+
+# ====================================================================
+# 4-5 상위 파생 3종
+# ====================================================================
+
+def add_derived_signals(df: pd.DataFrame,
+                        group_col: str = "V_BZNO",
+                        order_col: str = "FNA_CLS_YM",
+                        prefix: str = "") -> pd.DataFrame:
+    """결산 시계열 기반 파생 3종.
+
+        consec_loss_years  당기순이익 < 0 인 연속 결산 횟수 (당기 포함)
+        pl_turn_dir        -1 흑자->적자 / 0 유지 / +1 적자->흑자
+        op_ni_sign_mismatch 영업이익 > 0 인데 당기순이익 < 0
+                            → 영업외 손실이 이익을 잠식하는 신호
+
+    group_col / order_col 로 정렬한 순서를 '연속 결산'으로 본다.
+    """
+    out = df.copy()
+    p = prefix
+    ni = _num(out, f"{p}{NET_INCOME}")
+    oi = _num(out, f"{p}{OP_INCOME}")
+
+    out[f"{p}op_ni_sign_mismatch"] = ((oi > 0) & (ni < 0)).astype("float64")
+
+    if group_col not in out.columns or order_col not in out.columns:
+        log.warning("add_derived_signals: %s / %s 없음 — 시계열 파생 생략",
+                    group_col, order_col)
+        out[f"{p}consec_loss_years"] = np.nan
+        out[f"{p}pl_turn_dir"] = np.nan
+        return out
+
+    order = out.sort_values([group_col, order_col], kind="mergesort").index
+    ni_s = ni.loc[order]
+    g = out.loc[order, group_col]
+    loss = (ni_s < 0)
+
+    # 연속 적자 횟수: 흑자(또는 결측)를 만나면 0 으로 리셋
+    reset = (~loss) | (g != g.shift(1))
+    block = reset.cumsum()
+    consec = loss.groupby(block).cumsum().where(loss, 0.0)
+    consec = consec.mask(ni_s.isna())
+
+    prev_ni = ni_s.groupby(g, sort=False).shift(1)
+    turn = pd.Series(0.0, index=order)
+    turn = turn.mask((prev_ni > 0) & (ni_s < 0), -1.0)
+    turn = turn.mask((prev_ni < 0) & (ni_s > 0), 1.0)
+    turn = turn.mask(prev_ni.isna() | ni_s.isna())
+
+    out[f"{p}consec_loss_years"] = consec.reindex(out.index).astype("float64")
+    out[f"{p}pl_turn_dir"] = turn.reindex(out.index).astype("float64")
+    return out
+
+
+# ====================================================================
+# 오케스트레이터
+# ====================================================================
+
+def decode_jemu(df: pd.DataFrame,
+                prefix: str = "",
+                group_col: str = "V_BZNO",
+                order_col: str = "FNA_CLS_YM") -> pd.DataFrame:
+    """4-1 ~ 4-5 를 한 번에 적용한다. 입력 행수를 바꾸지 않는다."""
+    n = len(df)
+    out = decode_growth(df, prefix=prefix)
+    out = decode_ratio(out, prefix=prefix)
+    out = add_structure_flags(out, prefix=prefix)
+    out = compute_clean_ratios(out, prefix=prefix)
+    out = add_derived_signals(out, group_col=group_col,
+                              order_col=order_col, prefix=prefix)
+    assert len(out) == n, f"decode_jemu 에서 행수 변동: {n} -> {len(out)}"
+    log.info("decode_jemu: %d행 유지, 컬럼 %d -> %d (+%d)",
+             n, len(df.columns), len(out.columns), len(out.columns) - len(df.columns))
+    return out

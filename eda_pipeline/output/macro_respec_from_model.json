@@ -1,0 +1,478 @@
+{
+  "n_macro_features_full": 172,
+  "n_base_indicators": 63,
+  "macro_features_full": [
+    "KOSPI_log_ret",
+    "KOSDAQ_log_ret",
+    "DowJones_log_ret",
+    "NASDAQ_log_ret",
+    "SP500_log_ret",
+    "Nikkei225_log_ret",
+    "Shanghai_Composite_log_ret",
+    "USD_KRW_log_ret",
+    "EUR_KRW_log_ret",
+    "JPY_KRW_log_ret",
+    "CNY_KRW_log_ret",
+    "DXY_dollar_index_log_ret",
+    "brent_crude_oil_log_ret",
+    "WTI_crude_oil_log_ret",
+    "natural_gas_log_ret",
+    "gold_log_ret",
+    "silver_log_ret",
+    "copper_log_ret",
+    "corn_log_ret",
+    "soybean_log_ret",
+    "VIX_log_ret",
+    "CP_91d_log_ret",
+    "MSB_91d_log_ret",
+    "KOSPI_vol_m",
+    "KOSDAQ_vol_m",
+    "DowJones_vol_m",
+    "NASDAQ_vol_m",
+    "SP500_vol_m",
+    "Nikkei225_vol_m",
+    "Shanghai_Composite_vol_m",
+    "USD_KRW_vol_m",
+    "EUR_KRW_vol_m",
+    "JPY_KRW_vol_m",
+    "CNY_KRW_vol_m",
+    "DXY_dollar_index_vol_m",
+    "brent_crude_oil_vol_m",
+    "WTI_crude_oil_vol_m",
+    "natural_gas_vol_m",
+    "gold_vol_m",
+    "silver_vol_m",
+    "copper_vol_m",
+    "corn_vol_m",
+    "soybean_vol_m",
+    "VIX_vol_m",
+    "CP_91d_vol_m",
+    "MSB_91d_vol_m",
+    "call_rate_overnight_diff12",
+    "call_rate_overnight_brokered_diff12",
+    "corporate_bond_3y_AA_diff12",
+    "KORIBOR_12m_diff12",
+    "KORIBOR_3m_diff12",
+    "KORIBOR_6m_diff12",
+    "treasury_bond_10y_diff12",
+    "treasury_bond_1y_diff12",
+    "treasury_bond_3y_diff12",
+    "treasury_bond_5y_diff12",
+    "US_10Y_treasury_diff12",
+    "US_2Y_treasury_diff12",
+    "base_rate_diff12",
+    "CD_rate_91d_diff12",
+    "treasury_bond_1y_monthly_diff12",
+    "credit_spread_diff12",
+    "liquidity_spread_diff12",
+    "CPI_core_yoy",
+    "CPI_core_excl_food_energy_yoy",
+    "CPI_food_nonalcohol_yoy",
+    "PPI_total_yoy",
+    "housing_price_index_yoy",
+    "M1_narrow_money_yoy",
+    "M2_broad_money_yoy",
+    "Lf_liquidity_yoy",
+    "monetary_base_sa_yoy",
+    "export_index_yoy",
+    "import_index_yoy",
+    "trade_total_yoy",
+    "current_account_yoy",
+    "goods_balance_yoy",
+    "household_credit_yoy",
+    "household_loan_yoy",
+    "current_account_quarterly_yoy",
+    "BSI_mfg_biz_yoy",
+    "BSI_mfg_export_yoy",
+    "BSI_mfg_domestic_yoy",
+    "BSI_nonmfg_biz_yoy",
+    "CSI_composite_yoy",
+    "CSI_living_prospect_yoy",
+    "KOSPI_log_ret_ma3m",
+    "KOSDAQ_log_ret_ma3m",
+    "DowJones_log_ret_ma3m",
+    "NASDAQ_log_ret_ma3m",
+    "SP500_log_ret_ma3m",
+    "Nikkei225_log_ret_ma3m",
+    "Shanghai_Composite_log_ret_ma3m",
+    "USD_KRW_log_ret_ma3m",
+    "EUR_KRW_log_ret_ma3m",
+    "JPY_KRW_log_ret_ma3m",
+    "CNY_KRW_log_ret_ma3m",
+    "DXY_dollar_index_log_ret_ma3m",
+    "brent_crude_oil_log_ret_ma3m",
+    "WTI_crude_oil_log_ret_ma3m",
+    "natural_gas_log_ret_ma3m",
+    "gold_log_ret_ma3m",
+    "silver_log_ret_ma3m",
+    "copper_log_ret_ma3m",
+    "corn_log_ret_ma3m",
+    "soybean_log_ret_ma3m",
+    "VIX_log_ret_ma3m",
+    "CP_91d_log_ret_ma3m",
+    "MSB_91d_log_ret_ma3m",
+    "KOSPI_vol_m_ma3m",
+    "KOSDAQ_vol_m_ma3m",
+    "DowJones_vol_m_ma3m",
+    "NASDAQ_vol_m_ma3m",
+    "SP500_vol_m_ma3m",
+    "Nikkei225_vol_m_ma3m",
+    "Shanghai_Composite_vol_m_ma3m",
+    "USD_KRW_vol_m_ma3m",
+    "EUR_KRW_vol_m_ma3m",
+    "JPY_KRW_vol_m_ma3m",
+    "CNY_KRW_vol_m_ma3m",
+    "DXY_dollar_index_vol_m_ma3m",
+    "brent_crude_oil_vol_m_ma3m",
+    "WTI_crude_oil_vol_m_ma3m",
+    "natural_gas_vol_m_ma3m",
+    "gold_vol_m_ma3m",
+    "silver_vol_m_ma3m",
+    "copper_vol_m_ma3m",
+    "corn_vol_m_ma3m",
+    "soybean_vol_m_ma3m",
+    "VIX_vol_m_ma3m",
+    "CP_91d_vol_m_ma3m",
+    "MSB_91d_vol_m_ma3m",
+    "call_rate_overnight_diff12_ma3m",
+    "call_rate_overnight_brokered_diff12_ma3m",
+    "corporate_bond_3y_AA_diff12_ma3m",
+    "KORIBOR_12m_diff12_ma3m",
+    "KORIBOR_3m_diff12_ma3m",
+    "KORIBOR_6m_diff12_ma3m",
+    "treasury_bond_10y_diff12_ma3m",
+    "treasury_bond_1y_diff12_ma3m",
+    "treasury_bond_3y_diff12_ma3m",
+    "treasury_bond_5y_diff12_ma3m",
+    "US_10Y_treasury_diff12_ma3m",
+    "US_2Y_treasury_diff12_ma3m",
+    "base_rate_diff12_ma3m",
+    "CD_rate_91d_diff12_ma3m",
+    "treasury_bond_1y_monthly_diff12_ma3m",
+    "credit_spread_diff12_ma3m",
+    "liquidity_spread_diff12_ma3m",
+    "CPI_core_yoy_ma3m",
+    "CPI_core_excl_food_energy_yoy_ma3m",
+    "CPI_food_nonalcohol_yoy_ma3m",
+    "PPI_total_yoy_ma3m",
+    "housing_price_index_yoy_ma3m",
+    "M1_narrow_money_yoy_ma3m",
+    "M2_broad_money_yoy_ma3m",
+    "Lf_liquidity_yoy_ma3m",
+    "monetary_base_sa_yoy_ma3m",
+    "export_index_yoy_ma3m",
+    "import_index_yoy_ma3m",
+    "trade_total_yoy_ma3m",
+    "current_account_yoy_ma3m",
+    "goods_balance_yoy_ma3m",
+    "household_credit_yoy_ma3m",
+    "household_loan_yoy_ma3m",
+    "current_account_quarterly_yoy_ma3m",
+    "BSI_mfg_biz_yoy_ma3m",
+    "BSI_mfg_export_yoy_ma3m",
+    "BSI_mfg_domestic_yoy_ma3m",
+    "BSI_nonmfg_biz_yoy_ma3m",
+    "CSI_composite_yoy_ma3m",
+    "CSI_living_prospect_yoy_ma3m"
+  ],
+  "base_indicators": {
+    "KOSPI": [
+      "log_ret",
+      "log_ret_ma3m",
+      "vol_m",
+      "vol_m_ma3m"
+    ],
+    "KOSDAQ": [
+      "log_ret",
+      "log_ret_ma3m",
+      "vol_m",
+      "vol_m_ma3m"
+    ],
+    "DowJones": [
+      "log_ret",
+      "log_ret_ma3m",
+      "vol_m",
+      "vol_m_ma3m"
+    ],
+    "NASDAQ": [
+      "log_ret",
+      "log_ret_ma3m",
+      "vol_m",
+      "vol_m_ma3m"
+    ],
+    "SP500": [
+      "log_ret",
+      "log_ret_ma3m",
+      "vol_m",
+      "vol_m_ma3m"
+    ],
+    "Nikkei225": [
+      "log_ret",
+      "log_ret_ma3m",
+      "vol_m",
+      "vol_m_ma3m"
+    ],
+    "Shanghai_Composite": [
+      "log_ret",
+      "log_ret_ma3m",
+      "vol_m",
+      "vol_m_ma3m"
+    ],
+    "USD_KRW": [
+      "log_ret",
+      "log_ret_ma3m",
+      "vol_m",
+      "vol_m_ma3m"
+    ],
+    "EUR_KRW": [
+      "log_ret",
+      "log_ret_ma3m",
+      "vol_m",
+      "vol_m_ma3m"
+    ],
+    "JPY_KRW": [
+      "log_ret",
+      "log_ret_ma3m",
+      "vol_m",
+      "vol_m_ma3m"
+    ],
+    "CNY_KRW": [
+      "log_ret",
+      "log_ret_ma3m",
+      "vol_m",
+      "vol_m_ma3m"
+    ],
+    "DXY_dollar_index": [
+      "log_ret",
+      "log_ret_ma3m",
+      "vol_m",
+      "vol_m_ma3m"
+    ],
+    "brent_crude_oil": [
+      "log_ret",
+      "log_ret_ma3m",
+      "vol_m",
+      "vol_m_ma3m"
+    ],
+    "WTI_crude_oil": [
+      "log_ret",
+      "log_ret_ma3m",
+      "vol_m",
+      "vol_m_ma3m"
+    ],
+    "natural_gas": [
+      "log_ret",
+      "log_ret_ma3m",
+      "vol_m",
+      "vol_m_ma3m"
+    ],
+    "gold": [
+      "log_ret",
+      "log_ret_ma3m",
+      "vol_m",
+      "vol_m_ma3m"
+    ],
+    "silver": [
+      "log_ret",
+      "log_ret_ma3m",
+      "vol_m",
+      "vol_m_ma3m"
+    ],
+    "copper": [
+      "log_ret",
+      "log_ret_ma3m",
+      "vol_m",
+      "vol_m_ma3m"
+    ],
+    "corn": [
+      "log_ret",
+      "log_ret_ma3m",
+      "vol_m",
+      "vol_m_ma3m"
+    ],
+    "soybean": [
+      "log_ret",
+      "log_ret_ma3m",
+      "vol_m",
+      "vol_m_ma3m"
+    ],
+    "VIX": [
+      "log_ret",
+      "log_ret_ma3m",
+      "vol_m",
+      "vol_m_ma3m"
+    ],
+    "CP_91d": [
+      "log_ret",
+      "log_ret_ma3m",
+      "vol_m",
+      "vol_m_ma3m"
+    ],
+    "MSB_91d": [
+      "log_ret",
+      "log_ret_ma3m",
+      "vol_m",
+      "vol_m_ma3m"
+    ],
+    "call_rate_overnight": [
+      "diff12",
+      "diff12_ma3m"
+    ],
+    "call_rate_overnight_brokered": [
+      "diff12",
+      "diff12_ma3m"
+    ],
+    "corporate_bond_3y_AA": [
+      "diff12",
+      "diff12_ma3m"
+    ],
+    "KORIBOR_12m": [
+      "diff12",
+      "diff12_ma3m"
+    ],
+    "KORIBOR_3m": [
+      "diff12",
+      "diff12_ma3m"
+    ],
+    "KORIBOR_6m": [
+      "diff12",
+      "diff12_ma3m"
+    ],
+    "treasury_bond_10y": [
+      "diff12",
+      "diff12_ma3m"
+    ],
+    "treasury_bond_1y": [
+      "diff12",
+      "diff12_ma3m"
+    ],
+    "treasury_bond_3y": [
+      "diff12",
+      "diff12_ma3m"
+    ],
+    "treasury_bond_5y": [
+      "diff12",
+      "diff12_ma3m"
+    ],
+    "US_10Y_treasury": [
+      "diff12",
+      "diff12_ma3m"
+    ],
+    "US_2Y_treasury": [
+      "diff12",
+      "diff12_ma3m"
+    ],
+    "base_rate": [
+      "diff12",
+      "diff12_ma3m"
+    ],
+    "CD_rate_91d": [
+      "diff12",
+      "diff12_ma3m"
+    ],
+    "treasury_bond_1y_monthly": [
+      "diff12",
+      "diff12_ma3m"
+    ],
+    "credit_spread": [
+      "diff12",
+      "diff12_ma3m"
+    ],
+    "liquidity_spread": [
+      "diff12",
+      "diff12_ma3m"
+    ],
+    "CPI_core": [
+      "yoy",
+      "yoy_ma3m"
+    ],
+    "CPI_core_excl_food_energy": [
+      "yoy",
+      "yoy_ma3m"
+    ],
+    "CPI_food_nonalcohol": [
+      "yoy",
+      "yoy_ma3m"
+    ],
+    "PPI_total": [
+      "yoy",
+      "yoy_ma3m"
+    ],
+    "housing_price_index": [
+      "yoy",
+      "yoy_ma3m"
+    ],
+    "M1_narrow_money": [
+      "yoy",
+      "yoy_ma3m"
+    ],
+    "M2_broad_money": [
+      "yoy",
+      "yoy_ma3m"
+    ],
+    "Lf_liquidity": [
+      "yoy",
+      "yoy_ma3m"
+    ],
+    "monetary_base_sa": [
+      "yoy",
+      "yoy_ma3m"
+    ],
+    "export_index": [
+      "yoy",
+      "yoy_ma3m"
+    ],
+    "import_index": [
+      "yoy",
+      "yoy_ma3m"
+    ],
+    "trade_total": [
+      "yoy",
+      "yoy_ma3m"
+    ],
+    "current_account": [
+      "yoy",
+      "yoy_ma3m"
+    ],
+    "goods_balance": [
+      "yoy",
+      "yoy_ma3m"
+    ],
+    "household_credit": [
+      "yoy",
+      "yoy_ma3m"
+    ],
+    "household_loan": [
+      "yoy",
+      "yoy_ma3m"
+    ],
+    "current_account_quarterly": [
+      "yoy",
+      "yoy_ma3m"
+    ],
+    "BSI_mfg_biz": [
+      "yoy",
+      "yoy_ma3m"
+    ],
+    "BSI_mfg_export": [
+      "yoy",
+      "yoy_ma3m"
+    ],
+    "BSI_mfg_domestic": [
+      "yoy",
+      "yoy_ma3m"
+    ],
+    "BSI_nonmfg_biz": [
+      "yoy",
+      "yoy_ma3m"
+    ],
+    "CSI_composite": [
+      "yoy",
+      "yoy_ma3m"
+    ],
+    "CSI_living_prospect": [
+      "yoy",
+      "yoy_ma3m"
+    ]
+  }
+}

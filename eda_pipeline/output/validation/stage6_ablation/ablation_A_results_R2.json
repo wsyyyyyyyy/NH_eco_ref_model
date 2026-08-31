@@ -1,0 +1,200 @@
+[
+  {
+    "scenario": "C4",
+    "desc": "최적 조합. 업종 대분류만 + C302_CRI_ORD만",
+    "n_features": 150,
+    "best_iteration": 6276,
+    "n_estimators_cap": 10000,
+    "hit_cap": false,
+    "reg_variant": "R2",
+    "scale_pos_weight": 108.6971,
+    "dev_start": "202310",
+    "n_train": 579859,
+    "n_dev": 56021,
+    "n_valid": 312334,
+    "pos_train": 5286,
+    "pos_dev": 696,
+    "pos_valid": 3832,
+    "rate_train": 0.009116009236728239,
+    "rate_dev": 0.012423912461398404,
+    "rate_valid": 0.012268917248842584,
+    "train": {
+      "auc": 0.9985301587092684,
+      "gini": 0.9970603174185368,
+      "ks": 0.9778773167530125
+    },
+    "dev": {
+      "auc": 0.9742281762417482,
+      "gini": 0.9484563524834964,
+      "ks": 0.832425946990355
+    },
+    "valid": {
+      "auc": 0.8512105770751949,
+      "gini": 0.7024211541503897,
+      "ks": 0.5504542514275563
+    },
+    "psi_train_valid": 0.026217992128710708,
+    "elapsed_sec": 122.8,
+    "gain_top15": [
+      {
+        "feature": "C302_CRI_ORD",
+        "gain_pct": 15.713
+      },
+      {
+        "feature": "JEMU_191310_val",
+        "gain_pct": 7.298
+      },
+      {
+        "feature": "STD_INDS_SECTION",
+        "gain_pct": 3.927
+      },
+      {
+        "feature": "JEMU_118100",
+        "gain_pct": 3.763
+      },
+      {
+        "feature": "JEMU_191502_val",
+        "gain_pct": 3.613
+      },
+      {
+        "feature": "BUSINESS_AGE",
+        "gain_pct": 3.468
+      },
+      {
+        "feature": "JEMU_115000",
+        "gain_pct": 3.23
+      },
+      {
+        "feature": "JEMU_125100",
+        "gain_pct": 3.071
+      },
+      {
+        "feature": "OBV_LD_AM",
+        "gain_pct": 2.981
+      },
+      {
+        "feature": "JEMU_126000",
+        "gain_pct": 2.363
+      },
+      {
+        "feature": "JEMU_114000",
+        "gain_pct": 2.217
+      },
+      {
+        "feature": "exp_inv",
+        "gain_pct": 2.059
+      },
+      {
+        "feature": "OBV_XPC_LSS_AM",
+        "gain_pct": 1.896
+      },
+      {
+        "feature": "JEMU_191503_val",
+        "gain_pct": 1.718
+      },
+      {
+        "feature": "JEMU_121000",
+        "gain_pct": 1.625
+      }
+    ]
+  },
+  {
+    "scenario": "C5",
+    "desc": "Lean. C4 − JEMU sentinel 파생 36개",
+    "n_features": 114,
+    "best_iteration": 5572,
+    "n_estimators_cap": 10000,
+    "hit_cap": false,
+    "reg_variant": "R2",
+    "scale_pos_weight": 108.6971,
+    "dev_start": "202310",
+    "n_train": 579859,
+    "n_dev": 56021,
+    "n_valid": 312334,
+    "pos_train": 5286,
+    "pos_dev": 696,
+    "pos_valid": 3832,
+    "rate_train": 0.009116009236728239,
+    "rate_dev": 0.012423912461398404,
+    "rate_valid": 0.012268917248842584,
+    "train": {
+      "auc": 0.9980779363594965,
+      "gini": 0.996155872718993,
+      "ks": 0.9728070378413418
+    },
+    "dev": {
+      "auc": 0.9725940887441502,
+      "gini": 0.9451881774883004,
+      "ks": 0.8305266164929286
+    },
+    "valid": {
+      "auc": 0.8559667437317717,
+      "gini": 0.7119334874635435,
+      "ks": 0.5498451917203679
+    },
+    "psi_train_valid": 0.02613295958597725,
+    "elapsed_sec": 103.9,
+    "gain_top15": [
+      {
+        "feature": "C302_CRI_ORD",
+        "gain_pct": 15.85
+      },
+      {
+        "feature": "JEMU_191503_val",
+        "gain_pct": 7.131
+      },
+      {
+        "feature": "JEMU_191310_val",
+        "gain_pct": 3.906
+      },
+      {
+        "feature": "STD_INDS_SECTION",
+        "gain_pct": 3.862
+      },
+      {
+        "feature": "JEMU_118100",
+        "gain_pct": 3.424
+      },
+      {
+        "feature": "BUSINESS_AGE",
+        "gain_pct": 3.304
+      },
+      {
+        "feature": "OBV_LD_AM",
+        "gain_pct": 2.946
+      },
+      {
+        "feature": "JEMU_123000",
+        "gain_pct": 2.811
+      },
+      {
+        "feature": "JEMU_126000",
+        "gain_pct": 2.435
+      },
+      {
+        "feature": "JEMU_191506_val",
+        "gain_pct": 2.328
+      },
+      {
+        "feature": "JEMU_191502_val",
+        "gain_pct": 2.254
+      },
+      {
+        "feature": "JEMU_121000",
+        "gain_pct": 2.204
+      },
+      {
+        "feature": "JEMU_114000",
+        "gain_pct": 2.061
+      },
+      {
+        "feature": "JEMU_115000",
+        "gain_pct": 2.042
+      },
+      {
+        "feature": "OBV_XPC_LSS_AM",
+        "gain_pct": 1.921
+      }
+    ]
+  }
+]

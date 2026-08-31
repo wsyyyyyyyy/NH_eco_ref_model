@@ -63,10 +63,11 @@ class EDAReporter:
     def __init__(
         self,
         panel: pd.DataFrame,
-        output_dir: str | Path = "eda_pipeline/output",
+        output_dir: str | Path | None = None,
     ) -> None:
         self.panel = panel
-        self.output_dir = Path(output_dir)
+        from eda_pipeline import config as _cfg
+        self.output_dir = Path(output_dir) if output_dir is not None else _cfg.OUTPUT_DIR
         self.plots_dir = self.output_dir / "eda_plots"
         self.plots_dir.mkdir(parents=True, exist_ok=True)
         self._report_sections: list[str] = []
@@ -102,7 +103,7 @@ class EDAReporter:
         df = self.panel
         n_companies = df["V_BZNO"].nunique()
         n_months    = df["BASE_YM"].nunique()
-        n_defaults  = df["IS_BUDO_YN"].sum() if "IS_BUDO_YN" in df.columns else 0
+        n_defaults  = df["IS_BUDO_IN_SPINE_YN"].sum() if "IS_BUDO_IN_SPINE_YN" in df.columns else 0
         default_rate = n_defaults / len(df) * 100
 
         train_rows = (df["SPLIT"] == "TRAIN").sum() if "SPLIT" in df.columns else 0
@@ -193,8 +194,8 @@ class EDAReporter:
     # ================================================================
 
     def _section_target_distribution(self) -> None:
-        if "IS_BUDO_YN" not in self.panel.columns:
-            self._report_sections.append("<section id='target'><h2>🎯 3. Target</h2><p>IS_BUDO_YN 없음</p></section>")
+        if "IS_BUDO_IN_SPINE_YN" not in self.panel.columns:
+            self._report_sections.append("<section id='target'><h2>🎯 3. Target</h2><p>IS_BUDO_IN_SPINE_YN 없음</p></section>")
             return
 
         df = self.panel.copy()
@@ -205,7 +206,7 @@ class EDAReporter:
             ax.set_facecolor(LIGHT_BG)
 
         # (1) 전체 부도율
-        counts = df["IS_BUDO_YN"].value_counts()
+        counts = df["IS_BUDO_IN_SPINE_YN"].value_counts()
         wedges, texts, autotexts = axes[0].pie(
             counts, labels=["정상(0)", "부도(1)"],
             colors=[SUCCESS, DANGER], autopct="%1.2f%%",
@@ -215,7 +216,7 @@ class EDAReporter:
 
         # (2) 월별 부도 발생 건수
         if "BASE_YM" in df.columns:
-            monthly = df.groupby("BASE_YM")["IS_BUDO_YN"].sum()
+            monthly = df.groupby("BASE_YM")["IS_BUDO_IN_SPINE_YN"].sum()
             axes[1].bar(range(len(monthly)), monthly.values, color=DANGER, alpha=0.8)
             axes[1].set_xticks(range(0, len(monthly), max(1, len(monthly)//12)))
             axes[1].set_xticklabels(monthly.index[::max(1, len(monthly)//12)], rotation=45, ha="right", fontsize=8)
@@ -224,7 +225,7 @@ class EDAReporter:
 
         # (3) SPLIT별 부도율
         if "SPLIT" in df.columns:
-            split_rate = df.groupby("SPLIT")["IS_BUDO_YN"].mean() * 100
+            split_rate = df.groupby("SPLIT")["IS_BUDO_IN_SPINE_YN"].mean() * 100
             bars = axes[2].bar(split_rate.index, split_rate.values,
                                color=[PRIMARY, SECONDARY], edgecolor="white")
             for bar, val in zip(bars, split_rate.values):
@@ -241,7 +242,7 @@ class EDAReporter:
         # 업종별 부도율 (STD_INDS_CFC 상위 20개)
         industry_html = ""
         if "STD_INDS_CFC" in df.columns:
-            ind_rate = (df.groupby("STD_INDS_CFC")["IS_BUDO_YN"]
+            ind_rate = (df.groupby("STD_INDS_CFC")["IS_BUDO_IN_SPINE_YN"]
                         .agg(["sum", "count", "mean"])
                         .rename(columns={"sum": "부도건수", "count": "전체건수", "mean": "부도율"})
                         .sort_values("부도건수", ascending=False)
@@ -268,7 +269,7 @@ class EDAReporter:
         df = self.panel
         num_cols = df.select_dtypes(include=[np.number]).columns.tolist()
         # 키/Target 제외
-        exclude = {"IS_BUDO_YN", "SPLIT", "ETB_DT"}
+        exclude = {"IS_BUDO_IN_SPINE_YN", "SPLIT", "ETB_DT"}
         num_cols = [c for c in num_cols if c not in exclude][:30]  # 상위 30개
 
         if not num_cols:
@@ -435,8 +436,8 @@ class EDAReporter:
 
         # Target과의 상관
         target_corr = pd.DataFrame()
-        if "IS_BUDO_YN" in df.columns:
-            tc = df[num_cols].corrwith(df["IS_BUDO_YN"]).dropna().sort_values(key=abs, ascending=False)
+        if "IS_BUDO_IN_SPINE_YN" in df.columns:
+            tc = df[num_cols].corrwith(df["IS_BUDO_IN_SPINE_YN"]).dropna().sort_values(key=abs, ascending=False)
             target_corr = tc.head(20)
 
             fig, ax = plt.subplots(figsize=(12, 7))
@@ -446,7 +447,7 @@ class EDAReporter:
             ax.barh(target_corr.index[::-1], target_corr.values[::-1],
                     color=colors[::-1], edgecolor="white")
             ax.axvline(0, color=DARK, linewidth=0.8)
-            ax.set_title("IS_BUDO_YN과의 상관계수 (상위 20개)", fontsize=13, fontweight="bold")
+            ax.set_title("IS_BUDO_IN_SPINE_YN과의 상관계수 (상위 20개)", fontsize=13, fontweight="bold")
             ax.set_xlabel("Pearson r")
             plt.tight_layout()
             fig.savefig(self.plots_dir / "target_correlation.png", dpi=120, bbox_inches="tight")
@@ -468,7 +469,7 @@ class EDAReporter:
         fig.savefig(self.plots_dir / "correlation_heatmap.png", dpi=100, bbox_inches="tight")
         plt.close(fig)
 
-        corr_html = (f"<h3>Target(IS_BUDO_YN)과의 상관 상위 20개</h3>"
+        corr_html = (f"<h3>Target(IS_BUDO_IN_SPINE_YN)과의 상관 상위 20개</h3>"
                      f"{target_corr.reset_index().rename(columns={'index':'컬럼명', 0:'상관계수'}).to_html(index=False, classes='data-table', border=0)}"
                      if not target_corr.empty else "")
 
@@ -489,11 +490,11 @@ class EDAReporter:
 
     def _section_default_trajectory(self) -> None:
         df = self.panel.copy()
-        if "IS_BUDO_YN" not in df.columns or "BASE_YM" not in df.columns:
+        if "IS_BUDO_IN_SPINE_YN" not in df.columns or "BASE_YM" not in df.columns:
             return
 
         # 부도 발생 차주 목록
-        default_companies = df[df["IS_BUDO_YN"] == 1]["V_BZNO"].unique()
+        default_companies = df[df["IS_BUDO_IN_SPINE_YN"] == 1]["V_BZNO"].unique()
 
         if len(default_companies) == 0:
             self._report_sections.append(
@@ -513,7 +514,7 @@ class EDAReporter:
 
         # 부도 시점 기준 N개월 전 지표 평균 계산
         df["BASE_YM_DT"] = pd.to_datetime(df["BASE_YM"], format="%Y%m")
-        default_month_map = (df[df["IS_BUDO_YN"] == 1]
+        default_month_map = (df[df["IS_BUDO_IN_SPINE_YN"] == 1]
                              .groupby("V_BZNO")["BASE_YM_DT"].min()
                              .to_dict())
 
@@ -541,7 +542,7 @@ class EDAReporter:
 
         # 정상 차주 평균 (기준선)
         normal_means = {}
-        normal_df = df[df["IS_BUDO_YN"] == 0]
+        normal_df = df[df["IS_BUDO_IN_SPINE_YN"] == 0]
         for col in track_cols:
             normal_means[col] = normal_df[col].mean()
 
