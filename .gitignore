@@ -35,5 +35,13 @@ eda_pipeline/output/*.csv
 !api_data_processing/config/indicators.csv
 !api_data_processing/config/indicator_names.csv
 !eda_pipeline/output/budo_events.csv
+# 예외 — 거시 지표 월별 데이터 (~280KB). 있으면 API 키 없이 파이프라인 완주 가능.
+!api_data_processing/output/model_input/model_input_monthly.csv
+!api_data_processing/output/model_input/model_input_monthly_cleaned.csv
+!api_data_processing/output/model_input/model_input_monthly_level.csv
+
+# 검증용 격리 출력
+_verify_run/
+
 # IDE
 .idea/

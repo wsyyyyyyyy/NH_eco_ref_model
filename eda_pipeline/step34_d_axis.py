@@ -150,7 +150,12 @@ D7_MONO = {k: v for k, v in D6_MONO.items() if k in D7_NAMES}
 #   -> `D6mc` (C1 기반 + D6m 의 3종)를 함께 둔다. 이것이 D8 의 정당한 기준선이고,
 #      동시에 "최종 구성 = C1 + 거시 3종 + 제약" 을 처음으로 실측하는 것이기도 하다
 #      (D6m 은 MID2 를 포함한 기반에서 측정됐다).
-C1_DROP_BASE = ["STD_INDS_MID2"]
+# VH_OBV_DTL 금액 컬럼 5개 — 202101~202111 (11개월)에만 값이 있고 이후 전 행 0.
+# Dev·Valid 전 구간에서 0 이라 예측에 작동하지 않는데 gain(3.86%)은 잡혀 있었다.
+# 제외 후 재학습 시 Valid AUC 0.8548 -> 0.8578, σ 0.0015 -> 0.0007 (docs/04 §7-3, 07 §1-4-1).
+OBV_DEAD_IN_VALID = ["OBV_LN_BAC", "OBV_LN_LMT_AM", "OBV_LN_LMT_BAC",
+                     "OBV_BZL_RZVL_ASP_ELGD", "OBV_XPC_LSS_AM"]
+C1_DROP_BASE = ["STD_INDS_MID2"] + OBV_DEAD_IN_VALID
 E14_SPEC_JSON = config.VALIDATION_DIR / "macro_interaction_candidates.json"
 
 

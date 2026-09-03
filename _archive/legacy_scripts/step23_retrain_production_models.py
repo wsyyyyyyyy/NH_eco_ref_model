@@ -1,5 +1,5 @@
 """Retrain the Full and Lean LightGBM models with the regularization + methodology fixes
-confirmed in docs/step28, on the leakage-cleaned feature set (STAGE 1 refactor).
+confirmed in docs/appendix/step28, on the leakage-cleaned feature set (STAGE 1 refactor).
 
   1. Regularized params (num_leaves=15, min_child_samples=100, reg_alpha=1.0, reg_lambda=1.0)
      instead of the production defaults, which step14 showed both closes the overfit gap

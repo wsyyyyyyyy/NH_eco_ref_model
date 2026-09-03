@@ -62,7 +62,7 @@
   <h2>📊 1. 데이터 개요</h2>
   <div class="stats-grid">
     <div class="stat-card"><div class="stat-value">951,908</div><div class="stat-label">전체 행수</div></div>
-    <div class="stat-card"><div class="stat-value">90</div><div class="stat-label">전체 컬럼수</div></div>
+    <div class="stat-card"><div class="stat-value">149</div><div class="stat-label">전체 컬럼수</div></div>
     <div class="stat-card"><div class="stat-value">27,150</div><div class="stat-label">차주 수</div></div>
     <div class="stat-card"><div class="stat-value">53</div><div class="stat-label">관측 월수</div></div>
     <div class="stat-card highlight"><div class="stat-value">658</div><div class="stat-label">부도 건수</div></div>
@@ -70,7 +70,7 @@
     <div class="stat-card"><div class="stat-value">637,611</div><div class="stat-label">Train 행수 (≤2023)</div></div>
     <div class="stat-card"><div class="stat-value">314,297</div><div class="stat-label">Valid 행수 (≥2024)</div></div>
   </div>
-  <p class="note">데이터 타입: float64: 79, object: 6, int64: 5</p>
+  <p class="note">데이터 타입: float64: 132, str: 14, int64: 3</p>
   <p class="note">기간: 202101 ~ 202505</p>
 </section>
 
@@ -78,8 +78,8 @@
   <h2>📉 2. 결측치 분석</h2>
   <div class="stats-grid">
     <div class="stat-card danger"><div class="stat-value">32</div><div class="stat-label">결측률 ≥45% (제거 후보)</div></div>
-    <div class="stat-card warning"><div class="stat-value">5</div><div class="stat-label">결측률 20~45% (주의)</div></div>
-    <div class="stat-card"><div class="stat-value">39</div><div class="stat-label">결측률 &lt;20% (양호)</div></div>
+    <div class="stat-card warning"><div class="stat-value">16</div><div class="stat-label">결측률 20~45% (주의)</div></div>
+    <div class="stat-card"><div class="stat-value">87</div><div class="stat-label">결측률 &lt;20% (양호)</div></div>
   </div>
   <img src="eda_plots/missing_rate.png" alt="결측률" class="plot-img">
   <h3>결측률 상위 20개 컬럼</h3>
@@ -100,7 +100,7 @@
       <td>99.93</td>
     </tr>
     <tr>
-      <td>CRIF_WORST_RSNC</td>
+      <td>CRIF_RSN_AM_SUM</td>
       <td>98.65</td>
     </tr>
     <tr>
@@ -108,7 +108,7 @@
       <td>98.65</td>
     </tr>
     <tr>
-      <td>CRIF_RSN_AM_SUM</td>
+      <td>CRIF_WORST_RSNC</td>
       <td>98.65</td>
     </tr>
     <tr>
@@ -144,15 +144,7 @@
       <td>93.11</td>
     </tr>
     <tr>
-      <td>AC12_CN_KRW_AM</td>
-      <td>93.11</td>
-    </tr>
-    <tr>
-      <td>AC12_EU_FC_AM</td>
-      <td>93.11</td>
-    </tr>
-    <tr>
-      <td>AC12_US_FC_AM</td>
+      <td>AC12_US_KRW_AM</td>
       <td>93.11</td>
     </tr>
     <tr>
@@ -160,11 +152,19 @@
       <td>93.11</td>
     </tr>
     <tr>
-      <td>AC12_US_KRW_AM</td>
+      <td>AC12_US_FC_AM</td>
       <td>93.11</td>
     </tr>
     <tr>
-      <td>AC12_JP_FC_AM</td>
+      <td>AC12_EU_FC_AM</td>
+      <td>93.11</td>
+    </tr>
+    <tr>
+      <td>AC12_CN_KRW_AM</td>
+      <td>93.11</td>
+    </tr>
+    <tr>
+      <td>AC12_EU_KRW_AM</td>
       <td>93.11</td>
     </tr>
     <tr>
@@ -189,124 +189,124 @@
   </thead>
   <tbody>
     <tr>
-      <td>10129.0</td>
-      <td>20</td>
-      <td>17905</td>
-      <td>0.112</td>
-    </tr>
-    <tr>
-      <td>46313.0</td>
+      <td>46313</td>
       <td>20</td>
       <td>14983</td>
       <td>0.133</td>
     </tr>
     <tr>
-      <td>46312.0</td>
-      <td>15</td>
-      <td>15855</td>
-      <td>0.095</td>
+      <td>10129</td>
+      <td>20</td>
+      <td>17905</td>
+      <td>0.112</td>
     </tr>
     <tr>
-      <td>10121.0</td>
+      <td>10121</td>
       <td>15</td>
       <td>11187</td>
       <td>0.134</td>
     </tr>
     <tr>
-      <td>10309.0</td>
+      <td>46312</td>
+      <td>15</td>
+      <td>15855</td>
+      <td>0.095</td>
+    </tr>
+    <tr>
+      <td>10309</td>
       <td>14</td>
       <td>13343</td>
       <td>0.105</td>
     </tr>
     <tr>
-      <td>1110.0</td>
+      <td>1110</td>
       <td>11</td>
       <td>9215</td>
       <td>0.119</td>
     </tr>
     <tr>
-      <td>46315.0</td>
-      <td>11</td>
-      <td>6093</td>
-      <td>0.181</td>
-    </tr>
-    <tr>
-      <td>46311.0</td>
+      <td>46311</td>
       <td>11</td>
       <td>12584</td>
       <td>0.087</td>
     </tr>
     <tr>
-      <td>10122.0</td>
+      <td>46315</td>
+      <td>11</td>
+      <td>6093</td>
+      <td>0.181</td>
+    </tr>
+    <tr>
+      <td>10122</td>
       <td>10</td>
       <td>6703</td>
       <td>0.149</td>
     </tr>
     <tr>
-      <td>30399.0</td>
+      <td>30399</td>
       <td>8</td>
       <td>14539</td>
       <td>0.055</td>
     </tr>
     <tr>
-      <td>10301.0</td>
+      <td>10301</td>
       <td>8</td>
       <td>6371</td>
       <td>0.126</td>
     </tr>
     <tr>
-      <td>10212.0</td>
-      <td>7</td>
-      <td>4336</td>
-      <td>0.161</td>
-    </tr>
-    <tr>
-      <td>41112.0</td>
-      <td>7</td>
-      <td>3004</td>
-      <td>0.233</td>
-    </tr>
-    <tr>
-      <td>46800.0</td>
+      <td>46800</td>
       <td>7</td>
       <td>12581</td>
       <td>0.056</td>
     </tr>
     <tr>
-      <td>41220.0</td>
-      <td>6</td>
-      <td>4161</td>
-      <td>0.144</td>
+      <td>10212</td>
+      <td>7</td>
+      <td>4336</td>
+      <td>0.161</td>
     </tr>
     <tr>
-      <td>22299.0</td>
-      <td>6</td>
-      <td>2954</td>
-      <td>0.203</td>
+      <td>41112</td>
+      <td>7</td>
+      <td>3004</td>
+      <td>0.233</td>
     </tr>
     <tr>
-      <td>25113.0</td>
-      <td>6</td>
-      <td>3969</td>
-      <td>0.151</td>
-    </tr>
-    <tr>
-      <td>10519.0</td>
+      <td>10519</td>
       <td>6</td>
       <td>2315</td>
       <td>0.259</td>
     </tr>
     <tr>
-      <td>41100.0</td>
-      <td>5</td>
-      <td>3430</td>
-      <td>0.146</td>
+      <td>25113</td>
+      <td>6</td>
+      <td>3969</td>
+      <td>0.151</td>
     </tr>
     <tr>
-      <td>26299.0</td>
+      <td>22299</td>
+      <td>6</td>
+      <td>2954</td>
+      <td>0.203</td>
+    </tr>
+    <tr>
+      <td>41220</td>
+      <td>6</td>
+      <td>4161</td>
+      <td>0.144</td>
+    </tr>
+    <tr>
+      <td>58222</td>
       <td>5</td>
-      <td>5683</td>
-      <td>0.088</td>
+      <td>9682</td>
+      <td>0.052</td>
+    </tr>
+    <tr>
+      <td>25111</td>
+      <td>5</td>
+      <td>4370</td>
+      <td>0.114</td>
     </tr>
   </tbody>
 </table>
@@ -339,32 +339,14 @@
   </thead>
   <tbody>
     <tr>
-      <th>V_BZNO</th>
-      <td>951908.0</td>
-      <td>1.000016e+09</td>
-      <td>8.894196e+03</td>
-      <td>1.000000e+09</td>
-      <td>1.000000e+09</td>
-      <td>1.000002e+09</td>
-      <td>1.000008e+09</td>
-      <td>1.000016e+09</td>
-      <td>1.000023e+09</td>
-      <td>1.000030e+09</td>
-      <td>1.000031e+09</td>
-      <td>1.000032e+09</td>
-      <td>-0.0105</td>
-      <td>-1.1332</td>
-      <td>0.0000</td>
-    </tr>
-    <tr>
       <th>IS_RECOVERED</th>
       <td>658.0</td>
       <td>1.383000e-01</td>
       <td>3.455000e-01</td>
       <td>0.000000e+00</td>
-      <td>0.000000e+00</td>
-      <td>0.000000e+00</td>
-      <td>0.000000e+00</td>
+      <td>0.00</td>
+      <td>0.00</td>
+      <td>0.00</td>
       <td>0.000000e+00</td>
       <td>0.000000e+00</td>
       <td>1.000000e+00</td>
@@ -375,86 +357,14 @@
       <td>99.9309</td>
     </tr>
     <tr>
-      <th>RECOVER_YM</th>
-      <td>91.0</td>
-      <td>2.023592e+05</td>
-      <td>1.019403e+02</td>
-      <td>2.021090e+05</td>
-      <td>2.021090e+05</td>
-      <td>2.022045e+05</td>
-      <td>2.023060e+05</td>
-      <td>2.024040e+05</td>
-      <td>2.024095e+05</td>
-      <td>2.025060e+05</td>
-      <td>2.025061e+05</td>
-      <td>2.025070e+05</td>
-      <td>-0.3371</td>
-      <td>-0.5704</td>
-      <td>99.9904</td>
-    </tr>
-    <tr>
-      <th>COPR_OPNP_C</th>
-      <td>951908.0</td>
-      <td>3.887960e+01</td>
-      <td>1.118430e+01</td>
-      <td>1.000000e+01</td>
-      <td>1.000000e+01</td>
-      <td>3.000000e+01</td>
-      <td>4.000000e+01</td>
-      <td>4.000000e+01</td>
-      <td>4.000000e+01</td>
-      <td>4.000000e+01</td>
-      <td>9.200000e+01</td>
-      <td>9.200000e+01</td>
-      <td>2.8717</td>
-      <td>13.4925</td>
-      <td>0.0000</td>
-    </tr>
-    <tr>
-      <th>BZSCAL_C</th>
-      <td>910063.0</td>
-      <td>4.171500e+00</td>
-      <td>8.640000e-01</td>
-      <td>0.000000e+00</td>
-      <td>2.000000e+00</td>
-      <td>4.000000e+00</td>
-      <td>4.000000e+00</td>
-      <td>4.000000e+00</td>
-      <td>4.000000e+00</td>
-      <td>5.000000e+00</td>
-      <td>8.000000e+00</td>
-      <td>9.000000e+00</td>
-      <td>3.0357</td>
-      <td>14.7853</td>
-      <td>4.3959</td>
-    </tr>
-    <tr>
-      <th>STD_INDS_CFC</th>
-      <td>951143.0</td>
-      <td>3.519691e+04</td>
-      <td>1.992591e+04</td>
-      <td>0.000000e+00</td>
-      <td>1.121000e+03</td>
-      <td>1.011100e+04</td>
-      <td>2.031300e+04</td>
-      <td>3.520000e+04</td>
-      <td>4.659200e+04</td>
-      <td>7.153100e+04</td>
-      <td>9.023100e+04</td>
-      <td>9.699900e+04</td>
-      <td>0.3549</td>
-      <td>-0.2651</td>
-      <td>0.0804</td>
-    </tr>
-    <tr>
       <th>OBV_LN_LMT_AM</th>
       <td>951908.0</td>
       <td>5.755961e+07</td>
       <td>1.668264e+09</td>
       <td>0.000000e+00</td>
-      <td>0.000000e+00</td>
-      <td>0.000000e+00</td>
-      <td>0.000000e+00</td>
+      <td>0.00</td>
+      <td>0.00</td>
+      <td>0.00</td>
       <td>0.000000e+00</td>
       <td>0.000000e+00</td>
       <td>0.000000e+00</td>
@@ -470,9 +380,9 @@
       <td>1.465436e+08</td>
       <td>1.644569e+09</td>
       <td>0.000000e+00</td>
-      <td>0.000000e+00</td>
-      <td>0.000000e+00</td>
-      <td>0.000000e+00</td>
+      <td>0.00</td>
+      <td>0.00</td>
+      <td>0.00</td>
       <td>0.000000e+00</td>
       <td>0.000000e+00</td>
       <td>5.000000e+08</td>
@@ -488,9 +398,9 @@
       <td>4.001580e+07</td>
       <td>1.168007e+09</td>
       <td>0.000000e+00</td>
-      <td>0.000000e+00</td>
-      <td>0.000000e+00</td>
-      <td>0.000000e+00</td>
+      <td>0.00</td>
+      <td>0.00</td>
+      <td>0.00</td>
       <td>0.000000e+00</td>
       <td>0.000000e+00</td>
       <td>0.000000e+00</td>
@@ -506,9 +416,9 @@
       <td>1.291000e+00</td>
       <td>5.131500e+00</td>
       <td>0.000000e+00</td>
-      <td>0.000000e+00</td>
-      <td>0.000000e+00</td>
-      <td>0.000000e+00</td>
+      <td>0.00</td>
+      <td>0.00</td>
+      <td>0.00</td>
       <td>0.000000e+00</td>
       <td>0.000000e+00</td>
       <td>7.826000e+00</td>
@@ -524,9 +434,9 @@
       <td>5.321900e+00</td>
       <td>1.650100e+01</td>
       <td>0.000000e+00</td>
-      <td>0.000000e+00</td>
-      <td>0.000000e+00</td>
-      <td>0.000000e+00</td>
+      <td>0.00</td>
+      <td>0.00</td>
+      <td>0.00</td>
       <td>0.000000e+00</td>
       <td>0.000000e+00</td>
       <td>6.676000e+01</td>
@@ -542,9 +452,9 @@
       <td>1.766882e+09</td>
       <td>2.244193e+10</td>
       <td>0.000000e+00</td>
-      <td>2.538000e+04</td>
-      <td>7.500000e+05</td>
-      <td>2.653312e+07</td>
+      <td>25380.00</td>
+      <td>750000.00</td>
+      <td>26533125.00</td>
       <td>1.101200e+08</td>
       <td>3.364000e+08</td>
       <td>3.156652e+09</td>
@@ -560,9 +470,9 @@
       <td>5.546770e+06</td>
       <td>5.809836e+08</td>
       <td>0.000000e+00</td>
-      <td>0.000000e+00</td>
-      <td>0.000000e+00</td>
-      <td>0.000000e+00</td>
+      <td>0.00</td>
+      <td>0.00</td>
+      <td>0.00</td>
       <td>0.000000e+00</td>
       <td>0.000000e+00</td>
       <td>1.057362e+07</td>
@@ -573,32 +483,14 @@
       <td>0.0000</td>
     </tr>
     <tr>
-      <th>JEMU_AUD_OPI_DSC</th>
-      <td>901856.0</td>
-      <td>2.299700e+00</td>
-      <td>4.938700e+00</td>
-      <td>0.000000e+00</td>
-      <td>0.000000e+00</td>
-      <td>0.000000e+00</td>
-      <td>0.000000e+00</td>
-      <td>0.000000e+00</td>
-      <td>0.000000e+00</td>
-      <td>1.000000e+01</td>
-      <td>2.100000e+01</td>
-      <td>5.000000e+01</td>
-      <td>3.2243</td>
-      <td>19.6918</td>
-      <td>5.2581</td>
-    </tr>
-    <tr>
       <th>JEMU_112000</th>
       <td>901856.0</td>
       <td>4.469747e+07</td>
       <td>7.202125e+08</td>
       <td>0.000000e+00</td>
-      <td>3.968600e+04</td>
-      <td>2.844000e+05</td>
-      <td>1.297309e+06</td>
+      <td>39686.00</td>
+      <td>284400.00</td>
+      <td>1297309.00</td>
       <td>2.489476e+06</td>
       <td>5.605673e+06</td>
       <td>6.349639e+07</td>
@@ -614,9 +506,9 @@
       <td>8.234246e+07</td>
       <td>1.787762e+09</td>
       <td>0.000000e+00</td>
-      <td>1.750100e+04</td>
-      <td>1.090860e+05</td>
-      <td>8.296750e+05</td>
+      <td>17501.00</td>
+      <td>109086.00</td>
+      <td>829675.00</td>
       <td>2.235416e+06</td>
       <td>5.918855e+06</td>
       <td>7.700585e+07</td>
@@ -632,9 +524,9 @@
       <td>1.270503e+08</td>
       <td>2.456366e+09</td>
       <td>0.000000e+00</td>
-      <td>6.516314e+05</td>
-      <td>1.502929e+06</td>
-      <td>2.748548e+06</td>
+      <td>651631.40</td>
+      <td>1502929.00</td>
+      <td>2748548.00</td>
       <td>4.950766e+06</td>
       <td>1.118360e+07</td>
       <td>1.471585e+08</td>
@@ -650,9 +542,9 @@
       <td>3.690152e+07</td>
       <td>5.269340e+08</td>
       <td>0.000000e+00</td>
-      <td>1.045450e+04</td>
-      <td>7.415300e+04</td>
-      <td>4.187280e+05</td>
+      <td>10454.50</td>
+      <td>74153.00</td>
+      <td>418728.00</td>
       <td>1.143726e+06</td>
       <td>3.784571e+06</td>
       <td>5.751778e+07</td>
@@ -668,9 +560,9 @@
       <td>2.096660e+07</td>
       <td>2.948787e+08</td>
       <td>-3.627116e+06</td>
-      <td>0.000000e+00</td>
-      <td>0.000000e+00</td>
-      <td>4.250000e+05</td>
+      <td>0.00</td>
+      <td>0.00</td>
+      <td>425000.00</td>
       <td>1.348627e+06</td>
       <td>3.186667e+06</td>
       <td>1.826217e+07</td>
@@ -686,9 +578,9 @@
       <td>5.779498e+07</td>
       <td>7.639742e+08</td>
       <td>0.000000e+00</td>
-      <td>1.140330e+05</td>
-      <td>4.524630e+05</td>
-      <td>1.442585e+06</td>
+      <td>114033.00</td>
+      <td>452463.00</td>
+      <td>1442585.00</td>
       <td>2.862641e+06</td>
       <td>6.803815e+06</td>
       <td>7.594254e+07</td>
@@ -704,9 +596,9 @@
       <td>5.372735e+06</td>
       <td>6.919246e+07</td>
       <td>-1.260093e+07</td>
-      <td>1.000000e+04</td>
-      <td>5.000000e+04</td>
-      <td>1.000000e+05</td>
+      <td>10000.00</td>
+      <td>50000.00</td>
+      <td>100000.00</td>
       <td>3.000000e+05</td>
       <td>8.000000e+05</td>
       <td>7.429079e+06</td>
@@ -722,9 +614,9 @@
       <td>6.926402e+07</td>
       <td>1.789336e+09</td>
       <td>-5.298140e+08</td>
-      <td>-2.758750e+05</td>
-      <td>2.138610e+05</td>
-      <td>9.430910e+05</td>
+      <td>-275875.00</td>
+      <td>213861.00</td>
+      <td>943091.00</td>
       <td>1.932076e+06</td>
       <td>4.561705e+06</td>
       <td>6.509213e+07</td>
@@ -740,9 +632,9 @@
       <td>1.026710e+08</td>
       <td>1.811854e+09</td>
       <td>-3.907374e+07</td>
-      <td>0.000000e+00</td>
-      <td>3.388170e+05</td>
-      <td>2.261075e+06</td>
+      <td>0.00</td>
+      <td>338817.00</td>
+      <td>2261075.00</td>
       <td>5.398327e+06</td>
       <td>1.408932e+07</td>
       <td>1.421411e+08</td>
@@ -758,9 +650,9 @@
       <td>1.861503e+07</td>
       <td>4.587563e+08</td>
       <td>-1.635890e+09</td>
-      <td>-3.199850e+05</td>
-      <td>7.168900e+04</td>
-      <td>4.657820e+05</td>
+      <td>-319985.00</td>
+      <td>71689.00</td>
+      <td>465782.00</td>
       <td>9.837650e+05</td>
       <td>2.426428e+06</td>
       <td>2.170634e+07</td>
@@ -776,9 +668,9 @@
       <td>5.393388e+06</td>
       <td>2.044807e+08</td>
       <td>-1.152630e+10</td>
-      <td>-4.642247e+06</td>
-      <td>-4.353230e+05</td>
-      <td>6.896500e+04</td>
+      <td>-4642247.00</td>
+      <td>-435323.00</td>
+      <td>68965.00</td>
       <td>2.061460e+05</td>
       <td>5.390860e+05</td>
       <td>5.346684e+06</td>
@@ -794,9 +686,9 @@
       <td>5.944019e+06</td>
       <td>1.752219e+08</td>
       <td>-4.812403e+07</td>
-      <td>1.100000e+01</td>
-      <td>3.747500e+02</td>
-      <td>1.226900e+04</td>
+      <td>11.00</td>
+      <td>374.75</td>
+      <td>12269.00</td>
       <td>4.537300e+04</td>
       <td>1.687130e+05</td>
       <td>3.763192e+06</td>
@@ -812,9 +704,9 @@
       <td>5.429708e+06</td>
       <td>9.487277e+07</td>
       <td>-4.472288e+07</td>
-      <td>5.000000e+00</td>
-      <td>5.737000e+03</td>
-      <td>3.577300e+04</td>
+      <td>5.00</td>
+      <td>5737.00</td>
+      <td>35773.00</td>
       <td>8.859000e+04</td>
       <td>2.555590e+05</td>
       <td>4.744543e+06</td>
@@ -830,9 +722,9 @@
       <td>5.908972e+06</td>
       <td>2.412381e+08</td>
       <td>-7.578702e+09</td>
-      <td>-9.273306e+06</td>
-      <td>-5.772700e+05</td>
-      <td>4.508300e+04</td>
+      <td>-9273306.00</td>
+      <td>-577270.00</td>
+      <td>45083.00</td>
       <td>1.636065e+05</td>
       <td>4.582460e+05</td>
       <td>4.886260e+06</td>
@@ -848,9 +740,9 @@
       <td>4.891947e+06</td>
       <td>2.118879e+08</td>
       <td>-4.836170e+09</td>
-      <td>-8.946826e+06</td>
-      <td>-5.919220e+05</td>
-      <td>3.752200e+04</td>
+      <td>-8946826.00</td>
+      <td>-591922.00</td>
+      <td>37522.00</td>
       <td>1.476955e+05</td>
       <td>4.063200e+05</td>
       <td>4.077223e+06</td>
@@ -861,21 +753,129 @@
       <td>5.2581</td>
     </tr>
     <tr>
-      <th>JEMU_191104</th>
-      <td>901856.0</td>
-      <td>3.207492e+02</td>
-      <td>1.689390e+03</td>
+      <th>JEMU_191104_val</th>
+      <td>875733.0</td>
+      <td>3.201530e+01</td>
+      <td>2.470790e+02</td>
       <td>-1.813100e+02</td>
-      <td>-7.513000e+01</td>
-      <td>-4.081000e+01</td>
-      <td>-8.500000e+00</td>
-      <td>6.810000e+00</td>
-      <td>2.916000e+01</td>
-      <td>2.398500e+02</td>
-      <td>1.000000e+04</td>
-      <td>1.000300e+04</td>
-      <td>5.4977</td>
-      <td>28.4459</td>
+      <td>-75.75</td>
+      <td>-41.38</td>
+      <td>-9.08</td>
+      <td>5.960000e+00</td>
+      <td>2.610000e+01</td>
+      <td>1.131140e+02</td>
+      <td>5.232400e+02</td>
+      <td>9.858840e+03</td>
+      <td>21.4808</td>
+      <td>608.5678</td>
+      <td>8.0023</td>
+    </tr>
+    <tr>
+      <th>JEMU_191104_undef</th>
+      <td>901856.0</td>
+      <td>2.650000e-02</td>
+      <td>1.606000e-01</td>
+      <td>0.000000e+00</td>
+      <td>0.00</td>
+      <td>0.00</td>
+      <td>0.00</td>
+      <td>0.000000e+00</td>
+      <td>0.000000e+00</td>
+      <td>0.000000e+00</td>
+      <td>1.000000e+00</td>
+      <td>1.000000e+00</td>
+      <td>5.8978</td>
+      <td>32.7841</td>
+      <td>5.2581</td>
+    </tr>
+    <tr>
+      <th>JEMU_191104_capped</th>
+      <td>901856.0</td>
+      <td>1.000000e-03</td>
+      <td>3.090000e-02</td>
+      <td>0.000000e+00</td>
+      <td>0.00</td>
+      <td>0.00</td>
+      <td>0.00</td>
+      <td>0.000000e+00</td>
+      <td>0.000000e+00</td>
+      <td>0.000000e+00</td>
+      <td>0.000000e+00</td>
+      <td>1.000000e+00</td>
+      <td>32.2805</td>
+      <td>1040.0311</td>
+      <td>5.2581</td>
+    </tr>
+    <tr>
+      <th>JEMU_191105_val</th>
+      <td>711592.0</td>
+      <td>1.085464e+02</td>
+      <td>5.255942e+02</td>
+      <td>-1.000000e+02</td>
+      <td>-97.10</td>
+      <td>-83.46</td>
+      <td>-32.90</td>
+      <td>5.460000e+00</td>
+      <td>6.461000e+01</td>
+      <td>5.095800e+02</td>
+      <td>2.271500e+03</td>
+      <td>9.992860e+03</td>
+      <td>9.4681</td>
+      <td>115.8753</td>
+      <td>25.2457</td>
+    </tr>
+    <tr>
+      <th>JEMU_191105_undef</th>
+      <td>901856.0</td>
+      <td>1.460000e-02</td>
+      <td>1.200000e-01</td>
+      <td>0.000000e+00</td>
+      <td>0.00</td>
+      <td>0.00</td>
+      <td>0.00</td>
+      <td>0.000000e+00</td>
+      <td>0.000000e+00</td>
+      <td>0.000000e+00</td>
+      <td>1.000000e+00</td>
+      <td>1.000000e+00</td>
+      <td>8.0918</td>
+      <td>63.4776</td>
+      <td>5.2581</td>
+    </tr>
+    <tr>
+      <th>JEMU_191105_capped</th>
+      <td>901856.0</td>
+      <td>2.300000e-03</td>
+      <td>4.840000e-02</td>
+      <td>0.000000e+00</td>
+      <td>0.00</td>
+      <td>0.00</td>
+      <td>0.00</td>
+      <td>0.000000e+00</td>
+      <td>0.000000e+00</td>
+      <td>0.000000e+00</td>
+      <td>0.000000e+00</td>
+      <td>1.000000e+00</td>
+      <td>20.5770</td>
+      <td>421.4141</td>
+      <td>5.2581</td>
+    </tr>
+    <tr>
+      <th>JEMU_191105_turn_neg</th>
+      <td>901856.0</td>
+      <td>7.530000e-02</td>
+      <td>2.639000e-01</td>
+      <td>0.000000e+00</td>
+      <td>0.00</td>
+      <td>0.00</td>
+      <td>0.00</td>
+      <td>0.000000e+00</td>
+      <td>0.000000e+00</td>
+      <td>1.000000e+00</td>
+      <td>1.000000e+00</td>
+      <td>1.000000e+00</td>
+      <td>3.2191</td>
+      <td>8.3624</td>
       <td>5.2581</td>
     </tr>
   </tbody>
@@ -890,7 +890,7 @@
 <section id="timeseries">
   <h2>📅 6. 주요 지표 시계열 추이</h2>
   <img src="eda_plots/timeseries_trends.png" alt="시계열" class="plot-img">
-  <p class="note">점선: 학습(Train) / 검증(Valid) 분리 시점 (2023-12)</p>
+  <p class="note">점선: 학습(Train) / 검증(Valid) 분리 시점 (2023-12) · 제외(202401~ 전 구간 0): IS_BUDO_IN_SPINE_YN, OBV_LN_BAC, OBV_RZVL_POD</p>
 </section>
 
 <section id="correlation">
@@ -910,14 +910,6 @@
       <td>1.000000</td>
     </tr>
     <tr>
-      <td>GRD_LS_NICS_GRDC</td>
-      <td>0.059461</td>
-    </tr>
-    <tr>
-      <td>COPR_OPNP_C</td>
-      <td>0.047265</td>
-    </tr>
-    <tr>
       <td>C302_CRI_ORD</td>
       <td>0.038176</td>
     </tr>
@@ -926,16 +918,20 @@
       <td>0.037061</td>
     </tr>
     <tr>
-      <td>CG01_KIS_SCORE</td>
-      <td>-0.035235</td>
-    </tr>
-    <tr>
       <td>CRIF_EVENT_CNT</td>
       <td>0.025658</td>
     </tr>
     <tr>
+      <td>CG01_KIS_SCORE</td>
+      <td>0.021631</td>
+    </tr>
+    <tr>
       <td>CRIF_RSN_AM_SUM</td>
       <td>0.020617</td>
+    </tr>
+    <tr>
+      <td>JEMU_roa_avg</td>
+      <td>-0.013493</td>
     </tr>
     <tr>
       <td>AA17_DIFF_INVALID_YN</td>
@@ -946,12 +942,32 @@
       <td>0.010344</td>
     </tr>
     <tr>
+      <td>JEMU_roe_first_fy_YN</td>
+      <td>-0.010136</td>
+    </tr>
+    <tr>
       <td>C302_IS_NR_YN</td>
       <td>0.010131</td>
     </tr>
     <tr>
-      <td>CRIF_WORST_RSNC</td>
-      <td>-0.009512</td>
+      <td>JEMU_191108_turn_neg</td>
+      <td>0.010024</td>
+    </tr>
+    <tr>
+      <td>JEMU_consec_loss_years</td>
+      <td>0.009655</td>
+    </tr>
+    <tr>
+      <td>JEMU_191105_turn_neg</td>
+      <td>0.009564</td>
+    </tr>
+    <tr>
+      <td>JEMU_capital_impaired</td>
+      <td>0.008996</td>
+    </tr>
+    <tr>
+      <td>JEMU_pl_turn_dir</td>
+      <td>-0.008714</td>
     </tr>
     <tr>
       <td>AA17_YTD_Q</td>
@@ -962,28 +978,12 @@
       <td>-0.008434</td>
     </tr>
     <tr>
+      <td>JEMU_debt_dependency</td>
+      <td>0.008020</td>
+    </tr>
+    <tr>
       <td>CRIF_OVD_AM_SUM</td>
       <td>0.007938</td>
-    </tr>
-    <tr>
-      <td>AA17_YOY_NA_YN</td>
-      <td>0.007925</td>
-    </tr>
-    <tr>
-      <td>JEMU_AUD_NONE_YN</td>
-      <td>0.007522</td>
-    </tr>
-    <tr>
-      <td>AA17_EXPORT_RATIO</td>
-      <td>-0.006859</td>
-    </tr>
-    <tr>
-      <td>JEMU_191108</td>
-      <td>0.006533</td>
-    </tr>
-    <tr>
-      <td>JEMU_191105</td>
-      <td>0.006378</td>
     </tr>
   </tbody>
 </table>

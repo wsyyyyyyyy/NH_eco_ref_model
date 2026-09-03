@@ -79,7 +79,10 @@ def md5_of(p: Path) -> str:
 def check_protected(tag: str) -> dict:
     out = {}
     for name in PROTECTED:
-        p = OUT_DIR / name
+        # 누수 포함 모델은 Group E 정리에서 _archive/legacy_model/ 로 이동했다.
+        p = config.ARCHIVE_DIR / "legacy_model" / name
+        if not p.exists():
+            p = OUT_DIR / name
         if not p.exists():
             out[name] = "(없음)"
             log.warning("  보호 파일 없음: %s", name)

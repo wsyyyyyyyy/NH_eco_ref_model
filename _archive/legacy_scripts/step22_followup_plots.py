@@ -1,4 +1,4 @@
-"""Generates chart assets for the two follow-up sections of docs/step28 (1-1: true 3-way
+"""Generates chart assets for the two follow-up sections of docs/appendix/step28 (1-1: true 3-way
 split, 2-1: full multicollinearity audit). Reads the CSVs/JSONs already produced by
 step17/step20/step21 -- no retraining needed.
 """

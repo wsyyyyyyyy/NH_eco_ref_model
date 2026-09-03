@@ -13,7 +13,7 @@
 
 | 포함 (git 추적) | 미포함 (재생성/요청) |
 |---|---|
-| `legacy_model/lgbm_12m_model.txt` · `lgbm_12m_lean_model.txt` (합 ~1.7 MB) — `docs/04` gain 수치(CRIF 36.34%, A7 0.9398)의 직접 출처 | `ablation_models/` `lgbm_v2_A*`·`lgbm_v2_C*` 17개 (~76 MB) — `step30_stage6_ablation.py` 재실행으로 재생성 |
+| `legacy_model/lgbm_12m_model.txt` · `lgbm_12m_lean_model.txt` (합 ~1.7 MB) — `docs/04` gain 수치의 직접 출처 **이자 `step6` 이 거시 축소(178→89) 기준으로 참조**하므로 삭제 불가 | `ablation_models/` `lgbm_v2_A*`·`lgbm_v2_C*` 17개 (~76 MB) — `step30_stage6_ablation.py` 재실행으로 재생성 |
 | 이 `README.md` + 6개 하위 `README.md` | `legacy_panels/nh_panel_full.csv` (~350 MB) — `python -m eda_pipeline.run` 로 재생성 |
 | `legacy_docs/` 문서 전부 | `legacy_validation/*_preGroupD.parquet` (~100 MB) |
 
@@ -27,7 +27,7 @@
 
 | 폴더 | 내용 |
 |---|---|
-| `legacy_model/` | 누수 포함 모델(230피처). `docs/04` gain 수치의 출처. `lgbm_12m_model.txt` md5 `4e02cd37…9359` / `lgbm_12m_lean_model.txt` md5 `25d1cc5b…fec7` (불변 확인) |
+| `legacy_model/` | 누수 포함 모델(230피처). `docs/04` gain 수치의 출처 + `step6` 거시 축소 기준(`step6_macro_integration.py` 의 `config.MODEL_PATH_LEGACY_FULL` 참조). `lgbm_12m_model.txt` md5 `4e02cd37…9359` / `lgbm_12m_lean_model.txt` md5 `25d1cc5b…fec7` (불변 확인) |
 | `legacy_docs/` | AUC 0.9005 를 주장하던 이전 세대 개발 문서(step01~29 등). 전부 무효 |
 | `legacy_scripts/` | 이 PC 에서 실행 불가(`.gemini/antigravity/brain` 절대경로)하거나 현행 스크립트로 대체된 것 |
 | `legacy_panels/` | 구세대 패널 CSV (`nh_panel_full.csv` 등). 재현 시 `eda_pipeline` step1~2 로 재생성 가능 |

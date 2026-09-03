@@ -198,7 +198,7 @@ JEMU 라벨 한 칸 밀림에 이은 **두 번째 매핑 사고**다. 이번에�
 | # | 대상 | 상태 | 비고 |
 |---|---|---|---|
 | 1 | `indicators.csv` 항목코드 정정 | **완료 (2026-09-01)** | 23건 정정. `old_stat_code`/`old_item_code1`/`old_item_code2` 에 기존 값 보존. 재감사 ECOS 일치 39/44, 잔여 5건은 (d)·enabled=N |
-| 1b | 전체 재수집 (`output/` → `output_pre_remap/` 보존) | **대기 — 판단 2 승인 후** | 32건만이 아니라 전체를 다시 받는다 |
+| 1b | 전체 재수집 (`output/` → `output_pre_remap/` 보존) | **완료 (2026-09-01)** — 65/65 성공 | 정정 23건만이 아니라 전체 65개를 다시 받았다 |
 | 1c | KOSIS `construction_cost_index` 차원 필터 | **완료 (2026-09-01)** | `C1_NM='건설'`(총지수) 필터 추가. 기존은 '기타건설' 이 저장되고 있었다 |
 | 2 | 파생 `credit_spread` / `liquidity_spread` | 대기 | credit_spread 무효, liquidity_spread 는 정상 확인 |
 | 3 | Phase 6 산출물 3개 재생성 | 대기 | `LV_credit_spread` / `CUM_spread_stress_12m` / `PCT_spread_5y`. 나머지 9개 유지 |

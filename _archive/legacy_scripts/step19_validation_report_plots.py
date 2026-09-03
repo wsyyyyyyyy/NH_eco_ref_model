@@ -1,4 +1,4 @@
-"""Generates the remaining chart assets for docs/step28 (items 2, 3, 5 originally had tables
+"""Generates the remaining chart assets for docs/appendix/step28 (items 2, 3, 5 originally had tables
 only). Reads the CSVs already produced by step15/16/18 -- no retraining needed.
 """
 import pandas as pd

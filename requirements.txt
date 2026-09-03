@@ -1,0 +1,15 @@
+# NH ECO Ref Model — 파이프라인 실행 의존성 (검증된 설치 버전)
+# 포털(backend)만 띄우려면 backend/requirements.txt 를 쓰십시오.
+lightgbm==4.7.0
+scikit-learn==1.9.0
+scipy==1.18.1
+shap==0.52.0
+numba==0.67.0
+llvmlite==0.49.0
+pandas==3.0.5
+numpy==2.5.2
+duckdb==1.5.5
+joblib==1.5.3
+threadpoolctl==3.6.0
+cloudpickle==3.1.2
+slicer==0.0.8

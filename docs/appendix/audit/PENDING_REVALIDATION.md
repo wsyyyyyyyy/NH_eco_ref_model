@@ -198,7 +198,7 @@ JEMU 라벨 한 칸 밀림에 이은 **두 번째 매핑 사고**다. 이번에�
 | # | 대상 | 상태 | 비고 |
 |---|---|---|---|
 | 1 | `indicators.csv` 항목코드 정정 | **완료 (2026-09-01)** | 23건 정정. `old_stat_code`/`old_item_code1`/`old_item_code2` 에 기존 값 보존. 재감사 ECOS 일치 39/44, 잔여 5건은 (d)·enabled=N |
-| 1b | 전체 재수집 (`output/` → `output_pre_remap/` 보존) | **대기 — 판단 2 승인 후** | 32건만이 아니라 전체를 다시 받는다 |
+| 1b | 전체 재수집 (`output/` → `output_pre_remap/` 보존) | **완료 (2026-09-01)** — 65/65 성공 | 정정 23건만이 아니라 전체 65개를 다시 받았다 |
 | 1c | KOSIS `construction_cost_index` 차원 필터 | **완료 (2026-09-01)** | `C1_NM='건설'`(총지수) 필터 추가. 기존은 '기타건설' 이 저장되고 있었다 |
 | 2 | 파생 `credit_spread` / `liquidity_spread` | 대기 | credit_spread 무효, liquidity_spread 는 정상 확인 |
 | 3 | Phase 6 산출물 3개 재생성 | 대기 | `LV_credit_spread` / `CUM_spread_stress_12m` / `PCT_spread_5y`. 나머지 9개 유지 |
@@ -289,7 +289,7 @@ GNI 3건은 **연간 지표라 월 패널에서 (기업,연도) 내 변동이 0 
 
 | 위치 | 내용 | 조치 시점 |
 |---|---|---|
-| `eda_pipeline/output/lgbm_12m_model.txt` | `feature_names` 에 `US_2Y_treasury_diff12` 가 학습된 채로 박혀 있다 | **재학습 시 해소**. 그 전까지 포털은 구 모델·구 데이터로 동작 |
+| `eda_pipeline/output/lgbm_12m_model.txt` | `feature_names` 에 `US_2Y_treasury_diff12` 가 학습된 채로 박혀 있다 | **해소 (2026-09-03).** `backend/model_inference.py` 가 `lgbm_v2_lean_macro.txt`(59피처)로 교체되어 이 파일은 더 이상 서빙에 쓰이지 않는다 |
 | `eda_pipeline/output/lgbm_12m_lean_model.txt` | 동일 | 재학습 시 |
 | `backend/model_inference.py` `_GROWTH_COLS` | `'trade_total_yoy'` 가 남아 있다 | **재학습 후 제거**. `shift()` 가 `if c in shocked.columns` 로 막아 주므로 런타임 오류는 없다 |
 | `output/` 하위 생성물 (`macro_columns_v2.json`, `nh_panel_*.csv`, `standardized/` 등) | 구 지표명 포함 | 3~5단계 재생성으로 해소 |

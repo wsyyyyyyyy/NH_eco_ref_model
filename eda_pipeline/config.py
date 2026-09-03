@@ -14,12 +14,20 @@ EDA Pipeline — 공통 설정
 from __future__ import annotations
 
 import os
+import sys
 from pathlib import Path
 
 # ── 경로 ─────────────────────────────────────────────────────────────
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
-OUTPUT_DIR = PROJECT_ROOT / "eda_pipeline" / "output"
+# 출력 경로 오버라이드. 미설정 시 기본 경로 사용
+OUTPUT_DIR = Path(os.getenv("NH_OUTPUT_DIR", str(PROJECT_ROOT / "eda_pipeline" / "output"))).resolve()
 INPUT_DIR = PROJECT_ROOT / "input"
+
+if not str(PROJECT_ROOT).isascii():
+    sys.stderr.write(
+        f"[경고] 프로젝트 경로에 비ASCII 문자가 있습니다: {PROJECT_ROOT}\n"
+        f"        LightGBM 의 C++ 파일 IO 가 실패할 수 있습니다. 모델 저장/로드는 "
+        f"config.save_booster()/load_booster() 를 쓰고, 가능하면 한글 없는 경로로 옮기십시오.\n")
 #: 이전 세대 산출물 보관 폴더 (누수 모델·구세대 패널 등). 인용 금지. `_archive/README.md` 참조.
 ARCHIVE_DIR = PROJECT_ROOT / "_archive"
 

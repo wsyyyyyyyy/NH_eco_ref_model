@@ -111,6 +111,8 @@ CATEGORY_MAP_FILE = "categorical_levels_v2.json"
 MACRO_REDUCE = True
 MACRO_DROPPED_FILE = "macro_dropped_v2.json"
 REFERENCE_MODEL = "lgbm_12m_model.txt"
+#: 확정 D8 패널의 거시 축소 후 컬럼 수. 달라지면 참조/입력이 바뀐 것 — 경고한다.
+EXPECTED_MACRO_AFTER_REDUCE = 89
 
 # 수출 노출도 모드. 하이브리드가 실측을 완전히 포함하므로 동시 투입은 VIF 문제를 만든다.
 # 두 컬럼은 모두 생성해 두되 학습에는 하나만 쓴다 (STAGE 6 의 S7a / S7b).
@@ -429,10 +431,16 @@ def reduce_macro(macro: pd.DataFrame, enable: bool = MACRO_REDUCE) -> pd.DataFra
 
     import json
     import re
-    model = config.OUTPUT_DIR / REFERENCE_MODEL
+    # 누수 포함 참조 모델. Group E 정리에서 _archive/legacy_model/ 로 이동했다.
+    model = config.MODEL_PATH_LEGACY_FULL
     if not model.exists():
-        log.warning("  %s 없음 — 거시 축소를 건너뜁니다.", REFERENCE_MODEL)
-        return macro
+        raise FileNotFoundError(
+            f"거시 축소 기준 모델이 없습니다: {model}\n"
+            f"  이 파일({REFERENCE_MODEL})의 gain>0 거시 변수만 남겨 178 -> 89 로 축소합니다.\n"
+            f"  없으면 축소가 조용히 생략되어 산출 패널이 확정본과 달라집니다.\n"
+            f"  해결: _archive/legacy_model/{REFERENCE_MODEL} 을 복원하거나,\n"
+            f"        축소가 필요 없으면 step6 을 --no-reduce 로 실행하십시오."
+        )
 
     txt = model.read_text(encoding="utf-8")
     feats = re.search(r"^feature_names=(.+)$", txt, re.M).group(1).split()
@@ -455,8 +463,10 @@ def reduce_macro(macro: pd.DataFrame, enable: bool = MACRO_REDUCE) -> pd.DataFra
     if forced:
         log.info("  거시 축소: gain=0 이지만 상호작용 재료라 보존 = %s", forced)
     if not keep:
-        log.warning("  기준 모델과 겹치는 거시 변수가 없어 축소를 건너뜁니다.")
-        return macro
+        raise RuntimeError(
+            f"거시 축소 결과 남는 변수가 0개입니다 (참조 모델 {REFERENCE_MODEL} 의 "
+            f"feature_names 와 거시 컬럼명이 겹치지 않음). 축소를 건너뛰면 산출 패널이 "
+            f"확정본과 달라지므로 예외로 중단합니다.")
 
     (config.OUTPUT_DIR / MACRO_DROPPED_FILE).write_text(
         json.dumps({"reference_model": REFERENCE_MODEL,
@@ -469,6 +479,10 @@ def reduce_macro(macro: pd.DataFrame, enable: bool = MACRO_REDUCE) -> pd.DataFra
         encoding="utf-8")
     log.info("  거시 축소: %d -> %d개 (gain>0 기준, 제거 %d개) — %s 저장",
              len(cols), len(keep), len(drop), MACRO_DROPPED_FILE)
+    if len(keep) != EXPECTED_MACRO_AFTER_REDUCE:
+        log.warning("  ★ 거시 축소 결과 %d개 — 확정 D8 패널 기대값 %d 과 다릅니다. "
+                    "참조 모델 또는 입력 거시 CSV 가 바뀐 것으로 보입니다.",
+                    len(keep), EXPECTED_MACRO_AFTER_REDUCE)
     return macro[["BASE_YM"] + keep]
 
 

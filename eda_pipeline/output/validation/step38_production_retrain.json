@@ -7,7 +7,7 @@
       2024
     ],
     "lean_cum_gain": 0.95,
-    "n_features_full": 169,
+    "n_features_full": 164,
     "e14": [
       "ix_KORIBOR_spread_d12__liq",
       "ix_export_index__mfg",
@@ -40,110 +40,102 @@
       "ix_CNY_KRW_ret__fx_hybrid": 0,
       "ix_JPY_KRW_ret__mfg": 0
     },
-    "lean_n_at_95pct": 50,
+    "lean_n_at_95pct": 46,
     "lean_pure_features": [
-      "C302_MISSING_YN",
       "C302_CRI_ORD",
-      "JEMU_191310_val",
+      "JEMU_115000",
       "STD_INDS_SECTION",
-      "JEMU_126000",
       "BUSINESS_AGE",
-      "OBV_LD_AM",
       "JEMU_118100",
+      "OBV_LD_AM",
+      "JEMU_191310_val",
       "JEMU_191503_val",
       "JEMU_191502_val",
-      "JEMU_112000",
-      "JEMU_118900",
+      "JEMU_126000",
       "JEMU_114000",
-      "OBV_XPC_LSS_AM",
       "JEMU_125100",
-      "JEMU_123000",
-      "JEMU_115000",
       "JEMU_121000",
       "JEMU_191104_val",
+      "JEMU_123000",
+      "exp_fx_industry",
+      "JEMU_debt_ratio",
+      "JEMU_118900",
       "JEMU_191505_val",
       "JEMU_current_ratio",
-      "JEMU_asset_turnover_avg",
-      "JEMU_debt_ratio",
-      "JEMU_125000",
+      "JEMU_191506_val",
+      "JEMU_112000",
       "exp_fx_hybrid",
       "JEMU_191105_val",
-      "JEMU_191506_val",
+      "JEMU_asset_turnover_avg",
+      "JEMU_125000",
       "JEMU_191110_val",
       "JEMU_191108_val",
-      "exp_fx_industry",
+      "exp_liq",
       "JEMU_116000",
       "JEMU_asset_turnover_end",
       "JEMU_191210_val",
-      "OBV_BZL_RZVL_ASP_ELGD",
-      "exp_liq",
-      "JEMU_118000",
       "exp_inv",
-      "OBV_ELYWRN_OBV_GRD_DSC",
       "JEMU_191207_val",
-      "exp_rate",
+      "JEMU_118000",
+      "JEMU_roe_end",
+      "OBV_ELYWRN_OBV_GRD_DSC",
+      "JEMU_191208_val",
       "JEMU_117000",
       "JEMU_roe_avg",
-      "JEMU_191204_val",
-      "JEMU_roe_end",
-      "JEMU_roa_avg",
-      "AA10_PERS_CNT",
-      "OBV_LN_BAC",
       "JEMU_128000",
+      "JEMU_debt_dependency",
+      "exp_rate",
       "ix_KORIBOR_spread_d12__liq",
-      "JEMU_129000"
+      "JEMU_191204_val",
+      "AA10_PERS_CNT"
     ],
     "lean_macro_features": [
-      "C302_MISSING_YN",
       "C302_CRI_ORD",
-      "JEMU_191310_val",
+      "JEMU_115000",
       "STD_INDS_SECTION",
-      "JEMU_126000",
       "BUSINESS_AGE",
-      "OBV_LD_AM",
       "JEMU_118100",
+      "OBV_LD_AM",
+      "JEMU_191310_val",
       "JEMU_191503_val",
       "JEMU_191502_val",
-      "JEMU_112000",
-      "JEMU_118900",
+      "JEMU_126000",
       "JEMU_114000",
-      "OBV_XPC_LSS_AM",
       "JEMU_125100",
-      "JEMU_123000",
-      "JEMU_115000",
       "JEMU_121000",
       "JEMU_191104_val",
+      "JEMU_123000",
+      "exp_fx_industry",
+      "JEMU_debt_ratio",
+      "JEMU_118900",
       "JEMU_191505_val",
       "JEMU_current_ratio",
-      "JEMU_asset_turnover_avg",
-      "JEMU_debt_ratio",
-      "JEMU_125000",
+      "JEMU_191506_val",
+      "JEMU_112000",
       "exp_fx_hybrid",
       "JEMU_191105_val",
-      "JEMU_191506_val",
+      "JEMU_asset_turnover_avg",
+      "JEMU_125000",
       "JEMU_191110_val",
       "JEMU_191108_val",
-      "exp_fx_industry",
+      "exp_liq",
       "JEMU_116000",
       "JEMU_asset_turnover_end",
       "JEMU_191210_val",
-      "OBV_BZL_RZVL_ASP_ELGD",
-      "exp_liq",
-      "JEMU_118000",
       "exp_inv",
-      "OBV_ELYWRN_OBV_GRD_DSC",
       "JEMU_191207_val",
-      "exp_rate",
+      "JEMU_118000",
+      "JEMU_roe_end",
+      "OBV_ELYWRN_OBV_GRD_DSC",
+      "JEMU_191208_val",
       "JEMU_117000",
       "JEMU_roe_avg",
-      "JEMU_191204_val",
-      "JEMU_roe_end",
-      "JEMU_roa_avg",
-      "AA10_PERS_CNT",
-      "OBV_LN_BAC",
       "JEMU_128000",
+      "JEMU_debt_dependency",
+      "exp_rate",
       "ix_KORIBOR_spread_d12__liq",
-      "JEMU_129000",
+      "JEMU_191204_val",
+      "AA10_PERS_CNT",
       "ix_export_index__mfg",
       "ix_current_account_quarterly__mfg",
       "ix_CPI_food_nonalcohol__rate",
@@ -163,258 +155,258 @@
     ]
   },
   "md5_before": {
-    "lgbm_12m_model.txt": "4e02cd3738dfae657da84edd906b9359",
-    "lgbm_12m_lean_model.txt": "25d1cc5bfe091c4549fd78fe4549fec7"
+    "lgbm_12m_model.txt": "(없음)",
+    "lgbm_12m_lean_model.txt": "(없음)"
   },
   "runs": [
     {
       "tag": "Full",
       "seed": 42,
-      "n_features": 169,
-      "best_iteration": 5336,
+      "n_features": 164,
+      "best_iteration": 5103,
       "scale_pos_weight": 108.6971,
       "train": {
-        "auc": 0.9979760373321934,
-        "gini": 0.9959520746643868,
-        "ks": 0.9711896578469456
+        "auc": 0.9974433352401665,
+        "gini": 0.994886670480333,
+        "ks": 0.961263858198735
       },
       "dev": {
-        "auc": 0.9728145337633939,
-        "gini": 0.9456290675267878,
-        "ks": 0.8305251621816747
+        "auc": 0.9728425032851853,
+        "gini": 0.9456850065703706,
+        "ks": 0.8273989123829409
       },
       "valid": {
-        "auc": 0.8553763871884705,
-        "gini": 0.7107527743769411,
-        "ks": 0.5566317743730027
+        "auc": 0.858226836745857,
+        "gini": 0.716453673491714,
+        "ks": 0.5615216267161233
       },
-      "psi_train_valid": 0.04829258882363901,
-      "elapsed_sec": 124.2,
+      "psi_train_valid": 0.01999303102408513,
+      "elapsed_sec": 145.1,
       "model_path": "eda_pipeline\\output\\lgbm_v2_full.txt"
     },
     {
       "tag": "Full",
       "seed": 7,
-      "n_features": 169,
-      "best_iteration": 5789,
+      "n_features": 164,
+      "best_iteration": 5023,
       "scale_pos_weight": 108.6971,
       "train": {
-        "auc": 0.9983444462693094,
-        "gini": 0.9966888925386188,
-        "ks": 0.9750189563035054
+        "auc": 0.9973004687784599,
+        "gini": 0.9946009375569198,
+        "ks": 0.9600305845310888
       },
       "dev": {
-        "auc": 0.9741824693166296,
-        "gini": 0.9483649386332591,
-        "ks": 0.8383601342121529
+        "auc": 0.9735638936067439,
+        "gini": 0.9471277872134878,
+        "ks": 0.827630251751666
       },
       "valid": {
-        "auc": 0.8559218994482719,
-        "gini": 0.7118437988965438,
-        "ks": 0.5577111686807024
+        "auc": 0.8583138121042826,
+        "gini": 0.7166276242085652,
+        "ks": 0.5603658734566086
       },
-      "psi_train_valid": 0.04330392984141686,
-      "elapsed_sec": 132.8
+      "psi_train_valid": 0.020398863535142496,
+      "elapsed_sec": 138.3
     },
     {
       "tag": "Full",
       "seed": 2024,
-      "n_features": 169,
-      "best_iteration": 5247,
+      "n_features": 164,
+      "best_iteration": 5370,
       "scale_pos_weight": 108.6971,
       "train": {
-        "auc": 0.9978630660742647,
-        "gini": 0.9957261321485293,
-        "ks": 0.9699731022482662
+        "auc": 0.9976782506797383,
+        "gini": 0.9953565013594765,
+        "ks": 0.9633740959272722
       },
       "dev": {
-        "auc": 0.9734990469067318,
-        "gini": 0.9469980938134637,
-        "ks": 0.8332519438428098
+        "auc": 0.9741798723322478,
+        "gini": 0.9483597446644956,
+        "ks": 0.8291039105390822
       },
       "valid": {
-        "auc": 0.8530853513311663,
-        "gini": 0.7061707026623325,
-        "ks": 0.5435018547231584
+        "auc": 0.8569792345032252,
+        "gini": 0.7139584690064504,
+        "ks": 0.5604824496456573
       },
-      "psi_train_valid": 0.04035952757154744,
-      "elapsed_sec": 136.8
+      "psi_train_valid": 0.018249178035334622,
+      "elapsed_sec": 146.8
     },
     {
       "tag": "Lean_pure",
       "seed": 42,
-      "n_features": 50,
-      "best_iteration": 5146,
+      "n_features": 46,
+      "best_iteration": 4699,
       "scale_pos_weight": 108.6971,
       "train": {
-        "auc": 0.9977421662780548,
-        "gini": 0.9954843325561096,
-        "ks": 0.9679922329911377
+        "auc": 0.9967663974944959,
+        "gini": 0.9935327949889918,
+        "ks": 0.9567686639360018
       },
       "dev": {
-        "auc": 0.972961263380962,
-        "gini": 0.945922526761924,
-        "ks": 0.8273144844206908
+        "auc": 0.9716943764900199,
+        "gini": 0.9433887529800398,
+        "ks": 0.8233213612353336
       },
       "valid": {
-        "auc": 0.8539643048706682,
-        "gini": 0.7079286097413364,
-        "ks": 0.5525334717650836
+        "auc": 0.8551002578403345,
+        "gini": 0.710200515680669,
+        "ks": 0.555257918901234
       },
-      "psi_train_valid": 0.04414791183670014,
-      "elapsed_sec": 85.9,
+      "psi_train_valid": 0.0249008496555835,
+      "elapsed_sec": 80.2,
       "model_path": "eda_pipeline\\output\\lgbm_v2_lean.txt"
     },
     {
       "tag": "Lean_pure",
       "seed": 7,
-      "n_features": 50,
-      "best_iteration": 5261,
+      "n_features": 46,
+      "best_iteration": 5636,
       "scale_pos_weight": 108.6971,
       "train": {
-        "auc": 0.9977938065611387,
-        "gini": 0.9955876131222774,
-        "ks": 0.9696807612493025
+        "auc": 0.9977705979593701,
+        "gini": 0.9955411959187401,
+        "ks": 0.9661892638614306
       },
       "dev": {
-        "auc": 0.9727099532023413,
-        "gini": 0.9454199064046827,
-        "ks": 0.8264738146064791
+        "auc": 0.9722181233152064,
+        "gini": 0.9444362466304128,
+        "ks": 0.8247879821950751
       },
       "valid": {
-        "auc": 0.8530558591980651,
-        "gini": 0.7061117183961303,
-        "ks": 0.5476453484315732
+        "auc": 0.851367021992691,
+        "gini": 0.702734043985382,
+        "ks": 0.5425796497206536
       },
-      "psi_train_valid": 0.04839955698248455,
-      "elapsed_sec": 88.5
+      "psi_train_valid": 0.024568969862868467,
+      "elapsed_sec": 88.3
     },
     {
       "tag": "Lean_pure",
       "seed": 2024,
-      "n_features": 50,
-      "best_iteration": 4924,
+      "n_features": 46,
+      "best_iteration": 5393,
       "scale_pos_weight": 108.6971,
       "train": {
-        "auc": 0.9974503194854389,
-        "gini": 0.9949006389708779,
-        "ks": 0.9665895110794475
+        "auc": 0.9975224057864396,
+        "gini": 0.9950448115728792,
+        "ks": 0.9631640318893175
       },
       "dev": {
-        "auc": 0.9719536853805362,
-        "gini": 0.9439073707610723,
-        "ks": 0.8262930644935101
+        "auc": 0.9732251299790682,
+        "gini": 0.9464502599581364,
+        "ks": 0.8249606037469291
       },
       "valid": {
-        "auc": 0.853719319688788,
-        "gini": 0.707438639377576,
-        "ks": 0.548576983472793
+        "auc": 0.8527740961884791,
+        "gini": 0.7055481923769582,
+        "ks": 0.5539588811603852
       },
-      "psi_train_valid": 0.04639133929399274,
-      "elapsed_sec": 79.9
+      "psi_train_valid": 0.024592387430953662,
+      "elapsed_sec": 95.0
     },
     {
       "tag": "Lean_macro",
       "seed": 42,
-      "n_features": 63,
-      "best_iteration": 5233,
+      "n_features": 59,
+      "best_iteration": 4361,
       "scale_pos_weight": 108.6971,
       "train": {
-        "auc": 0.9977602970001433,
-        "gini": 0.9955205940002867,
-        "ks": 0.9694687477138223
+        "auc": 0.9962147438566462,
+        "gini": 0.9924294877132924,
+        "ks": 0.9513227717373832
       },
       "dev": {
-        "auc": 0.9731688143727504,
-        "gini": 0.9463376287455008,
-        "ks": 0.829639123050314
+        "auc": 0.9702628018345099,
+        "gini": 0.9405256036690197,
+        "ks": 0.8197414182651106
       },
       "valid": {
-        "auc": 0.8549210972554846,
-        "gini": 0.7098421945109692,
-        "ks": 0.5516851150976998
+        "auc": 0.8575371628114896,
+        "gini": 0.7150743256229792,
+        "ks": 0.5563211363108003
       },
-      "psi_train_valid": 0.0449117828973556,
-      "elapsed_sec": 96.2,
+      "psi_train_valid": 0.02323129747801605,
+      "elapsed_sec": 89.2,
       "model_path": "eda_pipeline\\output\\lgbm_v2_lean_macro.txt"
     },
     {
       "tag": "Lean_macro",
       "seed": 7,
-      "n_features": 63,
-      "best_iteration": 5586,
+      "n_features": 59,
+      "best_iteration": 5596,
       "scale_pos_weight": 108.6971,
       "train": {
-        "auc": 0.9981166558299824,
-        "gini": 0.9962333116599649,
-        "ks": 0.9723695555827653
+        "auc": 0.9976682518086689,
+        "gini": 0.9953365036173378,
+        "ks": 0.9655566952109783
       },
       "dev": {
-        "auc": 0.9734003225454602,
-        "gini": 0.9468006450909203,
-        "ks": 0.8306070450992309
+        "auc": 0.9726830224743029,
+        "gini": 0.9453660449486059,
+        "ks": 0.8282990271696506
       },
       "valid": {
-        "auc": 0.8551470574103871,
-        "gini": 0.7102941148207742,
-        "ks": 0.5524640796054161
+        "auc": 0.8523344916885662,
+        "gini": 0.7046689833771325,
+        "ks": 0.5444487750890631
       },
-      "psi_train_valid": 0.04108141206455021,
-      "elapsed_sec": 98.8
+      "psi_train_valid": 0.018700363141653374,
+      "elapsed_sec": 106.5
     },
     {
       "tag": "Lean_macro",
       "seed": 2024,
-      "n_features": 63,
-      "best_iteration": 5910,
+      "n_features": 59,
+      "best_iteration": 5088,
       "scale_pos_weight": 108.6971,
       "train": {
-        "auc": 0.998324364074187,
-        "gini": 0.996648728148374,
-        "ks": 0.974939691992785
+        "auc": 0.9971492776890412,
+        "gini": 0.9942985553780823,
+        "ks": 0.9606126809177905
       },
       "dev": {
-        "auc": 0.9738700520955067,
-        "gini": 0.9477401041910134,
-        "ks": 0.8317838685718145
+        "auc": 0.9741070788600278,
+        "gini": 0.9482141577200556,
+        "ks": 0.8312320353605395
       },
       "valid": {
-        "auc": 0.8518364726328096,
-        "gini": 0.7036729452656192,
-        "ks": 0.5498412024790168
+        "auc": 0.852390089413685,
+        "gini": 0.70478017882737,
+        "ks": 0.5493118007145825
       },
-      "psi_train_valid": 0.042434074710059076,
-      "elapsed_sec": 100.6
+      "psi_train_valid": 0.02036973425694484,
+      "elapsed_sec": 101.6
     }
   ],
   "summary": {
     "Full": {
-      "n_features": 169,
-      "valid_auc": 0.854794545989303,
-      "valid_auc_sd": 0.0015051264700849992,
-      "valid_ks": 0.5526149325922879,
-      "psi": 0.043985348745534426,
-      "best_iteration_mean": 5457.333333333333
+      "n_features": 164,
+      "valid_auc": 0.8578399611177883,
+      "valid_auc_sd": 0.0007466785834655946,
+      "valid_ks": 0.5607899832727964,
+      "psi": 0.019547024198187418,
+      "best_iteration_mean": 5165.333333333333
     },
     "Lean_pure": {
-      "n_features": 50,
-      "valid_auc": 0.8535798279191736,
-      "valid_auc_sd": 0.0004700126065972992,
-      "valid_ks": 0.5495852678898167,
-      "psi": 0.046312936037725815,
-      "best_iteration_mean": 5110.333333333333
+      "n_features": 46,
+      "valid_auc": 0.8530804586738349,
+      "valid_auc_sd": 0.00188537952488555,
+      "valid_ks": 0.5505988165940909,
+      "psi": 0.024687402316468543,
+      "best_iteration_mean": 5242.666666666667
     },
     "Lean_macro": {
-      "n_features": 63,
-      "valid_auc": 0.8539682090995605,
-      "valid_auc_sd": 0.0018495917848696769,
-      "valid_ks": 0.5513301323940443,
-      "psi": 0.04280908989065496,
-      "best_iteration_mean": 5576.333333333333
+      "n_features": 59,
+      "valid_auc": 0.8540872479712469,
+      "valid_auc_sd": 0.0029878432155075593,
+      "valid_ks": 0.550027237371482,
+      "psi": 0.020767131625538088,
+      "best_iteration_mean": 5015.0
     }
   },
   "md5_after": {
-    "lgbm_12m_model.txt": "4e02cd3738dfae657da84edd906b9359",
-    "lgbm_12m_lean_model.txt": "25d1cc5bfe091c4549fd78fe4549fec7"
+    "lgbm_12m_model.txt": "(없음)",
+    "lgbm_12m_lean_model.txt": "(없음)"
   }
 }

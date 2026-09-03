@@ -1,0 +1,143 @@
+{
+  "dropped": [
+    "OBV_LN_BAC",
+    "OBV_LN_LMT_AM",
+    "OBV_LN_LMT_BAC",
+    "OBV_BZL_RZVL_ASP_ELGD",
+    "OBV_XPC_LSS_AM"
+  ],
+  "n_features": 164,
+  "valid_auc_mean": 0.8578,
+  "valid_auc_sd": 0.0007,
+  "delta_auc_vs_0.8548": 0.003,
+  "verdict": "교체 권고 (ΔAUC >= -0.003)",
+  "per_seed_auc": [
+    0.8582,
+    0.8583,
+    0.857
+  ],
+  "calibration_raw_valid": {
+    "brier": 0.046503,
+    "ece": 0.091513,
+    "pd_default_corr": 0.1122,
+    "count_mape_pct": 752.2
+  },
+  "confirmed_D8_ref": {
+    "valid_auc": 0.8548,
+    "sd": 0.0015,
+    "note": "확정 상관/MAPE 는 platt_train 기준(docs/06 §3-4). 여기 cal 은 raw."
+  },
+  "gain_top15_seed42": [
+    {
+      "f": "C302_CRI_ORD",
+      "pct": 28.012
+    },
+    {
+      "f": "JEMU_115000",
+      "pct": 3.779
+    },
+    {
+      "f": "STD_INDS_SECTION",
+      "pct": 3.697
+    },
+    {
+      "f": "BUSINESS_AGE",
+      "pct": 3.528
+    },
+    {
+      "f": "JEMU_118100",
+      "pct": 2.985
+    },
+    {
+      "f": "OBV_LD_AM",
+      "pct": 2.943
+    },
+    {
+      "f": "JEMU_191310_val",
+      "pct": 2.845
+    },
+    {
+      "f": "JEMU_191503_val",
+      "pct": 2.822
+    },
+    {
+      "f": "JEMU_191502_val",
+      "pct": 2.539
+    },
+    {
+      "f": "JEMU_126000",
+      "pct": 2.177
+    },
+    {
+      "f": "JEMU_114000",
+      "pct": 2.127
+    },
+    {
+      "f": "JEMU_125100",
+      "pct": 1.742
+    },
+    {
+      "f": "JEMU_121000",
+      "pct": 1.634
+    },
+    {
+      "f": "JEMU_191104_val",
+      "pct": 1.5
+    },
+    {
+      "f": "JEMU_123000",
+      "pct": 1.482
+    }
+  ],
+  "lean_pure_n": 46,
+  "lean_macro_n": 59,
+  "lean_pure_features": [
+    "C302_CRI_ORD",
+    "JEMU_115000",
+    "STD_INDS_SECTION",
+    "BUSINESS_AGE",
+    "JEMU_118100",
+    "OBV_LD_AM",
+    "JEMU_191310_val",
+    "JEMU_191503_val",
+    "JEMU_191502_val",
+    "JEMU_126000",
+    "JEMU_114000",
+    "JEMU_125100",
+    "JEMU_121000",
+    "JEMU_191104_val",
+    "JEMU_123000",
+    "exp_fx_industry",
+    "JEMU_debt_ratio",
+    "JEMU_118900",
+    "JEMU_191505_val",
+    "JEMU_current_ratio",
+    "JEMU_191506_val",
+    "JEMU_112000",
+    "exp_fx_hybrid",
+    "JEMU_191105_val",
+    "JEMU_asset_turnover_avg",
+    "JEMU_125000",
+    "JEMU_191110_val",
+    "JEMU_191108_val",
+    "exp_liq",
+    "JEMU_116000",
+    "JEMU_asset_turnover_end",
+    "JEMU_191210_val",
+    "exp_inv",
+    "JEMU_191207_val",
+    "JEMU_118000",
+    "JEMU_roe_end",
+    "OBV_ELYWRN_OBV_GRD_DSC",
+    "JEMU_191208_val",
+    "JEMU_117000",
+    "JEMU_roe_avg",
+    "JEMU_128000",
+    "JEMU_debt_dependency",
+    "exp_rate",
+    "ix_KORIBOR_spread_d12__liq",
+    "JEMU_191204_val",
+    "AA10_PERS_CNT"
+  ],
+  "dropped5_still_in_lean_pure": []
+}

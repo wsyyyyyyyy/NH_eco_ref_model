@@ -372,11 +372,41 @@ class EDAReporter:
         if "BASE_YM" not in df.columns:
             return
 
+        #: Valid 구간(202401~)에서 비영·비결측 비율이 이 값 미만이면 시계열에서 뺀다.
+        #  VH_OBV_DTL 의 여러 컬럼이 202101~202111 에만 값이 있고 이후 0 이라
+        #  "값이 0 으로 떨어지는" 그래프가 나오는 것을 막는다.
+        MIN_VALID_COVERAGE = 0.01
+
+        def _valid_coverage(col: str) -> float:
+            va = df["BASE_YM"].astype(str) >= "202401"
+            if not va.any():
+                return 1.0
+            s = df.loc[va, col]
+            return float(((s.notna()) & (s != 0)).mean())
+
+        # 부도 관측율(스파인 내)을 먼저. 12개월 선행 타겟은 이 패널에 없으므로
+        # 정의를 라벨에 정확히 적는다.
+        candidates: list[tuple[str, str]] = []
+        if "IS_BUDO_IN_SPINE_YN" in df.columns:
+            candidates.append(("IS_BUDO_IN_SPINE_YN", "월별 부도 관측율(스파인 내, %)"))
+        for c, lab in (("JEMU_115000", "자산총계"),
+                       ("OBV_LD_AM", "부도시손실금액"),
+                       ("C302_CRI_ORD", "CRI 등급 서열"),
+                       ("CG01_KIS_SCORE", "나이스 신용평점"),
+                       ("OBV_LN_BAC", "여신 잔액"),
+                       ("OBV_RZVL_POD", "내부 EWS 부도율")):
+            if c in df.columns:
+                candidates.append((c, lab))
+
         key_metrics = []
-        if "OBV_LN_BAC" in df.columns:     key_metrics.append(("OBV_LN_BAC", "여신 잔액"))
-        if "OBV_RZVL_POD" in df.columns:   key_metrics.append(("OBV_RZVL_POD", "PD (부도확률)"))
-        if "CG01_KIS_SCORE" in df.columns:  key_metrics.append(("CG01_KIS_SCORE", "나이스 신용평점"))
-        if "C302_CRI_ORD" in df.columns:    key_metrics.append(("C302_CRI_ORD", "CRI 등급 서열"))
+        skipped: list[str] = []
+        for col, label in candidates:
+            cov = _valid_coverage(col)
+            if cov < MIN_VALID_COVERAGE:
+                log.warning("  [6] %s 스킵 — Valid(202401~) 비영률 %.2f%%", col, cov * 100)
+                skipped.append(col)
+                continue
+            key_metrics.append((col, label))
 
         if not key_metrics:
             self._report_sections.append("<section id='timeseries'><h2>📅 6. 시계열</h2><p>주요 시계열 지표 없음</p></section>")
@@ -390,11 +420,13 @@ class EDAReporter:
 
         for ax, (col, label) in zip(axes, key_metrics):
             ax.set_facecolor(LIGHT_BG)
-            monthly_mean = df.groupby("BASE_YM")[col].mean()
-            monthly_median = df.groupby("BASE_YM")[col].median()
+            scale = 100.0 if col == "IS_BUDO_IN_SPINE_YN" else 1.0
+            monthly_mean = df.groupby("BASE_YM")[col].mean() * scale
+            monthly_median = df.groupby("BASE_YM")[col].median() * scale
             x = range(len(monthly_mean))
             ax.plot(x, monthly_mean.values, color=PRIMARY, linewidth=2, label="평균")
-            ax.plot(x, monthly_median.values, color=SECONDARY, linewidth=1.5, linestyle="--", label="중앙값")
+            if col != "IS_BUDO_IN_SPINE_YN":
+                ax.plot(x, monthly_median.values, color=SECONDARY, linewidth=1.5, linestyle="--", label="중앙값")
             # 학습/검증 구분선
             if "202312" in monthly_mean.index.tolist():
                 split_idx = monthly_mean.index.tolist().index("202312")
@@ -410,11 +442,13 @@ class EDAReporter:
         fig.savefig(self.plots_dir / "timeseries_trends.png", dpi=100, bbox_inches="tight")
         plt.close(fig)
 
+        note_skip = (f" · 제외(202401~ 전 구간 0): {', '.join(skipped)}"
+                     if skipped else "")
         html = f"""
 <section id="timeseries">
   <h2>📅 6. 주요 지표 시계열 추이</h2>
   <img src="eda_plots/timeseries_trends.png" alt="시계열" class="plot-img">
-  <p class="note">점선: 학습(Train) / 검증(Valid) 분리 시점 (2023-12)</p>
+  <p class="note">점선: 학습(Train) / 검증(Valid) 분리 시점 (2023-12){note_skip}</p>
 </section>
 """
         self._report_sections.append(html)

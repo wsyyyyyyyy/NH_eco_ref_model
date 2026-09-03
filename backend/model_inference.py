@@ -16,7 +16,7 @@ from eda_pipeline import config as _cfg  # noqa: E402
 # ── [2026-09-03] 서빙 모델을 lean_macro 로 교체 ───────────────────────────
 #   종전 `lgbm_12m_model.txt` 는 구 누수 모델(230피처)로, CG01_KIS_SCORE /
 #   CRIF_* / COPR_OPNP_C 같은 사후 정보가 들어 있어 SHAP 설명이 성립하지 않았다.
-#   채택 모델은 `lgbm_v2_lean_macro.txt` (63피처, D8 상호작용 ix_* 14개 포함).
+#   채택 모델은 `lgbm_v2_lean_macro.txt` (59피처, D8 상호작용 ix_* 14개 포함).
 #   경로에 한글이 있어 `lgb.Booster(model_file=...)` 는 LightGBM C++ IO 에서
 #   열지 못한다 — `config.load_booster()` 가 model_str 로 우회한다.
 MODEL_PATH = str(_cfg.OUTPUT_DIR / 'lgbm_v2_lean_macro.txt')
