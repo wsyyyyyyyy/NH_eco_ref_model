@@ -1,0 +1,1234 @@
+{
+  "A0": [
+    {
+      "rank": 1,
+      "feature": "STD_INDS_MID2",
+      "gain_pct": 19.228
+    },
+    {
+      "rank": 2,
+      "feature": "C302_MISSING_YN",
+      "gain_pct": 16.713
+    },
+    {
+      "rank": 3,
+      "feature": "C302_CRI_ORD",
+      "gain_pct": 6.851
+    },
+    {
+      "rank": 4,
+      "feature": "JEMU_191310_val",
+      "gain_pct": 4.686
+    },
+    {
+      "rank": 5,
+      "feature": "BUSINESS_AGE",
+      "gain_pct": 3.662
+    },
+    {
+      "rank": 6,
+      "feature": "JEMU_191502_val",
+      "gain_pct": 2.929
+    },
+    {
+      "rank": 7,
+      "feature": "OBV_LD_AM",
+      "gain_pct": 2.426
+    },
+    {
+      "rank": 8,
+      "feature": "JEMU_115000",
+      "gain_pct": 2.322
+    },
+    {
+      "rank": 9,
+      "feature": "JEMU_118100",
+      "gain_pct": 2.186
+    },
+    {
+      "rank": 10,
+      "feature": "JEMU_126000",
+      "gain_pct": 2.094
+    },
+    {
+      "rank": 11,
+      "feature": "JEMU_191503_val",
+      "gain_pct": 1.814
+    },
+    {
+      "rank": 12,
+      "feature": "JEMU_114000",
+      "gain_pct": 1.638
+    },
+    {
+      "rank": 13,
+      "feature": "OBV_XPC_LSS_AM",
+      "gain_pct": 1.592
+    },
+    {
+      "rank": 14,
+      "feature": "JEMU_125100",
+      "gain_pct": 1.342
+    },
+    {
+      "rank": 15,
+      "feature": "JEMU_123000",
+      "gain_pct": 1.304
+    }
+  ],
+  "A0c": [
+    {
+      "rank": 1,
+      "feature": "STD_INDS_MID2",
+      "gain_pct": 23.789
+    },
+    {
+      "rank": 2,
+      "feature": "JEMU_191310_val",
+      "gain_pct": 7.129
+    },
+    {
+      "rank": 3,
+      "feature": "OBV_LD_AM",
+      "gain_pct": 3.865
+    },
+    {
+      "rank": 4,
+      "feature": "BUSINESS_AGE",
+      "gain_pct": 3.836
+    },
+    {
+      "rank": 5,
+      "feature": "JEMU_191502_val",
+      "gain_pct": 3.18
+    },
+    {
+      "rank": 6,
+      "feature": "JEMU_125100",
+      "gain_pct": 3.042
+    },
+    {
+      "rank": 7,
+      "feature": "JEMU_115000",
+      "gain_pct": 2.623
+    },
+    {
+      "rank": 8,
+      "feature": "JEMU_191503_val",
+      "gain_pct": 2.574
+    },
+    {
+      "rank": 9,
+      "feature": "JEMU_118100",
+      "gain_pct": 2.445
+    },
+    {
+      "rank": 10,
+      "feature": "OBV_XPC_LSS_AM",
+      "gain_pct": 2.399
+    },
+    {
+      "rank": 11,
+      "feature": "JEMU_126000",
+      "gain_pct": 2.356
+    },
+    {
+      "rank": 12,
+      "feature": "JEMU_114000",
+      "gain_pct": 2.083
+    },
+    {
+      "rank": 13,
+      "feature": "JEMU_191104_val",
+      "gain_pct": 1.857
+    },
+    {
+      "rank": 14,
+      "feature": "JEMU_123000",
+      "gain_pct": 1.806
+    },
+    {
+      "rank": 15,
+      "feature": "JEMU_118900",
+      "gain_pct": 1.74
+    }
+  ],
+  "A1": [
+    {
+      "rank": 1,
+      "feature": "C302_MISSING_YN",
+      "gain_pct": 17.102
+    },
+    {
+      "rank": 2,
+      "feature": "STD_INDS_MID2",
+      "gain_pct": 16.448
+    },
+    {
+      "rank": 3,
+      "feature": "COPR_OPNP_C",
+      "gain_pct": 11.857
+    },
+    {
+      "rank": 4,
+      "feature": "C302_CRI_ORD",
+      "gain_pct": 6.599
+    },
+    {
+      "rank": 5,
+      "feature": "JEMU_191310_val",
+      "gain_pct": 4.984
+    },
+    {
+      "rank": 6,
+      "feature": "BUSINESS_AGE",
+      "gain_pct": 2.451
+    },
+    {
+      "rank": 7,
+      "feature": "JEMU_118900",
+      "gain_pct": 2.075
+    },
+    {
+      "rank": 8,
+      "feature": "JEMU_118100",
+      "gain_pct": 2.072
+    },
+    {
+      "rank": 9,
+      "feature": "JEMU_115000",
+      "gain_pct": 1.985
+    },
+    {
+      "rank": 10,
+      "feature": "JEMU_112000",
+      "gain_pct": 1.915
+    },
+    {
+      "rank": 11,
+      "feature": "OBV_LD_AM",
+      "gain_pct": 1.795
+    },
+    {
+      "rank": 12,
+      "feature": "JEMU_asset_turnover_avg",
+      "gain_pct": 1.648
+    },
+    {
+      "rank": 13,
+      "feature": "JEMU_191503_val",
+      "gain_pct": 1.45
+    },
+    {
+      "rank": 14,
+      "feature": "JEMU_191502_val",
+      "gain_pct": 1.334
+    },
+    {
+      "rank": 15,
+      "feature": "JEMU_126000",
+      "gain_pct": 1.277
+    }
+  ],
+  "A2": [
+    {
+      "rank": 1,
+      "feature": "CRIF_EVENT_CNT",
+      "gain_pct": 18.631
+    },
+    {
+      "rank": 2,
+      "feature": "STD_INDS_MID2",
+      "gain_pct": 14.61
+    },
+    {
+      "rank": 3,
+      "feature": "C302_MISSING_YN",
+      "gain_pct": 13.252
+    },
+    {
+      "rank": 4,
+      "feature": "C302_CRI_ORD",
+      "gain_pct": 4.037
+    },
+    {
+      "rank": 5,
+      "feature": "CRIF_OVD_AM_SUM",
+      "gain_pct": 2.918
+    },
+    {
+      "rank": 6,
+      "feature": "JEMU_191502_val",
+      "gain_pct": 2.673
+    },
+    {
+      "rank": 7,
+      "feature": "JEMU_126000",
+      "gain_pct": 2.294
+    },
+    {
+      "rank": 8,
+      "feature": "JEMU_118000",
+      "gain_pct": 2.113
+    },
+    {
+      "rank": 9,
+      "feature": "BUSINESS_AGE",
+      "gain_pct": 1.927
+    },
+    {
+      "rank": 10,
+      "feature": "OBV_LD_AM",
+      "gain_pct": 1.904
+    },
+    {
+      "rank": 11,
+      "feature": "JEMU_118100",
+      "gain_pct": 1.883
+    },
+    {
+      "rank": 12,
+      "feature": "JEMU_118900",
+      "gain_pct": 1.765
+    },
+    {
+      "rank": 13,
+      "feature": "JEMU_191310_val",
+      "gain_pct": 1.673
+    },
+    {
+      "rank": 14,
+      "feature": "JEMU_114000",
+      "gain_pct": 1.266
+    },
+    {
+      "rank": 15,
+      "feature": "JEMU_191503_val",
+      "gain_pct": 1.203
+    }
+  ],
+  "A3": [
+    {
+      "rank": 1,
+      "feature": "CG01_MISSING_YN",
+      "gain_pct": 25.049
+    },
+    {
+      "rank": 2,
+      "feature": "CG01_KIS_SCORE",
+      "gain_pct": 16.55
+    },
+    {
+      "rank": 3,
+      "feature": "C302_MISSING_YN",
+      "gain_pct": 13.571
+    },
+    {
+      "rank": 4,
+      "feature": "STD_INDS_MID2",
+      "gain_pct": 11.327
+    },
+    {
+      "rank": 5,
+      "feature": "C302_CRI_ORD",
+      "gain_pct": 3.473
+    },
+    {
+      "rank": 6,
+      "feature": "JEMU_126000",
+      "gain_pct": 2.629
+    },
+    {
+      "rank": 7,
+      "feature": "JEMU_191310_val",
+      "gain_pct": 1.996
+    },
+    {
+      "rank": 8,
+      "feature": "BUSINESS_AGE",
+      "gain_pct": 1.448
+    },
+    {
+      "rank": 9,
+      "feature": "JEMU_debt_ratio",
+      "gain_pct": 1.415
+    },
+    {
+      "rank": 10,
+      "feature": "JEMU_118100",
+      "gain_pct": 1.294
+    },
+    {
+      "rank": 11,
+      "feature": "JEMU_191503_val",
+      "gain_pct": 0.9
+    },
+    {
+      "rank": 12,
+      "feature": "OBV_LD_AM",
+      "gain_pct": 0.881
+    },
+    {
+      "rank": 13,
+      "feature": "JEMU_191502_val",
+      "gain_pct": 0.848
+    },
+    {
+      "rank": 14,
+      "feature": "JEMU_asset_turnover_avg",
+      "gain_pct": 0.826
+    },
+    {
+      "rank": 15,
+      "feature": "JEMU_121000",
+      "gain_pct": 0.734
+    }
+  ],
+  "A4": [
+    {
+      "rank": 1,
+      "feature": "C302_MISSING_YN",
+      "gain_pct": 18.389
+    },
+    {
+      "rank": 2,
+      "feature": "STD_INDS_MID2",
+      "gain_pct": 15.702
+    },
+    {
+      "rank": 3,
+      "feature": "CG01_MISSING_YN",
+      "gain_pct": 11.425
+    },
+    {
+      "rank": 4,
+      "feature": "C302_CRI_ORD",
+      "gain_pct": 7.575
+    },
+    {
+      "rank": 5,
+      "feature": "JEMU_191310_val",
+      "gain_pct": 4.882
+    },
+    {
+      "rank": 6,
+      "feature": "JEMU_118900",
+      "gain_pct": 2.276
+    },
+    {
+      "rank": 7,
+      "feature": "JEMU_115000",
+      "gain_pct": 2.167
+    },
+    {
+      "rank": 8,
+      "feature": "BUSINESS_AGE",
+      "gain_pct": 2.101
+    },
+    {
+      "rank": 9,
+      "feature": "JEMU_112000",
+      "gain_pct": 1.985
+    },
+    {
+      "rank": 10,
+      "feature": "JEMU_118100",
+      "gain_pct": 1.95
+    },
+    {
+      "rank": 11,
+      "feature": "JEMU_126000",
+      "gain_pct": 1.775
+    },
+    {
+      "rank": 12,
+      "feature": "JEMU_191503_val",
+      "gain_pct": 1.699
+    },
+    {
+      "rank": 13,
+      "feature": "OBV_LD_AM",
+      "gain_pct": 1.588
+    },
+    {
+      "rank": 14,
+      "feature": "JEMU_asset_turnover_avg",
+      "gain_pct": 1.231
+    },
+    {
+      "rank": 15,
+      "feature": "OBV_XPC_LSS_AM",
+      "gain_pct": 1.224
+    }
+  ],
+  "A5": [
+    {
+      "rank": 1,
+      "feature": "C302_MISSING_YN",
+      "gain_pct": 18.667
+    },
+    {
+      "rank": 2,
+      "feature": "STD_INDS_MID2",
+      "gain_pct": 18.312
+    },
+    {
+      "rank": 3,
+      "feature": "JEMU_191310_val",
+      "gain_pct": 5.045
+    },
+    {
+      "rank": 4,
+      "feature": "BUSINESS_AGE",
+      "gain_pct": 3.344
+    },
+    {
+      "rank": 5,
+      "feature": "JEMU_191502_val",
+      "gain_pct": 3.066
+    },
+    {
+      "rank": 6,
+      "feature": "JEMU_126000",
+      "gain_pct": 2.768
+    },
+    {
+      "rank": 7,
+      "feature": "OBV_LD_AM",
+      "gain_pct": 2.757
+    },
+    {
+      "rank": 8,
+      "feature": "JEMU_191503_val",
+      "gain_pct": 2.436
+    },
+    {
+      "rank": 9,
+      "feature": "JEMU_118900",
+      "gain_pct": 2.375
+    },
+    {
+      "rank": 10,
+      "feature": "JEMU_115000",
+      "gain_pct": 2.281
+    },
+    {
+      "rank": 11,
+      "feature": "JEMU_118100",
+      "gain_pct": 2.132
+    },
+    {
+      "rank": 12,
+      "feature": "OBV_XPC_LSS_AM",
+      "gain_pct": 2.098
+    },
+    {
+      "rank": 13,
+      "feature": "JEMU_114000",
+      "gain_pct": 1.633
+    },
+    {
+      "rank": 14,
+      "feature": "JEMU_191104_val",
+      "gain_pct": 1.529
+    },
+    {
+      "rank": 15,
+      "feature": "JEMU_123000",
+      "gain_pct": 1.455
+    }
+  ],
+  "A6": [
+    {
+      "rank": 1,
+      "feature": "C302_CRI_ORD",
+      "gain_pct": 28.329
+    },
+    {
+      "rank": 2,
+      "feature": "STD_INDS_MID2",
+      "gain_pct": 17.797
+    },
+    {
+      "rank": 3,
+      "feature": "JEMU_126000",
+      "gain_pct": 3.347
+    },
+    {
+      "rank": 4,
+      "feature": "BUSINESS_AGE",
+      "gain_pct": 2.799
+    },
+    {
+      "rank": 5,
+      "feature": "JEMU_115000",
+      "gain_pct": 2.494
+    },
+    {
+      "rank": 6,
+      "feature": "JEMU_114000",
+      "gain_pct": 2.329
+    },
+    {
+      "rank": 7,
+      "feature": "JEMU_191310_val",
+      "gain_pct": 2.233
+    },
+    {
+      "rank": 8,
+      "feature": "OBV_LD_AM",
+      "gain_pct": 2.206
+    },
+    {
+      "rank": 9,
+      "feature": "JEMU_191503_val",
+      "gain_pct": 2.198
+    },
+    {
+      "rank": 10,
+      "feature": "JEMU_118100",
+      "gain_pct": 2.136
+    },
+    {
+      "rank": 11,
+      "feature": "JEMU_191502_val",
+      "gain_pct": 1.753
+    },
+    {
+      "rank": 12,
+      "feature": "OBV_XPC_LSS_AM",
+      "gain_pct": 1.641
+    },
+    {
+      "rank": 13,
+      "feature": "JEMU_125100",
+      "gain_pct": 1.38
+    },
+    {
+      "rank": 14,
+      "feature": "JEMU_191104_val",
+      "gain_pct": 1.249
+    },
+    {
+      "rank": 15,
+      "feature": "JEMU_123000",
+      "gain_pct": 1.244
+    }
+  ],
+  "A7": [
+    {
+      "rank": 1,
+      "feature": "CG01_KIS_SCORE",
+      "gain_pct": 53.452
+    },
+    {
+      "rank": 2,
+      "feature": "STD_INDS_MID2",
+      "gain_pct": 8.996
+    },
+    {
+      "rank": 3,
+      "feature": "C302_CRI_ORD",
+      "gain_pct": 6.228
+    },
+    {
+      "rank": 4,
+      "feature": "COPR_OPNP_C",
+      "gain_pct": 3.397
+    },
+    {
+      "rank": 5,
+      "feature": "CRIF_RLS_OCU_DT",
+      "gain_pct": 2.672
+    },
+    {
+      "rank": 6,
+      "feature": "exp_rate",
+      "gain_pct": 1.496
+    },
+    {
+      "rank": 7,
+      "feature": "JEMU_asset_turnover_avg",
+      "gain_pct": 1.273
+    },
+    {
+      "rank": 8,
+      "feature": "JEMU_118100",
+      "gain_pct": 1.1
+    },
+    {
+      "rank": 9,
+      "feature": "C302_MISSING_YN",
+      "gain_pct": 0.97
+    },
+    {
+      "rank": 10,
+      "feature": "JEMU_126000",
+      "gain_pct": 0.853
+    },
+    {
+      "rank": 11,
+      "feature": "BUSINESS_AGE",
+      "gain_pct": 0.763
+    },
+    {
+      "rank": 12,
+      "feature": "CRIF_WORST_RSNC",
+      "gain_pct": 0.741
+    },
+    {
+      "rank": 13,
+      "feature": "JEMU_191502_val",
+      "gain_pct": 0.69
+    },
+    {
+      "rank": 14,
+      "feature": "CRIF_OVD_AM_SUM",
+      "gain_pct": 0.649
+    },
+    {
+      "rank": 15,
+      "feature": "CG01_MISSING_YN",
+      "gain_pct": 0.633
+    }
+  ],
+  "A8": [
+    {
+      "rank": 1,
+      "feature": "C302_CRI_ORD",
+      "gain_pct": 27.416
+    },
+    {
+      "rank": 2,
+      "feature": "STD_INDS_MID2",
+      "gain_pct": 17.827
+    },
+    {
+      "rank": 3,
+      "feature": "JEMU_126000",
+      "gain_pct": 4.097
+    },
+    {
+      "rank": 4,
+      "feature": "BUSINESS_AGE",
+      "gain_pct": 2.806
+    },
+    {
+      "rank": 5,
+      "feature": "JEMU_118100",
+      "gain_pct": 2.321
+    },
+    {
+      "rank": 6,
+      "feature": "OBV_LD_AM",
+      "gain_pct": 2.309
+    },
+    {
+      "rank": 7,
+      "feature": "JEMU_191503_val",
+      "gain_pct": 2.246
+    },
+    {
+      "rank": 8,
+      "feature": "JEMU_191310_val",
+      "gain_pct": 2.0
+    },
+    {
+      "rank": 9,
+      "feature": "JEMU_114000",
+      "gain_pct": 1.981
+    },
+    {
+      "rank": 10,
+      "feature": "JEMU_191502_val",
+      "gain_pct": 1.807
+    },
+    {
+      "rank": 11,
+      "feature": "OBV_XPC_LSS_AM",
+      "gain_pct": 1.557
+    },
+    {
+      "rank": 12,
+      "feature": "JEMU_115000",
+      "gain_pct": 1.484
+    },
+    {
+      "rank": 13,
+      "feature": "JEMU_123000",
+      "gain_pct": 1.36
+    },
+    {
+      "rank": 14,
+      "feature": "JEMU_125100",
+      "gain_pct": 1.298
+    },
+    {
+      "rank": 15,
+      "feature": "JEMU_asset_turnover_avg",
+      "gain_pct": 1.233
+    }
+  ],
+  "C0": [
+    {
+      "rank": 1,
+      "feature": "C302_MISSING_YN",
+      "gain_pct": 16.554
+    },
+    {
+      "rank": 2,
+      "feature": "C302_CRI_ORD",
+      "gain_pct": 7.003
+    },
+    {
+      "rank": 3,
+      "feature": "JEMU_191310_val",
+      "gain_pct": 5.454
+    },
+    {
+      "rank": 4,
+      "feature": "BUSINESS_AGE",
+      "gain_pct": 3.523
+    },
+    {
+      "rank": 5,
+      "feature": "JEMU_191502_val",
+      "gain_pct": 3.434
+    },
+    {
+      "rank": 6,
+      "feature": "OBV_LD_AM",
+      "gain_pct": 2.972
+    },
+    {
+      "rank": 7,
+      "feature": "JEMU_118100",
+      "gain_pct": 2.914
+    },
+    {
+      "rank": 8,
+      "feature": "JEMU_115000",
+      "gain_pct": 2.715
+    },
+    {
+      "rank": 9,
+      "feature": "JEMU_191503_val",
+      "gain_pct": 2.6
+    },
+    {
+      "rank": 10,
+      "feature": "JEMU_114000",
+      "gain_pct": 2.181
+    },
+    {
+      "rank": 11,
+      "feature": "JEMU_126000",
+      "gain_pct": 2.056
+    },
+    {
+      "rank": 12,
+      "feature": "OBV_XPC_LSS_AM",
+      "gain_pct": 2.042
+    },
+    {
+      "rank": 13,
+      "feature": "exp_fx_industry",
+      "gain_pct": 1.753
+    },
+    {
+      "rank": 14,
+      "feature": "JEMU_121000",
+      "gain_pct": 1.698
+    },
+    {
+      "rank": 15,
+      "feature": "exp_fx_hybrid",
+      "gain_pct": 1.696
+    }
+  ],
+  "C1": [
+    {
+      "rank": 1,
+      "feature": "C302_CRI_ORD",
+      "gain_pct": 28.958
+    },
+    {
+      "rank": 2,
+      "feature": "STD_INDS_SECTION",
+      "gain_pct": 3.683
+    },
+    {
+      "rank": 3,
+      "feature": "BUSINESS_AGE",
+      "gain_pct": 3.239
+    },
+    {
+      "rank": 4,
+      "feature": "JEMU_126000",
+      "gain_pct": 3.141
+    },
+    {
+      "rank": 5,
+      "feature": "JEMU_114000",
+      "gain_pct": 2.867
+    },
+    {
+      "rank": 6,
+      "feature": "JEMU_191503_val",
+      "gain_pct": 2.852
+    },
+    {
+      "rank": 7,
+      "feature": "OBV_LD_AM",
+      "gain_pct": 2.76
+    },
+    {
+      "rank": 8,
+      "feature": "JEMU_118100",
+      "gain_pct": 2.701
+    },
+    {
+      "rank": 9,
+      "feature": "JEMU_115000",
+      "gain_pct": 2.668
+    },
+    {
+      "rank": 10,
+      "feature": "JEMU_191310_val",
+      "gain_pct": 2.476
+    },
+    {
+      "rank": 11,
+      "feature": "JEMU_191502_val",
+      "gain_pct": 2.031
+    },
+    {
+      "rank": 12,
+      "feature": "OBV_XPC_LSS_AM",
+      "gain_pct": 1.898
+    },
+    {
+      "rank": 13,
+      "feature": "JEMU_125100",
+      "gain_pct": 1.627
+    },
+    {
+      "rank": 14,
+      "feature": "JEMU_asset_turnover_avg",
+      "gain_pct": 1.547
+    },
+    {
+      "rank": 15,
+      "feature": "JEMU_112000",
+      "gain_pct": 1.48
+    }
+  ],
+  "C2": [
+    {
+      "rank": 1,
+      "feature": "C302_CRI_ORD",
+      "gain_pct": 27.127
+    },
+    {
+      "rank": 2,
+      "feature": "STD_INDS_MID2",
+      "gain_pct": 18.079
+    },
+    {
+      "rank": 3,
+      "feature": "JEMU_126000",
+      "gain_pct": 3.022
+    },
+    {
+      "rank": 4,
+      "feature": "BUSINESS_AGE",
+      "gain_pct": 2.776
+    },
+    {
+      "rank": 5,
+      "feature": "JEMU_115000",
+      "gain_pct": 2.424
+    },
+    {
+      "rank": 6,
+      "feature": "JEMU_114000",
+      "gain_pct": 2.314
+    },
+    {
+      "rank": 7,
+      "feature": "JEMU_191503_val",
+      "gain_pct": 2.244
+    },
+    {
+      "rank": 8,
+      "feature": "OBV_LD_AM",
+      "gain_pct": 2.209
+    },
+    {
+      "rank": 9,
+      "feature": "JEMU_118100",
+      "gain_pct": 2.141
+    },
+    {
+      "rank": 10,
+      "feature": "JEMU_191310_val",
+      "gain_pct": 2.092
+    },
+    {
+      "rank": 11,
+      "feature": "JEMU_191502_val",
+      "gain_pct": 1.746
+    },
+    {
+      "rank": 12,
+      "feature": "OBV_XPC_LSS_AM",
+      "gain_pct": 1.637
+    },
+    {
+      "rank": 13,
+      "feature": "JEMU_125100",
+      "gain_pct": 1.475
+    },
+    {
+      "rank": 14,
+      "feature": "JEMU_123000",
+      "gain_pct": 1.374
+    },
+    {
+      "rank": 15,
+      "feature": "JEMU_191104_val",
+      "gain_pct": 1.274
+    }
+  ],
+  "C3": [
+    {
+      "rank": 1,
+      "feature": "STD_INDS_MID2",
+      "gain_pct": 19.228
+    },
+    {
+      "rank": 2,
+      "feature": "C302_MISSING_YN",
+      "gain_pct": 16.713
+    },
+    {
+      "rank": 3,
+      "feature": "C302_CRI_ORD",
+      "gain_pct": 6.851
+    },
+    {
+      "rank": 4,
+      "feature": "JEMU_191310_val",
+      "gain_pct": 4.686
+    },
+    {
+      "rank": 5,
+      "feature": "BUSINESS_AGE",
+      "gain_pct": 3.662
+    },
+    {
+      "rank": 6,
+      "feature": "JEMU_191502_val",
+      "gain_pct": 2.929
+    },
+    {
+      "rank": 7,
+      "feature": "OBV_LD_AM",
+      "gain_pct": 2.426
+    },
+    {
+      "rank": 8,
+      "feature": "JEMU_115000",
+      "gain_pct": 2.322
+    },
+    {
+      "rank": 9,
+      "feature": "JEMU_118100",
+      "gain_pct": 2.186
+    },
+    {
+      "rank": 10,
+      "feature": "JEMU_126000",
+      "gain_pct": 2.094
+    },
+    {
+      "rank": 11,
+      "feature": "JEMU_191503_val",
+      "gain_pct": 1.814
+    },
+    {
+      "rank": 12,
+      "feature": "JEMU_114000",
+      "gain_pct": 1.638
+    },
+    {
+      "rank": 13,
+      "feature": "OBV_XPC_LSS_AM",
+      "gain_pct": 1.592
+    },
+    {
+      "rank": 14,
+      "feature": "JEMU_125100",
+      "gain_pct": 1.342
+    },
+    {
+      "rank": 15,
+      "feature": "JEMU_123000",
+      "gain_pct": 1.304
+    }
+  ],
+  "C4": [
+    {
+      "rank": 1,
+      "feature": "C302_CRI_ORD",
+      "gain_pct": 15.713
+    },
+    {
+      "rank": 2,
+      "feature": "JEMU_191310_val",
+      "gain_pct": 7.298
+    },
+    {
+      "rank": 3,
+      "feature": "STD_INDS_SECTION",
+      "gain_pct": 3.927
+    },
+    {
+      "rank": 4,
+      "feature": "JEMU_118100",
+      "gain_pct": 3.763
+    },
+    {
+      "rank": 5,
+      "feature": "JEMU_191502_val",
+      "gain_pct": 3.613
+    },
+    {
+      "rank": 6,
+      "feature": "BUSINESS_AGE",
+      "gain_pct": 3.468
+    },
+    {
+      "rank": 7,
+      "feature": "JEMU_115000",
+      "gain_pct": 3.23
+    },
+    {
+      "rank": 8,
+      "feature": "JEMU_125100",
+      "gain_pct": 3.071
+    },
+    {
+      "rank": 9,
+      "feature": "OBV_LD_AM",
+      "gain_pct": 2.981
+    },
+    {
+      "rank": 10,
+      "feature": "JEMU_126000",
+      "gain_pct": 2.363
+    },
+    {
+      "rank": 11,
+      "feature": "JEMU_114000",
+      "gain_pct": 2.217
+    },
+    {
+      "rank": 12,
+      "feature": "exp_inv",
+      "gain_pct": 2.059
+    },
+    {
+      "rank": 13,
+      "feature": "OBV_XPC_LSS_AM",
+      "gain_pct": 1.896
+    },
+    {
+      "rank": 14,
+      "feature": "JEMU_191503_val",
+      "gain_pct": 1.718
+    },
+    {
+      "rank": 15,
+      "feature": "JEMU_121000",
+      "gain_pct": 1.625
+    }
+  ],
+  "C5": [
+    {
+      "rank": 1,
+      "feature": "C302_CRI_ORD",
+      "gain_pct": 15.85
+    },
+    {
+      "rank": 2,
+      "feature": "JEMU_191503_val",
+      "gain_pct": 7.131
+    },
+    {
+      "rank": 3,
+      "feature": "JEMU_191310_val",
+      "gain_pct": 3.906
+    },
+    {
+      "rank": 4,
+      "feature": "STD_INDS_SECTION",
+      "gain_pct": 3.862
+    },
+    {
+      "rank": 5,
+      "feature": "JEMU_118100",
+      "gain_pct": 3.424
+    },
+    {
+      "rank": 6,
+      "feature": "BUSINESS_AGE",
+      "gain_pct": 3.304
+    },
+    {
+      "rank": 7,
+      "feature": "OBV_LD_AM",
+      "gain_pct": 2.946
+    },
+    {
+      "rank": 8,
+      "feature": "JEMU_123000",
+      "gain_pct": 2.811
+    },
+    {
+      "rank": 9,
+      "feature": "JEMU_126000",
+      "gain_pct": 2.435
+    },
+    {
+      "rank": 10,
+      "feature": "JEMU_191506_val",
+      "gain_pct": 2.328
+    },
+    {
+      "rank": 11,
+      "feature": "JEMU_191502_val",
+      "gain_pct": 2.254
+    },
+    {
+      "rank": 12,
+      "feature": "JEMU_121000",
+      "gain_pct": 2.204
+    },
+    {
+      "rank": 13,
+      "feature": "JEMU_114000",
+      "gain_pct": 2.061
+    },
+    {
+      "rank": 14,
+      "feature": "JEMU_115000",
+      "gain_pct": 2.042
+    },
+    {
+      "rank": 15,
+      "feature": "OBV_XPC_LSS_AM",
+      "gain_pct": 1.921
+    }
+  ]
+}

@@ -20,6 +20,8 @@ from pathlib import Path
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 OUTPUT_DIR = PROJECT_ROOT / "eda_pipeline" / "output"
 INPUT_DIR = PROJECT_ROOT / "input"
+#: 이전 세대 산출물 보관 폴더 (누수 모델·구세대 패널 등). 인용 금지. `_archive/README.md` 참조.
+ARCHIVE_DIR = PROJECT_ROOT / "_archive"
 
 # ── 스파인 모드 ──────────────────────────────────────────────────────
 #   obv    : VH_OBV_DTL 레코드가 있는 (기업, 월)만 = 당행 여신 보유 차주 (신규 기본)
@@ -138,8 +140,12 @@ JEMU_CONSTANT_COLS_FILE = "jemu_constant_cols.json"
 PANEL_FILE = {
     "obv":    "nh_panel_full_obv.csv",
     "full":   "nh_panel_full_spineFULL.csv",
-    "legacy": "nh_panel_full.csv",      # 읽기 전용. STAGE 6 S0 베이스라인.
+    "legacy": "nh_panel_full.csv",      # 읽기 전용. STAGE 6 S0 베이스라인. _archive/legacy_panels/ 로 이동됨.
 }
+
+#: legacy 패널은 정리(Group E)에서 `_archive/legacy_panels/` 로 이동했다.
+#: obv/full 은 `OUTPUT_DIR` 에 그대로 있다.
+_PANEL_DIR = {"legacy": ARCHIVE_DIR / "legacy_panels"}
 
 # legacy 패널은 절대 덮어쓰지 않는다.
 READ_ONLY_MODES = frozenset({"legacy"})
@@ -183,11 +189,26 @@ def budo_source_path() -> Path | None:
 
 
 def panel_path(mode: str | None = None) -> Path:
-    """모드에 대응하는 패널 CSV 경로를 반환합니다."""
+    """모드에 대응하는 패널 파일 경로를 반환합니다.
+
+    legacy(STAGE 6 S0 베이스라인)는 Group E 정리에서 `_archive/legacy_panels/` 로
+    옮겼습니다. 그 파일이 없으면 `SPINE_MODE=legacy` 로 도는 A~D축 ablation 재현이
+    불가능하므로, 여기서 존재 여부를 확인해 명확한 예외를 던집니다.
+    """
     m = mode or SPINE_MODE
     if m not in PANEL_FILE:
         raise ValueError(f"알 수 없는 SPINE_MODE: {m!r} (가능: {sorted(PANEL_FILE)})")
-    return OUTPUT_DIR / PANEL_FILE[m]
+    base = _PANEL_DIR.get(m, OUTPUT_DIR)
+    p = base / PANEL_FILE[m]
+    if m == "legacy" and not p.exists() and not _swap_ext(p).exists():
+        raise FileNotFoundError(
+            f"legacy 베이스라인 패널이 없습니다: {p}\n"
+            f"  이 파일은 _archive/legacy_panels/ 에 보관되며 git 추적 대상이 아닙니다"
+            f"(.gitignore: *.csv).\n"
+            f"  재생성: `python -m eda_pipeline.run` (step1~2) 후 산출물을 위 경로로 이동.\n"
+            f"  legacy 스파인이 필요 없는 경우 SPINE_MODE=obv 를 쓰십시오."
+        )
+    return p
 
 
 def split_paths(mode: str | None = None) -> tuple[Path, Path]:
@@ -288,8 +309,10 @@ def assert_db_writable(which: str) -> Path:
 # 모델 경로
 # ══════════════════════════════════════════════════════════════════════
 # legacy 2건은 STAGE 6 S0 베이스라인이다. 읽기만 하고 절대 다시 쓰지 않는다.
-MODEL_PATH_LEGACY_FULL = OUTPUT_DIR / "lgbm_12m_model.txt"
-MODEL_PATH_LEGACY_LEAN = OUTPUT_DIR / "lgbm_12m_lean_model.txt"
+# 누수 포함 모델(230피처). Group E 정리에서 _archive/legacy_model/ 로 이동.
+# docs/04 의 gain 수치가 이 파일의 feature_importance 에서 나왔다. 읽기 전용·덮어쓰기 금지.
+MODEL_PATH_LEGACY_FULL = ARCHIVE_DIR / "legacy_model" / "lgbm_12m_model.txt"
+MODEL_PATH_LEGACY_LEAN = ARCHIVE_DIR / "legacy_model" / "lgbm_12m_lean_model.txt"
 MODEL_PATH_V2_FULL = OUTPUT_DIR / "lgbm_v2_full.txt"
 MODEL_PATH_V2_LEAN = OUTPUT_DIR / "lgbm_v2_lean.txt"
 

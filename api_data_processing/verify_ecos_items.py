@@ -184,7 +184,7 @@ def value_cross_check() -> dict:
 
     cols = [c for c in ("corporate_bond_3y_AA", "treasury_bond_3y",
                         "CP_91d", "MSB_91d", "base_rate",
-                        "US_10Y_treasury", "US_2Y_treasury") if c in m.columns]
+                        "US_10Y_treasury", "US_3M_tbill") if c in m.columns]
     bench = m.loc[m["ym"] == BENCH_YM, ["ym"] + cols]
     out["bench_ym"] = BENCH_YM
     out["bench_row"] = (bench.iloc[0].to_dict() if len(bench) else {})
@@ -202,8 +202,8 @@ def value_cross_check() -> dict:
             "monthly": [{"ym": a, "spread": round(float(b), 4)}
                         for a, b in zip(m["ym"], sp)],
         }
-        if {"US_10Y_treasury", "US_2Y_treasury"} <= set(m.columns):
-            us = m["US_10Y_treasury"] - m["US_2Y_treasury"]
+        if {"US_10Y_treasury", "US_3M_tbill"} <= set(m.columns):
+            us = m["US_10Y_treasury"] - m["US_3M_tbill"]
             ok = sp.notna() & us.notna()
             out["corr_with_us_term_spread"] = float(np.corrcoef(sp[ok], us[ok])[0, 1])
             out["us_term_by_year"] = {k: round(float(v), 3) for k, v in
@@ -332,7 +332,7 @@ def main() -> None:
         print(f"    연평균: " + "  ".join(f"{k} {x:+.3f}" for k, x in sp["by_year"].items()))
     if "corr_with_us_term_spread" in v:
         print()
-        print(f"  US_10Y − US_2Y 와의 상관 = {v['corr_with_us_term_spread']:+.3f}")
+        print(f"  US_10Y − US_3M 와의 상관 = {v['corr_with_us_term_spread']:+.3f}")
         print(f"    US 연평균: " + "  ".join(f"{k} {x:+.3f}"
                                              for k, x in v["us_term_by_year"].items()))
     lq = v.get("liquidity_spread")

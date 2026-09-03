@@ -342,7 +342,16 @@ def join_crif_release_from_raw(df: pd.DataFrame) -> pd.DataFrame:
     return out
 
 
-def resolve_features(scenario: str, a0: list[str], available: list[str]) -> list[str]:
+def resolve_features(scenario: str, a0: list[str], available: list[str],
+                     strict: bool = True) -> list[str]:
+    """시나리오의 피처 목록. 되넣기 컬럼이 패널에 없으면 **중단한다.**
+
+    ★ [2026-09-02] `strict` 를 기본 True 로 넣었다.
+      초판은 없는 컬럼을 조용히 건너뛰었다. 그러면 "A0 + 누수 4개" 를 재려는
+      시나리오가 A0 와 완전히 같은 피처로 돌아가면서 ΔAUC 0 을 내고,
+      그것이 '누수 기여가 없다' 는 결론으로 오독될 수 있다.
+      측정하려던 것을 측정하지 못했으면 결과가 아니라 오류다.
+    """
     spec = SCENARIOS[scenario]
     feats = list(a0)
     for d in spec["drop"]:
@@ -350,6 +359,12 @@ def resolve_features(scenario: str, a0: list[str], available: list[str]) -> list
             feats = [c for c in feats if not c.endswith(SENTINEL_SUFFIX)]
         else:
             feats = [c for c in feats if c != d]
+    missing = [a for a in spec["add"] if a not in available]
+    if missing and strict:
+        raise ValueError(
+            f"{scenario}: 되넣기 컬럼 {len(missing)}개가 패널에 없다 — {missing}\n"
+            f"  이 상태로 돌리면 A0 와 같은 피처가 되어 측정 자체가 무의미하다.\n"
+            f"  --run / --seed-probe 에 이 시나리오를 넣어 조인 단계를 태울 것.")
     for a in spec["add"]:
         if a in available and a not in feats:
             feats.append(a)
@@ -515,6 +530,13 @@ def main() -> None:
         return
 
     targets = list(SCENARIOS) if a.run_all else (a.run or [])
+    # ★ [2026-09-02] --seed-probe / --reg-probe 시나리오를 targets 에 합친다.
+    #   합치지 않으면 아래 need_pre5 가 비어 CRIF·폐업 컬럼을 조인하지 않고,
+    #   resolve_features 의 `if a in available` 이 그 컬럼을 조용히 건너뛴다.
+    #   결과: `--seed-probe A2` 가 피처 152개(=A0)로 돌아가면서 라벨만 A2 였다.
+    #   AUC 가 A0 와 완전히 동일하게 나오는 것으로 발견했다 (2026-09-02).
+    targets = list(dict.fromkeys(
+        targets + list(a.seed_probe or []) + (["A0"] if a.reg_probe else [])))
     if a.dev_window_probe:
         targets = targets or ["A0"]
 
@@ -540,8 +562,22 @@ def main() -> None:
                 r = run_one(sc, df, feats, save_model=False, params=prm, tag=f"seed{sd}")
                 r["seed"] = sd
                 out.append(r)
+        # ★ [2026-09-02] 덮어쓰지 않고 (시나리오, 시드) 키로 병합한다.
+        #   초판은 매 실행이 파일을 통째로 갈아엎어, A2 를 재면 직전에 잰 A0
+        #   기준선이 사라졌다. 기준선이 없으면 ΔAUC 를 계산할 수 없다.
         p = OUT_DIR / "seed_variance_probe.json"
-        p.write_text(json.dumps(out, ensure_ascii=False, indent=2), encoding="utf-8")
+        prev = []
+        if p.exists():
+            try:
+                prev = json.loads(p.read_text(encoding="utf-8"))
+            except Exception:                                     # noqa: BLE001
+                prev = []
+        merged = {(r.get("scenario"), r.get("seed")): r for r in prev}
+        for r in out:
+            merged[(r["scenario"], r["seed"])] = r
+        p.write_text(json.dumps(sorted(merged.values(),
+                                       key=lambda r: (r["scenario"], r["seed"])),
+                                ensure_ascii=False, indent=2), encoding="utf-8")
         _verify_written(p, 100)
         print()
         print(f"{'시나리오':8s} {'시드':>6s} {'best':>6s} {'Valid AUC':>10s}")

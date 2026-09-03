@@ -10,7 +10,7 @@ Pipeline:
   Phase 0: 파생변수 선행 연산 + 대량결측 3개 지표 드롭
   Phase 1: 시차 적용(shift) + ffill().bfill() → 레벨 NaN 0개 달성
   Phase 2: 비금리 Group A → 월간 로그 수익률 + 일별 원천 기반 월간 내 변동성
-  Phase 3: 금리 → 12개월 차분 / 비금리 B+C → YoY 증감률
+  Phase 3: 금리 → 12개월 차분 / 비금리 B+C+D → YoY 증감률
   Phase 4: 전체 변환 변수 → 3개월 이동평균 확장
   Phase 5: 상위 12행 절단 + 최종 검증 (assert)
 
@@ -76,7 +76,7 @@ GROUP_A_COLS = [
     "KORIBOR_3m", "KORIBOR_6m", "KORIBOR_12m",
     "treasury_bond_1y", "treasury_bond_3y", "treasury_bond_5y", "treasury_bond_10y",
     "corporate_bond_3y_AA",
-    "US_10Y_treasury", "US_2Y_treasury",
+    "US_10Y_treasury", "US_3M_tbill",
     "CP_91d", "MSB_91d",
 ]
 
@@ -85,11 +85,10 @@ GROUP_B_COLS = [
     # 물가
     "CPI_core", "CPI_core_excl_food_energy", "CPI_food_nonalcohol",
     "PPI_total", "housing_price_index",
-    # 통화량
-    "M1_narrow_money", "M2_broad_money", "Lf_liquidity", "monetary_base_sa",
-    # 무역/국제수지
-    "export_index", "import_index", "trade_total",
-    "current_account", "goods_balance",
+    # [2026-09-01] 402Y014 수출물가지수(기본분류) 총지수. 월별·익월 공표.
+    "export_price_index_KOR",
+    # 무역
+    "export_index", "import_index",
     # 월별 금리
     "CD_rate_91d", "treasury_bond_1y_monthly",
 ]
@@ -98,11 +97,18 @@ GROUP_B_COLS = [
 GROUP_C_COLS = [
     # 정책 금리
     "base_rate",
-    # 가계
-    "household_credit", "household_loan",
     # 산업/무역
-    "manufacturing_index", "export_price_index_KOR",
-    "current_account_quarterly",
+    #   [2026-09-01] export_price_index_KOR 는 월별(402Y014, 익월 공표) 로 정정되어
+    #   Group B(+1) 로 이동했다. manufacturing_index 는 DROP_COLS 유지.
+    "manufacturing_index",
+    # [2026-09-01] Group B(+1) -> C(+2) 이동 6건.
+    #   근거: ECOS 실데이터 최종 수록월 관측(측정일 2026-09-01). 6건 모두 최종 2026-06 으로
+    #   9/1 시점에 7월 값이 미공표였다. shift(+1) 은 존재하지 않는 값을 쓰게 된다.
+    #   M1/M2/Lf 는 매핑 정정으로 통계표가 바뀌며 지연이 길어진 케이스다
+    #   (구 매핑 104Y016·104Y014·722Y001 이 짧았던 것은 잘못된 계열을 보고 있었기 때문).
+    #   monetary_base_sa·current_account·goods_balance 는 정정 이전부터 있던 문제다.
+    "M1_narrow_money", "M2_broad_money", "Lf_liquidity", "monetary_base_sa",
+    "current_account", "goods_balance",
     # 심리 지수 (BSI/CSI)
     "BSI_mfg_biz", "BSI_mfg_export", "BSI_mfg_domestic", "BSI_nonmfg_biz",
     "CSI_composite", "CSI_living_prospect",
@@ -110,6 +116,24 @@ GROUP_C_COLS = [
     #   unemployment_rate 1개월 / construction_cost_index 2개월 / unsold_housing 2개월
     # 최대 2개월이므로 Group C(+2) 가 적정하다. (STAGE 6 승인 2-a)
     "unemployment_rate", "construction_cost_index", "unsold_housing",
+]
+
+# Group D: 분기 공표 지표 — 익익익월 공표 (shift=+3개월)
+#   [2026-09-02] Group C(+2) -> D(+3) 이동 3건.
+#   근거: ECOS 실데이터 최종 수록월 관측(측정일 2026-09-01). 세 건 모두 최종
+#   2026-06 으로 측정일 기준 3개월 경과였다. Group C(+2) 는 t 월 값을 t+2 월에
+#   쓰는데, 실제로는 t+3 월에야 공표되므로 1개월 look-ahead 가 남는다.
+#
+#   ★ 분기 지표라는 사실 자체가 시점 누수 사유는 아니다. 분기 지표는 (기업,연도)
+#     내에서 4회 변하고 ffill 은 과거 값을 반복하므로 GNI_annual 유형의
+#     "연도 내 변동 0" 구조와 다르다. 여기서 시차를 늘리는 근거는 오직
+#     **관측된 공표 지연 3개월** 이다. 드롭하지 않는다 — 시차만 늘리면
+#     look-ahead 는 해소되고 정보는 남는다.
+GROUP_D_COLS = [
+    # 가계 (151Y001, 분기)
+    "household_credit", "household_loan",
+    # 국제수지 분기 (301Y013)
+    "current_account_quarterly",
 ]
 
 # 금리류 지표 — YoY 절대 금지, 반드시 _diff12 적용
@@ -120,7 +144,7 @@ INTEREST_RATE_COLS = {
     "KORIBOR_3m", "KORIBOR_6m", "KORIBOR_12m",
     "treasury_bond_1y", "treasury_bond_3y", "treasury_bond_5y", "treasury_bond_10y",
     "corporate_bond_3y_AA",
-    "US_10Y_treasury", "US_2Y_treasury",
+    "US_10Y_treasury", "US_3M_tbill",
     # Group B 금리
     "CD_rate_91d", "treasury_bond_1y_monthly",
     # Group C 금리
@@ -129,12 +153,18 @@ INTEREST_RATE_COLS = {
     "credit_spread", "liquidity_spread",
 }
 
-# 사전 드롭 대상 (결측률 높은 3개 지표)
-DROP_COLS = ["GNI_annual", "manufacturing_index", "export_price_index_KOR"]
+# 사전 드롭 대상
+#   [2026-09-01] export_price_index_KOR 를 드롭 대상에서 제외했다 (승인).
+#     구 매핑이 902Y015 '주요국 경제성장률'(연간) 이라 연 1회 값 -> 대량 결측이었다.
+#     정정 후 402Y014 '수출물가지수(기본분류) 총지수'(월별) 이므로 결측 사유가 소멸한다.
+#     ★ 재수집 후 실제 결측률을 확인하고 5% 초과 시 재보고할 것.
+#   manufacturing_index / GNI_annual 은 드롭 유지 (판단 2 / 시점 누수 사유).
+DROP_COLS = ["GNI_annual", "manufacturing_index"]
 
 # 상수 (월별 기준)
 LAG_MONTHS_B = 1        # Group B: 1개월 시차
 LAG_MONTHS_C = 2        # Group C: 2개월 시차
+LAG_MONTHS_D = 3        # Group D: 3개월 시차 (분기 공표 실측)
 TRUNCATION_MONTHS = 12  # shift(12) warm-up 구간 완전 제거
 
 
@@ -256,7 +286,8 @@ def _compute_monthly_volatility_from_daily(
 # Phase 함수 (Phase 0 ~ Phase 5)
 # ================================================================
 
-def _verify_against_config(group_a: list, group_b: list, group_c: list) -> None:
+def _verify_against_config(group_a: list, group_b: list, group_c: list,
+                           group_d: list) -> None:
     """그룹 배정 목록과 indicators.csv 를 대조한다.
 
     indicators 에 있는데 그룹 미배정 -> 예외 (phase0 가 이미 막지만 이중 방어)
@@ -269,7 +300,7 @@ def _verify_against_config(group_a: list, group_b: list, group_c: list) -> None:
     cfg = pd.read_csv(cfg_path, dtype=str, comment="#").fillna("")
     enabled = set(cfg.loc[cfg["enabled"].str.upper().isin(["Y", "YES", "1", "TRUE"]),
                           "series_name"])
-    assigned = set(group_a) | set(group_b) | set(group_c)
+    assigned = set(group_a) | set(group_b) | set(group_c) | set(group_d)
     derived = {"credit_spread", "liquidity_spread"}
 
     missing = sorted(enabled - assigned - set(DROP_COLS))
@@ -285,7 +316,7 @@ def _verify_against_config(group_a: list, group_b: list, group_c: list) -> None:
                 len(enabled), len(assigned))
 
 
-def phase0(df: pd.DataFrame) -> tuple[pd.DataFrame, list, list, list]:
+def phase0(df: pd.DataFrame) -> tuple[pd.DataFrame, list, list, list, list]:
     """Phase 0: 파생변수 선행 연산 및 변수 정제 (원천 상태)
 
     - GNI_annual 등 대량 결측 3개 지표를 사전 드롭
@@ -314,6 +345,7 @@ def phase0(df: pd.DataFrame) -> tuple[pd.DataFrame, list, list, list]:
     group_a = [c for c in GROUP_A_COLS if c in df.columns]
     group_b = [c for c in GROUP_B_COLS if c in df.columns]
     group_c = [c for c in GROUP_C_COLS if c in df.columns]
+    group_d = [c for c in GROUP_D_COLS if c in df.columns]
 
     # 파생변수 → Group A 강제 편입
     for derived in ("credit_spread", "liquidity_spread"):
@@ -325,33 +357,36 @@ def phase0(df: pd.DataFrame) -> tuple[pd.DataFrame, list, list, list]:
     # 처리이며, 모르는 지표를 그리로 보내면 시점 누수를 만든다.
     # 실제로 PUBLIC 3개와 GNI 3개가 이 경로로 시차 0 처리되고 있었다.
     # 명시적으로 배정하지 않으면 진행을 막는다.
-    assigned = set(group_a + group_b + group_c)
+    assigned = set(group_a + group_b + group_c + group_d)
     all_v = [c for c in df.columns if c != "date"]
     unassigned = [c for c in all_v if c not in assigned]
     if unassigned:
         raise ValueError(
             "그룹 미배정 컬럼 %d개: %s" % (len(unassigned), sorted(unassigned))
-            + "\n  GROUP_A_COLS / GROUP_B_COLS / GROUP_C_COLS 중 하나에 반드시 넣을 것."
+            + "\n  GROUP_A_COLS / GROUP_B_COLS / GROUP_C_COLS / GROUP_D_COLS 중 하나에 반드시 넣을 것."
             + "\n  Group A = 시차 0 (시장 종가처럼 당월 즉시 관찰 가능한 것만)"
             + "\n  Group B = +1개월 (월간 통계)"
             + "\n  Group C = +2개월 (분기/연간, 발표 지연이 큰 공공데이터)"
+            + "\n  Group D = +3개월 (실측 공표 지연 3개월인 분기 지표)"
             + "\n  수집이 불필요하면 indicators.csv 에서 enabled=N 으로 둘 것."
         )
 
-    _verify_against_config(group_a, group_b, group_c)
+    _verify_against_config(group_a, group_b, group_c, group_d)
 
-    LOGGER.info("  Group A: %d | Group B: %d | Group C: %d",
-                len(group_a), len(group_b), len(group_c))
+    LOGGER.info("  Group A: %d | Group B: %d | Group C: %d | Group D: %d",
+                len(group_a), len(group_b), len(group_c), len(group_d))
     _log_nan(df, "Phase 0 완료")
 
-    return df, group_a, group_b, group_c
+    return df, group_a, group_b, group_c, group_d
 
 
-def phase1(df: pd.DataFrame, group_b: list, group_c: list) -> pd.DataFrame:
+def phase1(df: pd.DataFrame, group_b: list, group_c: list,
+           group_d: list) -> pd.DataFrame:
     """Phase 1: 가용성 시차 적용 + ffill().bfill() → 원천 레벨 NaN 0개 달성
 
     - Group B: +1개월 shift (월간 공시 시차)
     - Group C: +2개월 shift (분기/연간 공시 시차)
+    - Group D: +3개월 shift (실측 공표 지연 3개월인 분기 지표)
     - Group A: shift 없음 (당일 즉시 반영)
     - 일괄 ffill → bfill 로 레벨 결측 완전 청산
     """
@@ -370,6 +405,12 @@ def phase1(df: pd.DataFrame, group_b: list, group_c: list) -> pd.DataFrame:
         existing_c = [c for c in group_c if c in df.columns]
         df[existing_c] = df[existing_c].shift(LAG_MONTHS_C)
         LOGGER.info("  Group C: shift(+%d months), %d cols", LAG_MONTHS_C, len(existing_c))
+
+    # Group D: +3개월 shift
+    if group_d:
+        existing_d = [c for c in group_d if c in df.columns]
+        df[existing_d] = df[existing_d].shift(LAG_MONTHS_D)
+        LOGGER.info("  Group D: shift(+%d months), %d cols", LAG_MONTHS_D, len(existing_d))
 
     _log_nan(df, "Post-shift")
 
@@ -454,8 +495,9 @@ def phase2(df: pd.DataFrame, group_a: list) -> pd.DataFrame:
     return df
 
 
-def phase3(df: pd.DataFrame, group_b: list, group_c: list) -> pd.DataFrame:
-    """Phase 3: 금리 → 12개월 차분(_diff12) / 비금리 B+C → YoY 증감률(_yoy)
+def phase3(df: pd.DataFrame, group_b: list, group_c: list,
+           group_d: list) -> pd.DataFrame:
+    """Phase 3: 금리 → 12개월 차분(_diff12) / 비금리 B+C+D → YoY 증감률(_yoy)
 
     - 금리 지표: col - col.shift(12)  →  _diff12
     - 비금리 지표: (V_t - V_{t-12}) / V_{t-12} * 100  →  _yoy
@@ -475,8 +517,8 @@ def phase3(df: pd.DataFrame, group_b: list, group_c: list) -> pd.DataFrame:
         s = pd.to_numeric(df[col], errors="coerce")
         diff_dict[f"{col}_diff12"] = s - s.shift(12)
 
-    # ── 3-2. 비금리 B+C → YoY 증감률 (_yoy) ─────────────────────
-    non_rate_bc = [c for c in group_b + group_c
+    # ── 3-2. 비금리 B+C+D → YoY 증감률 (_yoy) ───────────────────
+    non_rate_bc = [c for c in group_b + group_c + group_d
                    if c in df.columns and c not in INTEREST_RATE_COLS]
     LOGGER.info("  [3-2] 비금리 _yoy: %d cols", len(non_rate_bc))
 
@@ -711,8 +753,8 @@ def main() -> None:
     LOGGER.info("Loaded: %d rows × %d cols", len(df), len(df.columns) - 1)
 
     # ── Phase 0 → 1 → 2 → 3 → 4 → 5 (순서 변경 금지) ──────────
-    df, group_a, group_b, group_c = phase0(df)
-    df = phase1(df, group_b, group_c)
+    df, group_a, group_b, group_c, group_d = phase0(df)
+    df = phase1(df, group_b, group_c, group_d)
 
     # Phase 1 직후의 레벨을 따로 떠 둔다. Phase 2/3 가 레벨 컬럼을 drop 하므로
     # 여기서 복사하지 않으면 Phase 6 이 쓸 원천이 사라진다.
@@ -720,7 +762,7 @@ def main() -> None:
     level_snapshot = df.copy()
 
     df = phase2(df, group_a)
-    df = phase3(df, group_b, group_c)
+    df = phase3(df, group_b, group_c, group_d)
     df = phase4(df)
     df = phase5(df)
 

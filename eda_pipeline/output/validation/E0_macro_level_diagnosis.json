@@ -166,9 +166,9 @@
     {
       "col": "treasury_bond_3y",
       "desc": "국고채 3년 수준",
-      "train": 0.8415602336287331,
-      "valid": -0.7592751178328611,
-      "all": 0.5803764614664554,
+      "train": 0.8494206531424656,
+      "valid": -0.8232820507538078,
+      "all": 0.6314774695882343,
       "status": "뒤집힘",
       "note": "",
       "sign_kept": false,
@@ -177,9 +177,9 @@
     {
       "col": "corporate_bond_3y_AA",
       "desc": "회사채 AA 수준",
-      "train": 0.9161368320514108,
-      "valid": -0.8447904389649761,
-      "all": 0.7731693301626529,
+      "train": 0.8232530318541693,
+      "valid": -0.79810529564782,
+      "all": 0.5551844769301664,
       "status": "뒤집힘",
       "note": "",
       "sign_kept": false,
@@ -188,12 +188,12 @@
     {
       "col": "credit_spread",
       "desc": "신용스프레드 수준",
-      "train": 0.8652977555523864,
-      "valid": -0.5852180532730626,
-      "all": 0.8286552719074098,
-      "status": "뒤집힘",
+      "train": 0.3558892861256296,
+      "valid": 0.2806264664105951,
+      "all": -0.017916548091190115,
+      "status": "유지",
       "note": "",
-      "sign_kept": false,
+      "sign_kept": true,
       "n_missing_in_panel": 0
     },
     {
@@ -210,11 +210,11 @@
     {
       "col": "CPI_core",
       "desc": "물가 수준",
-      "train": -0.00584941846104417,
-      "valid": -0.1738667251057944,
-      "all": -0.2958556549084691,
-      "status": "유지(약함)",
-      "note": "한쪽 |r| < 0.2 라 부호의 의미가 약하다",
+      "train": 0.9783099763713103,
+      "valid": 0.9100391196114075,
+      "all": 0.9526425007570085,
+      "status": "유지",
+      "note": "",
       "sign_kept": true,
       "n_missing_in_panel": 0
     },
@@ -256,12 +256,12 @@
     {
       "col": "credit_spread_diff12",
       "desc": "신용스프레드 12개월 차분",
-      "train": 0.7548242878057007,
-      "valid": -0.45394720693247004,
-      "all": 0.3669963700624661,
-      "status": "뒤집힘",
+      "train": 0.46220035992042247,
+      "valid": 0.8613984749050481,
+      "all": 0.22375433207713133,
+      "status": "유지",
       "note": "",
-      "sign_kept": false,
+      "sign_kept": true,
       "n_missing_in_panel": 0
     },
     {
@@ -278,9 +278,9 @@
     {
       "col": "CPI_core_yoy",
       "desc": "물가 전년동월비",
-      "train": -0.9572049087877508,
-      "valid": 0.4200471841227142,
-      "all": -0.8943805088632897,
+      "train": 0.8342277922905662,
+      "valid": -0.13162618607257728,
+      "all": 0.29287035113147164,
       "status": "뒤집힘",
       "note": "",
       "sign_kept": false,
@@ -444,32 +444,32 @@
     {
       "col": "treasury_bond_3y",
       "desc": "국고채 3년 수준",
-      "train_first": 0.8824562537545324,
-      "train_second": 0.03240092091549072,
-      "status": "일치(약함)",
-      "note": "한쪽 |r| < 0.2 라 부호의 의미가 약하다",
-      "sign_match": true,
-      "gap": 0.8500553328390417
+      "train_first": 0.8660371630541394,
+      "train_second": -0.004822927842503392,
+      "status": "불일치",
+      "note": "",
+      "sign_match": false,
+      "gap": 0.8708600908966427
     },
     {
       "col": "corporate_bond_3y_AA",
       "desc": "회사채 AA 수준",
-      "train_first": 0.845228088071216,
-      "train_second": 0.4940784667934061,
-      "status": "일치",
+      "train_first": 0.938242202209304,
+      "train_second": -0.25540298630222646,
+      "status": "불일치",
       "note": "",
-      "sign_match": true,
-      "gap": 0.35114962127780985
+      "sign_match": false,
+      "gap": 1.1936451885115305
     },
     {
       "col": "credit_spread",
       "desc": "신용스프레드 수준",
-      "train_first": -0.027087863201700785,
-      "train_second": 0.4609299412719493,
+      "train_first": 0.13546645516718875,
+      "train_second": -0.4090896317134792,
       "status": "불일치",
       "note": "",
       "sign_match": false,
-      "gap": 0.48801780447365006
+      "gap": 0.5445560868806679
     },
     {
       "col": "liquidity_spread",
@@ -484,12 +484,12 @@
     {
       "col": "CPI_core",
       "desc": "물가 수준",
-      "train_first": 0.6492893632389026,
-      "train_second": -0.9664516744808688,
-      "status": "불일치",
+      "train_first": 0.883697687793393,
+      "train_second": 0.9765615727923369,
+      "status": "일치",
       "note": "",
-      "sign_match": false,
-      "gap": 1.6157410377197714
+      "sign_match": true,
+      "gap": 0.09286388499894394
     },
     {
       "col": "USD_KRW",
@@ -524,12 +524,12 @@
     {
       "col": "credit_spread_diff12",
       "desc": "신용스프레드 12개월 차분",
-      "train_first": 0.6902906744926289,
-      "train_second": 0.05312057903681979,
-      "status": "일치(약함)",
-      "note": "한쪽 |r| < 0.2 라 부호의 의미가 약하다",
-      "sign_match": true,
-      "gap": 0.6371700954558092
+      "train_first": 0.3813455273696632,
+      "train_second": -0.6731637645222395,
+      "status": "불일치",
+      "note": "",
+      "sign_match": false,
+      "gap": 1.0545092918919026
     },
     {
       "col": "liquidity_spread_diff12",
@@ -544,12 +544,12 @@
     {
       "col": "CPI_core_yoy",
       "desc": "물가 전년동월비",
-      "train_first": -0.12883286429268326,
-      "train_second": -0.9863740467556138,
-      "status": "일치(약함)",
-      "note": "한쪽 |r| < 0.2 라 부호의 의미가 약하다",
-      "sign_match": true,
-      "gap": 0.8575411824629305
+      "train_first": 0.8549368817201973,
+      "train_second": -0.17915001009290074,
+      "status": "불일치",
+      "note": "",
+      "sign_match": false,
+      "gap": 1.034086891813098
     },
     {
       "col": "USD_KRW_log_ret",

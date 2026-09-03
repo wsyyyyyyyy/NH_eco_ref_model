@@ -12,7 +12,8 @@ STAGE 6 D축 — 게이트 1 (데이터 무결성) 검증
         (충격 항 == 0 인 달은 판정 대상에서 제외하고 건수만 기록)
   G1-5b [개정 R1 신설] 각 상호작용항의 "충격 0 인 달" 개수와 행 비율 기록
   G1-6  거시 변수 중 (연도) 내 월별 변동 0 인 것 없음
-  G1-7  step6 shift 중복 제거 후 Group A 의 실제 총 시차 확인
+  G1-7  step6 shift 중복 제거 후 각 Group 의 실제 총 시차 확인
+        (기대 시차는 impute_data 의 GROUP_*_COLS 에서 파생한다 — 하드코딩 금지)
 
   + [확인] 금리 경로 커버리지 — 정책금리/신용스프레드/유동성스프레드 월별 충격값
 
@@ -305,16 +306,44 @@ def gate_7(res: list, macro: pd.DataFrame) -> None:
     raw = raw.sort_values("BASE_YM").set_index("BASE_YM")
     cl = macro.set_index("BASE_YM").sort_index()
 
-    # (정제본 컬럼, 원천 레벨, 변환, 기대 시차, 그룹)
-    probes = [
-        ("KOSPI_log_ret",        "KOSPI",          "log_ret", 0, "A"),
-        ("USD_KRW_log_ret",      "USD_KRW",        "log_ret", 0, "A"),
-        ("credit_spread_diff12", None,             "spread",  0, "A(파생)"),
-        ("CPI_core_yoy",         "CPI_core",       "yoy",     1, "B"),
-        ("M2_broad_money_yoy",   "M2_broad_money", "yoy",     1, "B"),
-        ("base_rate_diff12",     "base_rate",      "diff12",  2, "C"),
-        ("BSI_mfg_biz_yoy",      "BSI_mfg_biz",    "yoy",     2, "C"),
+    # ★ [2026-09-02] 기대 시차를 하드코딩하지 않는다. `impute_data` 의 그룹 배정에서
+    #   파생한다. 초판은 `M2_broad_money` 를 Group B(+1) 로 박아 두었는데 2026-09-01 에
+    #   Group C(+2) 로 옮겨졌고, 그래서 데이터가 옳은데도 G1-7 이 실패했다.
+    #   시차 배정의 정본은 `impute_data` 하나여야 한다.
+    def _expect_lag(level_col: str | None) -> tuple[int, str]:
+        from api_data_processing import impute_data as _imp
+        table = (("A", _imp.GROUP_A_COLS, 0),
+                 ("B", _imp.GROUP_B_COLS, _imp.LAG_MONTHS_B),
+                 ("C", _imp.GROUP_C_COLS, _imp.LAG_MONTHS_C),
+                 ("D", _imp.GROUP_D_COLS, _imp.LAG_MONTHS_D))
+        for g, cols, lag in table:
+            if level_col in cols:
+                return lag, g
+        return 0, "미배정"
+
+    # (정제본 컬럼, 원천 레벨, 변환) — 기대 시차·그룹은 impute_data 에서 읽는다
+    probe_spec = [
+        ("KOSPI_log_ret",                  "KOSPI",                     "log_ret"),
+        ("USD_KRW_log_ret",                "USD_KRW",                   "log_ret"),
+        ("credit_spread_diff12",           None,                        "spread"),
+        ("CPI_core_yoy",                   "CPI_core",                  "yoy"),
+        ("M2_broad_money_yoy",             "M2_broad_money",            "yoy"),
+        ("base_rate_diff12",               "base_rate",                 "diff12"),
+        ("BSI_mfg_biz_yoy",                "BSI_mfg_biz",               "yoy"),
+        # Group D(+3) 대표. 2026-09-02 신설분이 실제로 3개월 밀렸는지 확인한다.
+        ("household_credit_yoy",           "household_credit",          "yoy"),
+        ("current_account_quarterly_yoy",  "current_account_quarterly", "yoy"),
     ]
+    probes = []
+    for _col, _lvl, _kind in probe_spec:
+        if _kind == "spread":
+            # 파생 스프레드는 Group A 금리 두 개의 차이라 시차 0 이 정의상 기대값이다.
+            probes.append((_col, _lvl, _kind, 0, "A(파생)"))
+            continue
+        _lag, _g = _expect_lag(_lvl)
+        probes.append((_col, _lvl, _kind, _lag, _g))
+    # _best_lag 의 탐색 상한이 기대 시차보다 작으면 판정 자체가 불가능하다.
+    _max_lag = max(4, max(e for _, _, _, e, _ in probes) + 1)
     lines, all_ok = [], True
     for col, lvl, kind, expect, grp in probes:
         if col not in cl.columns:
@@ -340,15 +369,18 @@ def gate_7(res: list, macro: pd.DataFrame) -> None:
             cand = s - s.shift(12)
 
         tgt = pd.to_numeric(cl[col], errors="coerce").dropna()
-        k, err = _best_lag(tgt, cand)
+        k, err = _best_lag(tgt, cand, max_lag=_max_lag)
         ok = (k == expect)
         all_ok = all_ok and ok
         lines.append(f"{col:24s} Group {grp:7s} 실측 시차 {k}개월 "
                      f"(기대 {expect}) 잔차 {err:.3e}  "
                      f"{'OK' if ok else '*** 불일치 ***'}")
     lines.append(f"step6 추가 시차 MACRO_LAG_MONTHS = {MACRO_LAG_MONTHS}")
+    from api_data_processing import impute_data as _imp
     lines.append(f"-> 패널 기준 총 시차: Group A {0 + MACRO_LAG_MONTHS}개월 / "
-                 f"Group B {1 + MACRO_LAG_MONTHS} / Group C {2 + MACRO_LAG_MONTHS}")
+                 f"Group B {_imp.LAG_MONTHS_B + MACRO_LAG_MONTHS} / "
+                 f"Group C {_imp.LAG_MONTHS_C + MACRO_LAG_MONTHS} / "
+                 f"Group D {_imp.LAG_MONTHS_D + MACRO_LAG_MONTHS}")
     ok = all_ok and MACRO_LAG_MONTHS == 0
     if MACRO_LAG_MONTHS != 0:
         lines.append("★ step6 가 전 컬럼에 시차를 더 걸고 있다 = 이중 시차")

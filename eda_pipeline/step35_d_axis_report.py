@@ -30,7 +30,7 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
 
-from eda_pipeline import config
+from eda_pipeline import config, split_spec
 from eda_pipeline.step34_d_axis import SCENARIOS, summarize
 from eda_pipeline.step6_macro_integration import INTERACTIONS
 
@@ -41,9 +41,35 @@ REPORT = config.VALIDATION_DIR / "D_AXIS_RESULT.md"
 REFERENCE_MACRO_GAIN_PCT = 5.12
 NOISE_BAND = 0.003          # |ΔAUC| < 0.003 은 차이 없음
 
-# 연도별 실제 부도율 (기준서 게이트 3 측정 근거)
-ACTUAL_YEARLY = {"2021": 0.671, "2022": 0.904, "2023": 1.240,
-                 "2024": 1.176, "2025": 1.417}
+# 연도별 실제 부도율 — **폴백 전용 상수**.
+#   ★ [2026-09-02] 이 값을 리포트에 직접 쓰지 않는다. 패널에서 실측한다.
+#   패널이 재생성되면 이 상수는 조용히 어긋난다. 2026-09-02 실측 대조에서
+#   매년 0.003~0.020%p 높게 박혀 있었다 (구 세대 패널의 값이었다).
+#   패널을 읽을 수 없을 때만 쓰고, 그 사실을 리포트에 밝힌다.
+ACTUAL_YEARLY_FALLBACK = {"2021": 0.671, "2022": 0.904, "2023": 1.240,
+                          "2024": 1.176, "2025": 1.417}
+
+
+def yearly_default_rates() -> tuple[dict[str, float], bool]:
+    """패널에서 연도별 12개월 선행 부도율(%)을 실측한다.
+
+    Returns
+    -------
+    (연도 -> 부도율%, 실측 성공 여부)
+    """
+    try:
+        import duckdb
+        pnl = config.OUTPUT_DIR / "nh_panel_macro_12m_obv_none_real.parquet"
+        con = duckdb.connect()
+        try:
+            d = con.execute(
+                "SELECT SUBSTR(BASE_YM,1,4) y, AVG(IS_BUDO_12M)*100 r "
+                f"FROM read_parquet('{pnl.as_posix()}') GROUP BY 1 ORDER BY 1").df()
+        finally:
+            con.close()
+        return {str(r.y): float(r.r) for r in d.itertuples()}, True
+    except Exception:                                             # noqa: BLE001
+        return dict(ACTUAL_YEARLY_FALLBACK), False
 
 # ── 경제 채널 분류 ──────────────────────────────────────────────────
 CHANNELS: list[tuple[str, tuple[str, ...]]] = [
@@ -52,7 +78,7 @@ CHANNELS: list[tuple[str, tuple[str, ...]]] = [
                    "current_account", "goods_balance", "export_price")),
     ("금리-차입", ("base_rate", "KORIBOR", "treasury_bond", "corporate_bond",
                    "CD_rate", "CP_91d", "MSB_91d", "call_rate",
-                   "credit_spread", "liquidity_spread", "US_10Y", "US_2Y")),
+                   "credit_spread", "liquidity_spread", "US_10Y", "US_3M_tbill")),
     ("유가-원자재", ("brent", "WTI", "natural_gas", "gold", "silver",
                      "copper", "corn", "soybean")),
     ("심리지수", ("BSI", "CSI", "VIX")),
@@ -197,8 +223,13 @@ def macro_vs_default() -> tuple:
     m = m.sort_values("BASE_YM").set_index("BASE_YM")
 
     idx = [x for x in rate.index if x in m.index]
-    tr = [x for x in idx if x < "202310"]
-    va = [x for x in idx if x >= "202401"]
+    # ★ [2026-09-02] 분할 경계를 하드코딩하지 않는다. `split_spec` 이 정본이다.
+    #   하드코딩하면 분할을 바꿨을 때 이 진단만 옛 경계로 남아, 모델이 쓴 분할과
+    #   다른 구간의 상관을 같은 분할이라고 제시한다 (G1-7 과 같은 형태의 결함).
+    _TR_END = split_spec.DEV_START          # Train 은 Dev 시작 직전까지
+    _VA_START = split_spec.VALID_START
+    tr = [x for x in idx if x < _TR_END]
+    va = [x for x in idx if x >= _VA_START]
 
     sign_rows = []
     for c in DIAG_COLS:
@@ -218,8 +249,8 @@ def macro_vs_default() -> tuple:
         for k in LAG_GRID:
             sh = m[c].shift(k)
             i2 = [x for x in idx if pd.notna(sh.get(x))]
-            t2 = [x for x in i2 if x < "202310"]
-            v2 = [x for x in i2 if x >= "202401"]
+            t2 = [x for x in i2 if x < _TR_END]
+            v2 = [x for x in i2 if x >= _VA_START]
             r["train"][k] = (float(np.corrcoef(sh.loc[t2], rate.loc[t2])[0, 1])
                              if len(t2) > 3 else float("nan"))
             r["valid"][k] = (float(np.corrcoef(sh.loc[v2], rate.loc[v2])[0, 1])
@@ -227,8 +258,18 @@ def macro_vs_default() -> tuple:
         lag_rows.append(r)
 
     seg = {}
-    for lo, hi, lab in (("202101", "202309", "TRAIN"), ("202310", "202312", "DEV"),
-                        ("202401", "202505", "VALID")):
+    # 구간 상·하한도 split_spec 과 실제 관측 범위에서 만든다.
+    #   TRAIN 시작·VALID 끝은 패널의 실측 최소·최대월이다 (고정값 금지).
+    _first, _last = min(idx), max(idx)
+
+    def _prev_ym(ym: str) -> str:
+        y, m = int(ym[:4]), int(ym[4:])
+        y, m = (y - 1, 12) if m == 1 else (y, m - 1)
+        return f"{y:04d}{m:02d}"
+
+    for lo, hi, lab in ((_first, _prev_ym(split_spec.DEV_START), "TRAIN"),
+                        (split_spec.DEV_START, split_spec.DEV_END, "DEV"),
+                        (split_spec.VALID_START, _last, "VALID")):
         sub = rate.loc[(rate.index >= lo) & (rate.index <= hi)]
         br = m.loc[(m.index >= lo) & (m.index <= hi), "base_rate_diff12"]
         seg[lab] = {"n_months": int(len(sub)), "rate_mean": float(sub.mean()),
@@ -242,6 +283,82 @@ def macro_vs_default() -> tuple:
 # ══════════════════════════════════════════════════════════════════════
 # 판정
 # ══════════════════════════════════════════════════════════════════════
+
+def ac12_contamination_note(by_sc: dict, w) -> None:
+    """AC12 연 단위 조인분이 전 시나리오에 남아 있다는 사실과 그 크기를 적는다.
+
+    step31 감사(2026-09-02)에서 `AC12_*` 금액 10개와 `HAS_AC12_YN` 이
+    (b) 시점누수, `exp_fx_dbt` 가 (d) 부분오염으로 판정됐다. 이 컬럼들은
+    A0 피처 풀에 들어 있어 **D0 를 포함한 전 시나리오가 공유**한다.
+    B46(월 단위 as-of) 에서 해소 가능함을 확인했으나, 본류(step2/step5) 반영은
+    A/B/C/D 전 축 기준선을 함께 움직이므로 이번 범위에서는 적용하지 않았다.
+
+    ★ 크기 판단은 gain 으로 한다. 수치를 하드코딩하지 않는다.
+    """
+    import duckdb
+    pnl = config.OUTPUT_DIR / "nh_panel_macro_12m_obv_none_real.parquet"
+    try:
+        cols = [r[0] for r in duckdb.connect().execute(
+            f"DESCRIBE SELECT * FROM read_parquet('{pnl.as_posix()}')").fetchall()]
+    except Exception:                                             # noqa: BLE001
+        cols = []
+    ac12 = sorted(c for c in cols if c.startswith("AC12_"))
+    flags = [c for c in ("HAS_AC12_YN", "exp_fx_dbt") if c in cols]
+    watch = set(ac12) | set(flags)
+
+    # 전 시나리오의 gain 상위 20 안에 들어간 적이 있는가
+    seen = []
+    for sc, rows in by_sc.items():
+        for r in rows:
+            for e in r.get("gain_top20", []):
+                if e["feature"] in watch:
+                    seen.append((sc, r.get("seed"), e["feature"], e["rank"], e["gain_pct"]))
+
+    w("")
+    w("> ### ⚠ 전 시나리오가 공유하는 AC12 시점 오염")
+    w(">")
+    if ac12:
+        w(f"> `AC12_*` 금액 {len(ac12)}개"
+          + (f" + `{'` · `'.join(flags)}`" if flags else "")
+          + " 는 원천 `BAS_YM`(YYYYMM)을 `str[:4]` 로 잘라 **연 단위로 조인**한 값이다"
+            " (step2). step31 감사에서 금액 10개와 `HAS_AC12_YN` 은 **(b) 시점누수**,"
+            " `exp_fx_dbt` 는 **(d) 부분오염**으로 판정됐다.")
+        w("> 이 컬럼들은 A0 피처 풀에 있어 **D0 를 포함한 전 시나리오가 공유**한다."
+          " 따라서 시나리오 간 ΔAUC 비교는 공정하지만, **절대값은 이 오염을 포함**한다.")
+    w(">")
+    # fx_vol_x_fxdebt 는 D3 에만 있다 (exp_fx_dbt 를 직접 곱한 항)
+    fx = []
+    for sc, rows in by_sc.items():
+        for r in rows:
+            for e in r.get("interaction_gain", []):
+                if e["feature"] == "fx_vol_x_fxdebt":
+                    fx.append((sc, r.get("seed"), e["gain_pct"], e["rank"]))
+    if fx:
+        _g = [g for _, _, g, _ in fx]
+        _r = [rk for _, _, _, rk in fx if rk is not None]
+        _scs = sorted({sc for sc, _, _, _ in fx})
+        w(f"> **영향 크기 — 제한적이다.** `fx_vol_x_fxdebt`(환변동성 × 외화부채비중)는"
+          f" {', '.join(_scs)} 에만 들어가며 gain "
+          f"{min(_g):.3f}~{max(_g):.3f}%"
+          + (f" / 순위 {min(_r)}~{max(_r)}위" if _r else "") + " 다.")
+    if not seen:
+        w("> `AC12_*` 금액 컬럼과 `HAS_AC12_YN` · `exp_fx_dbt` 는 **어느 시나리오에서도"
+          " 전체 gain 상위 20 밖**이다. 판정을 뒤집을 크기가 아니다.")
+    else:
+        w("> gain 상위 20 안에 든 사례: "
+          + " · ".join(f"{sc}(seed {sd}) `{f}` {rk}위 {g:.3f}%"
+                       for sc, sd, f, rk, g in seen))
+    w(">")
+    w("> `HAS_AC12_YN` 이 피처에 살아 있으므로 모델은 **\"금액 0 = 외화부채 없음\"**"
+      " 과 **\"레코드 없음\"** 을 구분할 수 있다 (as-of 재구성에서도 결측은 step5 규칙대로"
+      " 0 으로 채우고 보유 여부는 이 플래그가 담는다).")
+    w(">")
+    w("> **해소 경로는 확인됐다** — B46(월 단위 as-of)에서 (b)·(d) 판정이 모두 풀렸고,"
+      " 성능 기여는 A0 대비 +0.00067(노이즈)이었다. 본류(step2/step5) 반영은 A/B/C/D"
+      " 전 축 기준선을 함께 움직이므로 이번 범위에서는 적용하지 않았다."
+      " 추적: `PENDING_REVALIDATION.md` 12번.")
+    w("")
+
 
 def _pooled_sd(a: float, b: float) -> float:
     return float(np.sqrt(a ** 2 + b ** 2))
@@ -332,12 +449,36 @@ def main() -> None:
     w = L.append
     w("# STAGE 6 D축 — 거시 결합 방식 Ablation 결과")
     w("")
-    w("실행일: 2026-08-31 · 규제 **R2** (A/B/C축과 동일) · 시드 3회 (42/7/2024)")
+    import datetime as _dt
+    import os as _os
+    _ran = _dt.datetime.fromtimestamp(
+        _os.path.getmtime(OUT_DIR / "d_axis_results.json")).strftime("%Y-%m-%d")
+    _seeds = sorted({r["seed"] for r in results})
+    _scs = [x["scenario"] for x in summary]
+    w(f"실행일: {_ran} · 규제 **{results[0].get('reg_variant', 'R2')}** "
+      f"(A/B/C축과 동일) · 시드 {len(_seeds)}회 "
+      f"({'/'.join(str(x) for x in _seeds)})")
+    w(f"시나리오: {' · '.join(_scs)}")
     w("기준서: `eda_pipeline/output/validation/D_AXIS_SUCCESS_CRITERIA.md` (**개정 R1**)")
     w("게이트 1: `eda_pipeline/output/validation/D_AXIS_GATE1_RESULT.md` — "
       f"**{'8/8 통과' if gate1_pass else '미통과'}**")
-    w("재현: `python -m eda_pipeline.step34_d_axis --run-all --seeds 42,7,2024`")
+    w(f"재현: `python -m eda_pipeline.step34_d_axis --run "
+      f"{' '.join(_scs)} --seeds {','.join(str(x) for x in _seeds)}`"
+      f" (인터프리터는 `data_preprocessing.md` 의 '재현 방법' 절 참조)")
+    _g1_age = _dt.datetime.fromtimestamp(
+        _os.path.getmtime(config.VALIDATION_DIR / "D_axis_gate1.json")
+    ).strftime("%Y-%m-%d")
+    w(f"게이트 1 산출일: {_g1_age}"
+      + ("" if _g1_age >= _ran else
+         "  ⚠ **이 실행보다 오래됐다** — 거시 원천이 바뀌었으면 "
+         "`step33_macro_gate1` 을 다시 돌릴 것"))
+    _mac = config.macro_input_path()
+    w(f"거시 원천: `{_mac.name}` (갱신 "
+      f"{_dt.datetime.fromtimestamp(_os.path.getmtime(_mac)):%Y-%m-%d})"
+      f" · 패널 `{results[0].get('panel') or gate1.get('panel', '(미기록)')}`"
+      f"{'' if results[0].get('panel') else ' (게이트 1 기록 기준)'}")
     w("원자료: `d_axis/d_axis_results.json` · `d_axis/d_axis_summary.json`")
+    w("세대 이력·정정 내역·미결 항목: `PENDING_REVALIDATION.md`")
     w("")
     w("---")
     w("")
@@ -350,7 +491,16 @@ def main() -> None:
     w("> ★ **`rate_shock_x_leverage` 는 정책금리 동결 구간에서 구조적으로 0 이 된다.**")
     w("> 이 항의 gain 이 낮게 나오더라도 '금리 경로가 무의미하다'는 뜻이 아니라")
     w("> '분석 기간의 절반이 금리 변동이 없는 구간'이라는 뜻이다.")
-    w("> 실측: Valid 312,334행 중 **53.14%** 에서 이 항이 0.")
+    _rs = zero.get("rate_shock_x_leverage")
+    if _rs:
+        _rsv = _rs.get("zero_shock_row_pct_valid")
+        # 행수는 결과 원자료에서 그대로 읽는다. 반올림된 %로 역산하면
+        # 없는 정밀도가 생긴다 (역산값 312,320 vs 실제 312,334).
+        _rsn = by_sc["D0"][0].get("n_valid")
+        if _rsv is not None:
+            w(f"> 실측: Valid"
+              + (f" {int(_rsn):,}행 중" if _rsn else "")
+              + f" **{float(_rsv):.2f}%** 에서 이 항이 0.")
     w("> gain 은 반드시 아래 §3 의 '0 비율' 컬럼과 함께 읽는다.")
     w("")
     w("### 확률 보정")
@@ -373,22 +523,27 @@ def main() -> None:
       " (`p/(p+(1-p)·spw)`). 적합 파라미터가 없어 과적합이 불가능하지만,"
       " R2 규제(`num_leaves=7, reg_alpha=5, reg_lambda=5`)로 트리 확률이 수축돼 있어"
       " **과소보정된다.**")
+    _d0r = by_sc["D0"][0]
+    _rate_tr = _d0r["pos_train"] / _d0r["n_train"] * 100
+    _rate_dv = _d0r["pos_dev"] / _d0r["n_dev"] * 100
+    _rate_va = _d0r["rate_valid"] * 100
     w("- `platt_train` 은 기준서의 *\"보정은 Train 구간에서만 학습해 Valid 에 적용\"* 을"
       " 문자 그대로 만족한다. **D0 에서 평균 PD 가 실제보다 낮게 나오는 것은 결함이"
-      " 아니라 측정 그 자체다** — Train 기저율 0.9116% 에서 Valid 1.2269% 로의"
+      " 아니라 측정 그 자체다** — "
+      f"Train 기저율 {_rate_tr:.4f}% 에서 Valid {_rate_va:.4f}% 로의"
       " 상승분을 기업 고유 피처만으로는 따라가지 못한다는 뜻이고, 거시가 메워야"
       " 하는 지점이 정확히 여기다.")
-    w("- `platt_dev` 는 Dev(202310~202312)가 Valid 와 시기가 인접해 기저율이 비슷하므로"
-      " (Dev 1.2424% vs Valid 1.2269%) 절편이 Valid 기저율을 대신 알려 주는 효과가"
-      " 있다. 거시가 없어도 캘리브레이션이 좋아 보여 판정이 무뎌지므로 참고용으로만"
-      " 둔다. §5 에 로버스트니스로 병기한다.")
-    w("- 보정 방식은 D0~D5 에 **동일하게** 적용되므로 시나리오 간 비교는 공정하다.")
+    w("- `platt_dev` 는 Dev 가 Valid 와 시기가 인접해 기저율이 비슷하므로"
+      f" (Dev {_rate_dv:.4f}% vs Valid {_rate_va:.4f}%) 절편이 Valid 기저율을 대신"
+      " 알려 주는 효과가 있다. 거시가 없어도 캘리브레이션이 좋아 보여 판정이"
+      " 무뎌지므로 참고용으로만 둔다. §5 에 로버스트니스로 병기한다.")
+    w("- 보정 방식은 **전 시나리오에 동일하게** 적용되므로 시나리오 간 비교는 공정하다.")
     w("")
     w("---")
     w("")
 
     # ── 메인 결과표 ──────────────────────────────────────────────
-    w("## 1. D0~D5 결과표")
+    w("## 1. 시나리오 결과표")
     w("")
     w("| ID | 구성 | 피처수 | Valid AUC(σ) | ΔAUC | 거시gain% | "
       "PD-부도율 상관 | 건수 MAPE | Brier | 판정 |")
@@ -408,6 +563,7 @@ def main() -> None:
     w(f"- 노이즈 규칙: `|ΔAUC| < {NOISE_BAND}` 은 **차이 없음**으로 기술한다.")
     w("- 괄호 안은 시드 3회 표준편차.")
     w("- 거시gain% = (거시 원본 + 상호작용) gain 합계 / 전체 gain.")
+    ac12_contamination_note(by_sc, w)
     w("")
 
     # ── 게이트 2 ────────────────────────────────────────────────
@@ -493,10 +649,28 @@ def main() -> None:
               f"{z.get('zero_shock_row_pct_valid', 0):.2f}% | "
               f"{z.get('n_exposure_empty', 0)}개월 |")
         w("")
-        w("> `rate_shock_x_leverage` 의 gain 을 다른 항과 나란히 비교하면 안 된다. "
-          "Valid 의 **53.14%** 에서 이 항은 전 기업 0 이고, 트리는 그 구간에서 이 "
-          "변수로 분기할 수 없다. 금리 경로는 `credit_spread_x_lev` 와 "
-          "`liq_spread_x_shortdebt` 가 커버한다 (두 항 모두 충격 0 인 달 0개).")
+        # ★ 수치를 하드코딩하지 않는다. 게이트 1 기록과 gain 표에서 읽는다.
+        _rsz = zero.get("rate_shock_x_leverage", {})
+        _rsp = _rsz.get("zero_shock_row_pct_valid")
+        if _rsp is not None:
+            w(f"> `rate_shock_x_leverage` 의 gain 을 다른 항과 나란히 비교하면 안 된다. "
+              f"Valid 의 **{float(_rsp):.2f}%** 에서 이 항은 전 기업 0 이고, 트리는 "
+              f"그 구간에서 이 변수로 분기할 수 없다.")
+        # 나머지 금리 경로 항의 상태를 '커버한다' 고 단정하지 않고 수치로 적는다.
+        #   초판은 "credit_spread_x_lev / liq_spread_x_shortdebt 가 커버한다" 고 썼다.
+        #   2026-09-01 정정에서 그 논거는 무효 판정을 받았다 (credit_spread 가
+        #   신용스프레드가 아니라 기간스프레드였고, liq 항은 gain 0.015 / 96위였다).
+        #   매핑이 정정된 뒤에도 '커버' 여부는 gain 과 0 비율로 판단할 일이다.
+        _other = [it for it in r0["interaction_gain"]
+                  if it["feature"] in ("credit_spread_x_lev", "liq_spread_x_shortdebt")]
+        if _other:
+            _txt = " · ".join(
+                f"`{it['feature']}` gain {it['gain_pct']:.3f} / {it['rank']}위 / "
+                f"충격 0 인 달 {zero.get(it['feature'], {}).get('n_zero_shock', '—')}개"
+                for it in _other)
+            w(f"> 같은 금리 경로의 다른 항: {_txt}. "
+              f"이 수치만으로 금리 경로가 메워졌다고 볼 수는 없다 — 판단은 "
+              f"§5 의 부호 안정성과 함께 해야 한다.")
     w("")
 
     # ── 게이트 3 ────────────────────────────────────────────────
@@ -557,11 +731,17 @@ def main() -> None:
     w("")
     w("### 측정 근거 — 연도별 실제 부도율 (기준서)")
     w("")
-    w("| 연도 | " + " | ".join(ACTUAL_YEARLY) + " |")
-    w("|---|" + "---:|" * len(ACTUAL_YEARLY))
-    w("| 실제 부도율 | " + " | ".join(f"{v}%" for v in ACTUAL_YEARLY.values()) + " |")
+    _yr, _yr_ok = yearly_default_rates()
+    w("| 연도 | " + " | ".join(_yr) + " |")
+    w("|---|" + "---:|" * len(_yr))
+    w("| 실제 부도율 | " + " | ".join(f"{v:.3f}%" for v in _yr.values()) + " |")
+    if not _yr_ok:
+        w("")
+        w("> ⚠ 패널을 읽지 못해 **폴백 상수**를 썼다 "
+          "(`ACTUAL_YEARLY_FALLBACK`). 현재 패널의 실측값이 아니다.")
     w("")
-    w("최저 대비 최고 **2.1배 변동**. 거시가 설명해야 할 구간이다.")
+    _yv = [v for v in _yr.values() if v]
+    w(f"최저 대비 최고 **{max(_yv) / min(_yv):.1f}배 변동**. 거시가 설명해야 할 구간이다.")
     w("")
 
     # ── 진단 ────────────────────────────────────────────────────
@@ -583,8 +763,25 @@ def main() -> None:
         w(f"| `{r['col']}` | {r['channel']} | {r['train']:+.3f} | {r['valid']:+.3f} | "
           f"{r['all']:+.3f} | {'**★ 뒤집힘**' if r['flip'] else '유지'} |")
     w("")
-    w("**금리 계열 3종이 전부 뒤집힌다.** `base_rate_diff12` 는 Train 에서 **+0.904**,")
-    w("Valid 에서 **−0.909** 다. 거의 완전한 부호 반전이다.")
+    # ★ 서술의 수치를 하드코딩하지 않는다. 재실행마다 데이터에서 다시 읽는다.
+    _rate = [r for r in sign_rows if r["channel"] == "금리-차입"]
+    _flip = [r for r in _rate if r["flip"]]
+    _br = next((r for r in sign_rows if r["col"] == "base_rate_diff12"), None)
+    if _rate:
+        if _flip and len(_flip) == len(_rate):
+            w(f"**금리 계열 {len(_rate)}종이 전부 뒤집힌다.**")
+        elif _flip:
+            w(f"**금리 계열 {len(_rate)}종 중 {len(_flip)}종이 뒤집힌다** "
+              f"({', '.join('`' + r['col'] + '`' for r in _flip)}).")
+        else:
+            w(f"**금리 계열 {len(_rate)}종은 부호가 유지된다.** "
+              f"이 실행에서는 반전이 나타나지 않았다.")
+    if _br is not None:
+        _tail = (" 거의 완전한 부호 반전이다."
+                 if _br["flip"] and min(abs(_br["train"]), abs(_br["valid"])) >= 0.5
+                 else "")
+        w(f"`base_rate_diff12` 는 Train **{_br['train']:+.3f}** / "
+          f"Valid **{_br['valid']:+.3f}** 다.{_tail}")
     w("")
     w("| 구간 | 개월 | 12개월 선행 부도율 | `base_rate_diff12` |")
     w("|---|---:|---|---|")
@@ -598,19 +795,49 @@ def main() -> None:
     w("### 5-2. 그래서 무슨 일이 벌어졌나")
     w("")
     w("1. 모델은 Train(2021~2023)에서 **\"금리가 오르면 부도가 는다\"** 를 배운다")
-    w("   (상관 +0.90). 경제학적으로 맞는 관계다.")
-    w("2. Valid(2024~2025)에서는 금리가 **내려간다** (diff12 평균 −0.162, 2024-12 부터")
-    w("   인하 전환). 모델은 배운 대로 **PD 를 낮춘다.**")
-    w("3. 그런데 실제 부도율은 **계속 오른다** (1.115% → 1.482%). 2022~23 긴축의")
-    w("   충격이 기업 재무를 갉아먹는 데 시간이 걸리기 때문이다 — **부도는 거시에**")
-    w("   **후행한다.**")
-    w("4. 결과: 거시를 넣을수록 예측 PD 가 실제와 **반대 방향**으로 움직인다.")
-    w("   D0 상관 −0.127 → D3 −0.457, 건수 MAPE 62.78% → 87.84%.")
+    w(f"   (`base_rate_diff12` 상관 "
+      f"{_br['train']:+.3f}). 경제학적으로 맞는 관계다."
+      if _br is not None else "   경제학적으로 맞는 관계다.")
+    _d3 = next((x for x in summary if x["scenario"] == "D3"), None)
+    _tr, _va = seg["TRAIN"], seg["VALID"]
+    w(f"2. Valid 구간의 `base_rate_diff12` 평균은 "
+      f"**{_va['base_rate_diff12_mean']:+.3f}** "
+      f"({_va['base_rate_diff12_min']:+.3f}~{_va['base_rate_diff12_max']:+.3f}) 다"
+      + (" — 금리가 **내려간다.** 모델은 배운 대로 **PD 를 낮춘다.**"
+         if _va["base_rate_diff12_mean"] < 0 else "."))
+    w(f"3. 같은 구간의 12개월 선행 부도율은 평균 {_va['rate_mean']:.3f}% "
+      f"({_va['rate_min']:.3f}~{_va['rate_max']:.3f}%) 로, "
+      f"Train 평균 {_tr['rate_mean']:.3f}% 보다 "
+      + ("**높다**. 긴축 충격이 기업 재무를 갉아먹는 데 시간이 걸린다 — "
+         "**부도는 거시에 후행한다.**"
+         if _va["rate_mean"] > _tr["rate_mean"] else "낮다."))
+    if _d3 is not None:
+        w(f"4. 결과: 거시를 넣으면 PD-부도율 상관이 "
+          f"D0 {base['corr_pd_rate']:+.3f} -> D3 {_d3['corr_pd_rate']:+.3f}, "
+          f"건수 MAPE {base['count_mape_pct']:.2f}% -> "
+          f"{_d3['count_mape_pct']:.2f}% 로 움직인다.")
     w("")
-    w("§4 의 월별 표가 이것을 그대로 보여 준다. D3 예측 부도건수는")
-    w("202401 51.7건 → 202505 10.0건으로 **줄어드는데**, 실제는 222건 → 268건으로")
-    w("**늘었다**. D0(거시 없음)는 같은 구간에서 108.1 → 66.9 로 덜 줄어든다.")
-    w("")
+    def _mon_ends(sc: str):
+        rows = by_sc.get(sc)
+        if not rows:
+            return None
+        ms = [r["calibration"]["monthly"][a.calib] for r in rows]
+        return (ms[0][0]["ym"], ms[0][-1]["ym"],
+                float(np.mean([m[0]["pred_cnt"] for m in ms])),
+                float(np.mean([m[-1]["pred_cnt"] for m in ms])),
+                int(ms[0][0]["actual_cnt"]), int(ms[0][-1]["actual_cnt"]))
+
+    _e3, _e0 = _mon_ends("D3"), _mon_ends("D0")
+    if _e3 and _e0:
+        _ym0, _ym1, _p3a, _p3b, _a0c, _a1c = _e3
+        _p0a, _p0b = _e0[2], _e0[3]
+        w(f"§4 의 월별 표가 이것을 그대로 보여 준다. D3 예측 부도건수는 "
+          f"{_ym0} {_p3a:.1f}건 -> {_ym1} {_p3b:.1f}건으로 "
+          f"**{'줄어드는데' if _p3b < _p3a else '늘어나는데'}**, "
+          f"실제는 {_a0c}건 -> {_a1c}건으로 "
+          f"**{'늘었다' if _a1c > _a0c else '줄었다'}**. "
+          f"D0(거시 없음)는 같은 구간에서 {_p0a:.1f} -> {_p0b:.1f} 다.")
+        w("")
     w("**상호작용항도 이 문제를 못 고친다.** STAGE 5 의 상호작용 설계가 해결한 것은")
     w("'시점 더미로의 퇴화'였다. 그런데 상호작용항은 같은 거시 충격에 기업 노출도를")
     w("곱한 것이라 **충격의 부호를 그대로 물려받는다.** 금리가 내려가면")
@@ -629,11 +856,34 @@ def main() -> None:
         w(f"| | Valid | "
           + " | ".join(f"{r['valid'][k]:+.3f}" for k in LAG_GRID) + " |")
     w("")
-    w("`base_rate_diff12` 는 **k=24 에서만** Train(+0.734) 과 Valid(+0.742) 의 부호가")
-    w("맞는다. `credit_spread_diff12` 도 k=24 에서 +0.512 / +0.769 다. 긴축 충격이")
-    w("부도로 이어지는 데 2년쯤 걸린다는 뜻이고, 타겟이 이미 12개월 선행이므로")
-    w("충격에서 부도까지 실질 24~36개월이 된다. 경제학적으로 무리한 값은 아니다.")
+    # 부호가 맞는 k 를 표에서 찾아 쓴다. 하드코딩하지 않는다.
+    def _agree_ks(r) -> list[int]:
+        out = []
+        for k in LAG_GRID:
+            t, v = r["train"].get(k), r["valid"].get(k)
+            if t is None or v is None:
+                continue
+            if not (np.isnan(t) or np.isnan(v)) and t * v > 0:
+                out.append(k)
+        return out
+
+    _any_agree = False
+    for r in lag_rows:
+        ks = _agree_ks(r)
+        if not ks:
+            w(f"- `{r['col']}` — 어느 k 에서도 Train/Valid 부호가 맞지 않는다.")
+            continue
+        _any_agree = True
+        _kk = ks[-1]
+        w(f"- `{r['col']}` — 부호가 맞는 k: {', '.join(str(k) for k in ks)} "
+          f"(k={_kk} 에서 Train {r['train'][_kk]:+.3f} / "
+          f"Valid {r['valid'][_kk]:+.3f})")
     w("")
+    if _any_agree:
+        w("충격이 부도로 이어지는 데 시간이 걸린다는 뜻이고, 타겟이 이미 12개월")
+        w("선행이므로 충격에서 부도까지 실질 시차는 여기에 12개월을 더한 값이 된다.")
+        w("경제학적으로 무리한 값은 아니다.")
+        w("")
     w("**그러나 이것을 지금 채택해서는 안 된다:**")
     w("")
     w("- k 를 **Valid 상관을 보고 골랐다.** 그 자체가 홀드아웃 오염이다.")
@@ -655,12 +905,15 @@ def main() -> None:
         for r in stable:
             w(f"| `{r['col']}` | {r['channel']} | {r['train']:+.3f} | {r['valid']:+.3f} |")
         w("")
-        w("`BSI_mfg_biz_yoy`(제조업 업황 BSI)는 Train −0.757 / Valid −0.760 으로")
-        w("**부호와 크기가 모두 안정적**이다. 심리지수는 금리처럼 정책 결정으로")
-        w("계단 변동하지 않고, 기업이 체감하는 업황을 동행적으로 반영하기 때문으로")
-        w("보인다. 거시를 다시 설계한다면 **가격 변수(금리·환율)보다 심리·업황**")
-        w("**지표를 축으로 삼는 편**이 유망하다는 단서다. 다만 이것도 위와 같은")
-        w("표본 한계를 공유하므로 단서 이상으로 취급하지 않는다.")
+        _bsi = next((r for r in stable if r["col"] == "BSI_mfg_biz_yoy"), None)
+        if _bsi is not None:
+            w(f"`BSI_mfg_biz_yoy`(제조업 업황 BSI)는 Train {_bsi['train']:+.3f} / "
+              f"Valid {_bsi['valid']:+.3f} 로")
+            w("**부호와 크기가 모두 안정적**이다. 심리지수는 금리처럼 정책 결정으로")
+            w("계단 변동하지 않고, 기업이 체감하는 업황을 동행적으로 반영하기 때문으로")
+            w("보인다. 거시를 다시 설계한다면 **가격 변수(금리·환율)보다 심리·업황**")
+            w("**지표를 축으로 삼는 편**이 유망하다는 단서다. 다만 이것도 위와 같은")
+            w("표본 한계를 공유하므로 단서 이상으로 취급하지 않는다.")
     w("")
 
     # ── 로버스트니스 ────────────────────────────────────────────
@@ -692,7 +945,7 @@ def main() -> None:
     w("|---|---|")
     w("| 성공 | 게이트 1 전부 통과 + G3-1 유지 + (G3-2 **또는** G3-3 개선) |")
     w("| 부분성공 | 게이트 1 통과 + AUC 유지 + 캘리브레이션 무변화 |")
-    w("| 실패 | AUC 가 0.003 초과 하락하거나 캘리브레이션 악화 |")
+    w(f"| 실패 | AUC 가 {NOISE_BAND} 초과 하락하거나 캘리브레이션 악화 |")
     w("")
     w("| ID | 판정 | 근거 |")
     w("|---|:---:|---|")

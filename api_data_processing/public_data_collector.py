@@ -13,6 +13,8 @@ class PublicDataCollector:
     """
     def __init__(self):
         self.kosis_api_key = os.getenv("KOSIS_API_KEY", "")
+        # 직전 수집 응답의 공식 명칭. data_collector 의 항목명 대조에 넘긴다.
+        self.last_meta: Dict[str, str] = {}
         self.max_retries = int(os.getenv("MAX_RETRIES", "3"))
         self.timeout = int(os.getenv("REQUEST_TIMEOUT", "10"))
         
@@ -55,8 +57,11 @@ class PublicDataCollector:
                                   [("C1_NM", {"계"}), ("C2_NM", {"계"})]),
             # 건설공사비지수(2020년기준). 기관이 통계청(101)이 아니라 397 이다.
             # 실측 기간 201901~202606 (지연 2개월)
+            # [2026-09-01] 필터 추가. 필터가 없어 C1 24개 부문이 섞인 채
+            #   groupby(date).last() 가 '기타건설' 을 저장하고 있었다 (감사: ECOS_MAPPING_AUDIT.md).
+            #   C1_NM '건설'(15397AA2AA) 이 총지수다.
             "construction_cost_index": ("397", "DT_39701_A003", "16397AAA0",
-                                        {}, []),
+                                        {}, [("C1_NM", {"건설"})]),
             # 규모별 미분양현황. 전국/총합/총합 만 사용. itmId='호'
             # 실측 기간 202401~202606 확인 (지연 2개월)
             "unsold_housing": ("116", "DT_MLTM_2080", "ALL",
@@ -140,6 +145,16 @@ class PublicDataCollector:
                 return pd.DataFrame(columns=["date", indicator_name])
                 
             df = pd.DataFrame(data)
+            # 응답이 알려 주는 공식 명칭을 붙잡아 둔다 (항목명 대조용).
+            if len(df):
+                f0 = df.iloc[0]
+                self.last_meta = {
+                    "stat_name": str(f0.get("TBL_NM", "") or ""),
+                    "item_names": " / ".join(
+                        x for x in (str(f0.get("ITM_NM", "") or ""),
+                                    str(f0.get("C1_NM", "") or "")) if x),
+                    "unit_name": str(f0.get("UNIT_NM", "") or ""),
+                }
             if "PRD_DE" not in df.columns or "DT" not in df.columns:
                 return pd.DataFrame(columns=["date", indicator_name])
 

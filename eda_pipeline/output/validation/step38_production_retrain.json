@@ -1,0 +1,420 @@
+{
+  "config": {
+    "scenario": "D8",
+    "seeds": [
+      42,
+      7,
+      2024
+    ],
+    "lean_cum_gain": 0.95,
+    "n_features_full": 169,
+    "e14": [
+      "ix_KORIBOR_spread_d12__liq",
+      "ix_export_index__mfg",
+      "ix_current_account_quarterly__mfg",
+      "ix_CPI_food_nonalcohol__rate",
+      "ix_unsold_housing__mfg",
+      "ix_BSI_mfg_domestic__mfg",
+      "ix_CSI_composite__young",
+      "ix_soybean_vol__inv",
+      "ix_gold_ret__inv",
+      "ix_Shanghai_Composite_ret__mfg",
+      "ix_CNY_KRW_vol__mfg",
+      "ix_EUR_KRW_vol__mfg",
+      "ix_CNY_KRW_ret__fx_hybrid",
+      "ix_JPY_KRW_ret__mfg"
+    ],
+    "monotone": {
+      "ix_KORIBOR_spread_d12__liq": 0,
+      "ix_export_index__mfg": -1,
+      "ix_current_account_quarterly__mfg": -1,
+      "ix_CPI_food_nonalcohol__rate": 0,
+      "ix_unsold_housing__mfg": 1,
+      "ix_BSI_mfg_domestic__mfg": -1,
+      "ix_CSI_composite__young": -1,
+      "ix_soybean_vol__inv": 0,
+      "ix_gold_ret__inv": 0,
+      "ix_Shanghai_Composite_ret__mfg": 0,
+      "ix_CNY_KRW_vol__mfg": 1,
+      "ix_EUR_KRW_vol__mfg": 1,
+      "ix_CNY_KRW_ret__fx_hybrid": 0,
+      "ix_JPY_KRW_ret__mfg": 0
+    },
+    "lean_n_at_95pct": 50,
+    "lean_pure_features": [
+      "C302_MISSING_YN",
+      "C302_CRI_ORD",
+      "JEMU_191310_val",
+      "STD_INDS_SECTION",
+      "JEMU_126000",
+      "BUSINESS_AGE",
+      "OBV_LD_AM",
+      "JEMU_118100",
+      "JEMU_191503_val",
+      "JEMU_191502_val",
+      "JEMU_112000",
+      "JEMU_118900",
+      "JEMU_114000",
+      "OBV_XPC_LSS_AM",
+      "JEMU_125100",
+      "JEMU_123000",
+      "JEMU_115000",
+      "JEMU_121000",
+      "JEMU_191104_val",
+      "JEMU_191505_val",
+      "JEMU_current_ratio",
+      "JEMU_asset_turnover_avg",
+      "JEMU_debt_ratio",
+      "JEMU_125000",
+      "exp_fx_hybrid",
+      "JEMU_191105_val",
+      "JEMU_191506_val",
+      "JEMU_191110_val",
+      "JEMU_191108_val",
+      "exp_fx_industry",
+      "JEMU_116000",
+      "JEMU_asset_turnover_end",
+      "JEMU_191210_val",
+      "OBV_BZL_RZVL_ASP_ELGD",
+      "exp_liq",
+      "JEMU_118000",
+      "exp_inv",
+      "OBV_ELYWRN_OBV_GRD_DSC",
+      "JEMU_191207_val",
+      "exp_rate",
+      "JEMU_117000",
+      "JEMU_roe_avg",
+      "JEMU_191204_val",
+      "JEMU_roe_end",
+      "JEMU_roa_avg",
+      "AA10_PERS_CNT",
+      "OBV_LN_BAC",
+      "JEMU_128000",
+      "ix_KORIBOR_spread_d12__liq",
+      "JEMU_129000"
+    ],
+    "lean_macro_features": [
+      "C302_MISSING_YN",
+      "C302_CRI_ORD",
+      "JEMU_191310_val",
+      "STD_INDS_SECTION",
+      "JEMU_126000",
+      "BUSINESS_AGE",
+      "OBV_LD_AM",
+      "JEMU_118100",
+      "JEMU_191503_val",
+      "JEMU_191502_val",
+      "JEMU_112000",
+      "JEMU_118900",
+      "JEMU_114000",
+      "OBV_XPC_LSS_AM",
+      "JEMU_125100",
+      "JEMU_123000",
+      "JEMU_115000",
+      "JEMU_121000",
+      "JEMU_191104_val",
+      "JEMU_191505_val",
+      "JEMU_current_ratio",
+      "JEMU_asset_turnover_avg",
+      "JEMU_debt_ratio",
+      "JEMU_125000",
+      "exp_fx_hybrid",
+      "JEMU_191105_val",
+      "JEMU_191506_val",
+      "JEMU_191110_val",
+      "JEMU_191108_val",
+      "exp_fx_industry",
+      "JEMU_116000",
+      "JEMU_asset_turnover_end",
+      "JEMU_191210_val",
+      "OBV_BZL_RZVL_ASP_ELGD",
+      "exp_liq",
+      "JEMU_118000",
+      "exp_inv",
+      "OBV_ELYWRN_OBV_GRD_DSC",
+      "JEMU_191207_val",
+      "exp_rate",
+      "JEMU_117000",
+      "JEMU_roe_avg",
+      "JEMU_191204_val",
+      "JEMU_roe_end",
+      "JEMU_roa_avg",
+      "AA10_PERS_CNT",
+      "OBV_LN_BAC",
+      "JEMU_128000",
+      "ix_KORIBOR_spread_d12__liq",
+      "JEMU_129000",
+      "ix_export_index__mfg",
+      "ix_current_account_quarterly__mfg",
+      "ix_CPI_food_nonalcohol__rate",
+      "ix_unsold_housing__mfg",
+      "ix_BSI_mfg_domestic__mfg",
+      "ix_CSI_composite__young",
+      "ix_soybean_vol__inv",
+      "ix_gold_ret__inv",
+      "ix_Shanghai_Composite_ret__mfg",
+      "ix_CNY_KRW_vol__mfg",
+      "ix_EUR_KRW_vol__mfg",
+      "ix_CNY_KRW_ret__fx_hybrid",
+      "ix_JPY_KRW_ret__mfg"
+    ],
+    "e14_in_pure_lean": [
+      "ix_KORIBOR_spread_d12__liq"
+    ]
+  },
+  "md5_before": {
+    "lgbm_12m_model.txt": "4e02cd3738dfae657da84edd906b9359",
+    "lgbm_12m_lean_model.txt": "25d1cc5bfe091c4549fd78fe4549fec7"
+  },
+  "runs": [
+    {
+      "tag": "Full",
+      "seed": 42,
+      "n_features": 169,
+      "best_iteration": 5336,
+      "scale_pos_weight": 108.6971,
+      "train": {
+        "auc": 0.9979760373321934,
+        "gini": 0.9959520746643868,
+        "ks": 0.9711896578469456
+      },
+      "dev": {
+        "auc": 0.9728145337633939,
+        "gini": 0.9456290675267878,
+        "ks": 0.8305251621816747
+      },
+      "valid": {
+        "auc": 0.8553763871884705,
+        "gini": 0.7107527743769411,
+        "ks": 0.5566317743730027
+      },
+      "psi_train_valid": 0.04829258882363901,
+      "elapsed_sec": 124.2,
+      "model_path": "eda_pipeline\\output\\lgbm_v2_full.txt"
+    },
+    {
+      "tag": "Full",
+      "seed": 7,
+      "n_features": 169,
+      "best_iteration": 5789,
+      "scale_pos_weight": 108.6971,
+      "train": {
+        "auc": 0.9983444462693094,
+        "gini": 0.9966888925386188,
+        "ks": 0.9750189563035054
+      },
+      "dev": {
+        "auc": 0.9741824693166296,
+        "gini": 0.9483649386332591,
+        "ks": 0.8383601342121529
+      },
+      "valid": {
+        "auc": 0.8559218994482719,
+        "gini": 0.7118437988965438,
+        "ks": 0.5577111686807024
+      },
+      "psi_train_valid": 0.04330392984141686,
+      "elapsed_sec": 132.8
+    },
+    {
+      "tag": "Full",
+      "seed": 2024,
+      "n_features": 169,
+      "best_iteration": 5247,
+      "scale_pos_weight": 108.6971,
+      "train": {
+        "auc": 0.9978630660742647,
+        "gini": 0.9957261321485293,
+        "ks": 0.9699731022482662
+      },
+      "dev": {
+        "auc": 0.9734990469067318,
+        "gini": 0.9469980938134637,
+        "ks": 0.8332519438428098
+      },
+      "valid": {
+        "auc": 0.8530853513311663,
+        "gini": 0.7061707026623325,
+        "ks": 0.5435018547231584
+      },
+      "psi_train_valid": 0.04035952757154744,
+      "elapsed_sec": 136.8
+    },
+    {
+      "tag": "Lean_pure",
+      "seed": 42,
+      "n_features": 50,
+      "best_iteration": 5146,
+      "scale_pos_weight": 108.6971,
+      "train": {
+        "auc": 0.9977421662780548,
+        "gini": 0.9954843325561096,
+        "ks": 0.9679922329911377
+      },
+      "dev": {
+        "auc": 0.972961263380962,
+        "gini": 0.945922526761924,
+        "ks": 0.8273144844206908
+      },
+      "valid": {
+        "auc": 0.8539643048706682,
+        "gini": 0.7079286097413364,
+        "ks": 0.5525334717650836
+      },
+      "psi_train_valid": 0.04414791183670014,
+      "elapsed_sec": 85.9,
+      "model_path": "eda_pipeline\\output\\lgbm_v2_lean.txt"
+    },
+    {
+      "tag": "Lean_pure",
+      "seed": 7,
+      "n_features": 50,
+      "best_iteration": 5261,
+      "scale_pos_weight": 108.6971,
+      "train": {
+        "auc": 0.9977938065611387,
+        "gini": 0.9955876131222774,
+        "ks": 0.9696807612493025
+      },
+      "dev": {
+        "auc": 0.9727099532023413,
+        "gini": 0.9454199064046827,
+        "ks": 0.8264738146064791
+      },
+      "valid": {
+        "auc": 0.8530558591980651,
+        "gini": 0.7061117183961303,
+        "ks": 0.5476453484315732
+      },
+      "psi_train_valid": 0.04839955698248455,
+      "elapsed_sec": 88.5
+    },
+    {
+      "tag": "Lean_pure",
+      "seed": 2024,
+      "n_features": 50,
+      "best_iteration": 4924,
+      "scale_pos_weight": 108.6971,
+      "train": {
+        "auc": 0.9974503194854389,
+        "gini": 0.9949006389708779,
+        "ks": 0.9665895110794475
+      },
+      "dev": {
+        "auc": 0.9719536853805362,
+        "gini": 0.9439073707610723,
+        "ks": 0.8262930644935101
+      },
+      "valid": {
+        "auc": 0.853719319688788,
+        "gini": 0.707438639377576,
+        "ks": 0.548576983472793
+      },
+      "psi_train_valid": 0.04639133929399274,
+      "elapsed_sec": 79.9
+    },
+    {
+      "tag": "Lean_macro",
+      "seed": 42,
+      "n_features": 63,
+      "best_iteration": 5233,
+      "scale_pos_weight": 108.6971,
+      "train": {
+        "auc": 0.9977602970001433,
+        "gini": 0.9955205940002867,
+        "ks": 0.9694687477138223
+      },
+      "dev": {
+        "auc": 0.9731688143727504,
+        "gini": 0.9463376287455008,
+        "ks": 0.829639123050314
+      },
+      "valid": {
+        "auc": 0.8549210972554846,
+        "gini": 0.7098421945109692,
+        "ks": 0.5516851150976998
+      },
+      "psi_train_valid": 0.0449117828973556,
+      "elapsed_sec": 96.2,
+      "model_path": "eda_pipeline\\output\\lgbm_v2_lean_macro.txt"
+    },
+    {
+      "tag": "Lean_macro",
+      "seed": 7,
+      "n_features": 63,
+      "best_iteration": 5586,
+      "scale_pos_weight": 108.6971,
+      "train": {
+        "auc": 0.9981166558299824,
+        "gini": 0.9962333116599649,
+        "ks": 0.9723695555827653
+      },
+      "dev": {
+        "auc": 0.9734003225454602,
+        "gini": 0.9468006450909203,
+        "ks": 0.8306070450992309
+      },
+      "valid": {
+        "auc": 0.8551470574103871,
+        "gini": 0.7102941148207742,
+        "ks": 0.5524640796054161
+      },
+      "psi_train_valid": 0.04108141206455021,
+      "elapsed_sec": 98.8
+    },
+    {
+      "tag": "Lean_macro",
+      "seed": 2024,
+      "n_features": 63,
+      "best_iteration": 5910,
+      "scale_pos_weight": 108.6971,
+      "train": {
+        "auc": 0.998324364074187,
+        "gini": 0.996648728148374,
+        "ks": 0.974939691992785
+      },
+      "dev": {
+        "auc": 0.9738700520955067,
+        "gini": 0.9477401041910134,
+        "ks": 0.8317838685718145
+      },
+      "valid": {
+        "auc": 0.8518364726328096,
+        "gini": 0.7036729452656192,
+        "ks": 0.5498412024790168
+      },
+      "psi_train_valid": 0.042434074710059076,
+      "elapsed_sec": 100.6
+    }
+  ],
+  "summary": {
+    "Full": {
+      "n_features": 169,
+      "valid_auc": 0.854794545989303,
+      "valid_auc_sd": 0.0015051264700849992,
+      "valid_ks": 0.5526149325922879,
+      "psi": 0.043985348745534426,
+      "best_iteration_mean": 5457.333333333333
+    },
+    "Lean_pure": {
+      "n_features": 50,
+      "valid_auc": 0.8535798279191736,
+      "valid_auc_sd": 0.0004700126065972992,
+      "valid_ks": 0.5495852678898167,
+      "psi": 0.046312936037725815,
+      "best_iteration_mean": 5110.333333333333
+    },
+    "Lean_macro": {
+      "n_features": 63,
+      "valid_auc": 0.8539682090995605,
+      "valid_auc_sd": 0.0018495917848696769,
+      "valid_ks": 0.5513301323940443,
+      "psi": 0.04280908989065496,
+      "best_iteration_mean": 5576.333333333333
+    }
+  },
+  "md5_after": {
+    "lgbm_12m_model.txt": "4e02cd3738dfae657da84edd906b9359",
+    "lgbm_12m_lean_model.txt": "25d1cc5bfe091c4549fd78fe4549fec7"
+  }
+}

@@ -1,5 +1,1391 @@
 [
   {
+    "scenario": "A0",
+    "desc": "기준선. 시점 정합 피처 전부 (C302 정합분 편입)",
+    "n_features": 152,
+    "best_iteration": 4813,
+    "n_estimators_cap": 10000,
+    "hit_cap": false,
+    "reg_variant": "R2",
+    "scale_pos_weight": 108.6971,
+    "dev_start": "202310",
+    "n_train": 579859,
+    "n_dev": 56021,
+    "n_valid": 312334,
+    "pos_train": 5286,
+    "pos_dev": 696,
+    "pos_valid": 3832,
+    "rate_train": 0.009116009236728239,
+    "rate_dev": 0.012423912461398404,
+    "rate_valid": 0.012268917248842584,
+    "train": {
+      "auc": 0.9982189193385828,
+      "gini": 0.9964378386771655,
+      "ks": 0.9730097720846822
+    },
+    "dev": {
+      "auc": 0.9700185164986418,
+      "gini": 0.9400370329972836,
+      "ks": 0.8283852730209682
+    },
+    "valid": {
+      "auc": 0.8433698805361958,
+      "gini": 0.6867397610723915,
+      "ks": 0.5307258288279945
+    },
+    "psi_train_valid": 0.016681525391769973,
+    "elapsed_sec": 97.9,
+    "gain_top15": [
+      {
+        "feature": "STD_INDS_MID2",
+        "gain_pct": 19.228
+      },
+      {
+        "feature": "C302_MISSING_YN",
+        "gain_pct": 16.713
+      },
+      {
+        "feature": "C302_CRI_ORD",
+        "gain_pct": 6.851
+      },
+      {
+        "feature": "JEMU_191310_val",
+        "gain_pct": 4.686
+      },
+      {
+        "feature": "BUSINESS_AGE",
+        "gain_pct": 3.662
+      },
+      {
+        "feature": "JEMU_191502_val",
+        "gain_pct": 2.929
+      },
+      {
+        "feature": "OBV_LD_AM",
+        "gain_pct": 2.426
+      },
+      {
+        "feature": "JEMU_115000",
+        "gain_pct": 2.322
+      },
+      {
+        "feature": "JEMU_118100",
+        "gain_pct": 2.186
+      },
+      {
+        "feature": "JEMU_126000",
+        "gain_pct": 2.094
+      },
+      {
+        "feature": "JEMU_191503_val",
+        "gain_pct": 1.814
+      },
+      {
+        "feature": "JEMU_114000",
+        "gain_pct": 1.638
+      },
+      {
+        "feature": "OBV_XPC_LSS_AM",
+        "gain_pct": 1.592
+      },
+      {
+        "feature": "JEMU_125100",
+        "gain_pct": 1.342
+      },
+      {
+        "feature": "JEMU_123000",
+        "gain_pct": 1.304
+      }
+    ]
+  },
+  {
+    "scenario": "A0c",
+    "desc": "보수 기준선. A0 − C302 정합분 (= STAGE 6 초판 A0)",
+    "n_features": 150,
+    "best_iteration": 6454,
+    "n_estimators_cap": 10000,
+    "hit_cap": false,
+    "reg_variant": "R2",
+    "scale_pos_weight": 108.6971,
+    "dev_start": "202310",
+    "n_train": 579859,
+    "n_dev": 56021,
+    "n_valid": 312334,
+    "pos_train": 5286,
+    "pos_dev": 696,
+    "pos_valid": 3832,
+    "rate_train": 0.009116009236728239,
+    "rate_dev": 0.012423912461398404,
+    "rate_valid": 0.012268917248842584,
+    "train": {
+      "auc": 0.9987443889297833,
+      "gini": 0.9974887778595667,
+      "ks": 0.9792529870406208
+    },
+    "dev": {
+      "auc": 0.9521694688128146,
+      "gini": 0.9043389376256292,
+      "ks": 0.808191356197184
+    },
+    "valid": {
+      "auc": 0.7825818639695362,
+      "gini": 0.5651637279390724,
+      "ks": 0.4169196941963299
+    },
+    "psi_train_valid": 0.025243384141067284,
+    "elapsed_sec": 246.2,
+    "gain_top15": [
+      {
+        "feature": "STD_INDS_MID2",
+        "gain_pct": 23.789
+      },
+      {
+        "feature": "JEMU_191310_val",
+        "gain_pct": 7.129
+      },
+      {
+        "feature": "OBV_LD_AM",
+        "gain_pct": 3.865
+      },
+      {
+        "feature": "BUSINESS_AGE",
+        "gain_pct": 3.836
+      },
+      {
+        "feature": "JEMU_191502_val",
+        "gain_pct": 3.18
+      },
+      {
+        "feature": "JEMU_125100",
+        "gain_pct": 3.042
+      },
+      {
+        "feature": "JEMU_115000",
+        "gain_pct": 2.623
+      },
+      {
+        "feature": "JEMU_191503_val",
+        "gain_pct": 2.574
+      },
+      {
+        "feature": "JEMU_118100",
+        "gain_pct": 2.445
+      },
+      {
+        "feature": "OBV_XPC_LSS_AM",
+        "gain_pct": 2.399
+      },
+      {
+        "feature": "JEMU_126000",
+        "gain_pct": 2.356
+      },
+      {
+        "feature": "JEMU_114000",
+        "gain_pct": 2.083
+      },
+      {
+        "feature": "JEMU_191104_val",
+        "gain_pct": 1.857
+      },
+      {
+        "feature": "JEMU_123000",
+        "gain_pct": 1.806
+      },
+      {
+        "feature": "JEMU_118900",
+        "gain_pct": 1.74
+      }
+    ]
+  },
+  {
+    "scenario": "A1",
+    "desc": "A0 + COPR_OPNP_C (폐업코드)",
+    "n_features": 153,
+    "best_iteration": 4215,
+    "n_estimators_cap": 10000,
+    "hit_cap": false,
+    "reg_variant": "R2",
+    "scale_pos_weight": 108.6971,
+    "dev_start": "202310",
+    "n_train": 579859,
+    "n_dev": 56021,
+    "n_valid": 312334,
+    "pos_train": 5286,
+    "pos_dev": 696,
+    "pos_valid": 3832,
+    "rate_train": 0.009116009236728239,
+    "rate_dev": 0.012423912461398404,
+    "rate_valid": 0.012268917248842584,
+    "train": {
+      "auc": 0.9979772298807557,
+      "gini": 0.9959544597615113,
+      "ks": 0.9779032640679068
+    },
+    "dev": {
+      "auc": 0.9682308303597862,
+      "gini": 0.9364616607195724,
+      "ks": 0.831538089969927
+    },
+    "valid": {
+      "auc": 0.8579839574198597,
+      "gini": 0.7159679148397193,
+      "ks": 0.551998539538403
+    },
+    "psi_train_valid": 0.030680994522920352,
+    "elapsed_sec": 167.0,
+    "gain_top15": [
+      {
+        "feature": "C302_MISSING_YN",
+        "gain_pct": 17.102
+      },
+      {
+        "feature": "STD_INDS_MID2",
+        "gain_pct": 16.448
+      },
+      {
+        "feature": "COPR_OPNP_C",
+        "gain_pct": 11.857
+      },
+      {
+        "feature": "C302_CRI_ORD",
+        "gain_pct": 6.599
+      },
+      {
+        "feature": "JEMU_191310_val",
+        "gain_pct": 4.984
+      },
+      {
+        "feature": "BUSINESS_AGE",
+        "gain_pct": 2.451
+      },
+      {
+        "feature": "JEMU_118900",
+        "gain_pct": 2.075
+      },
+      {
+        "feature": "JEMU_118100",
+        "gain_pct": 2.072
+      },
+      {
+        "feature": "JEMU_115000",
+        "gain_pct": 1.985
+      },
+      {
+        "feature": "JEMU_112000",
+        "gain_pct": 1.915
+      },
+      {
+        "feature": "OBV_LD_AM",
+        "gain_pct": 1.795
+      },
+      {
+        "feature": "JEMU_asset_turnover_avg",
+        "gain_pct": 1.648
+      },
+      {
+        "feature": "JEMU_191503_val",
+        "gain_pct": 1.45
+      },
+      {
+        "feature": "JEMU_191502_val",
+        "gain_pct": 1.334
+      },
+      {
+        "feature": "JEMU_126000",
+        "gain_pct": 1.277
+      }
+    ]
+  },
+  {
+    "scenario": "A2",
+    "desc": "A0 + CRIF 집계 4개 (연 단위 조인 = 시점 누수 잔존)",
+    "n_features": 156,
+    "best_iteration": 4916,
+    "n_estimators_cap": 10000,
+    "hit_cap": false,
+    "reg_variant": "R2",
+    "scale_pos_weight": 108.6971,
+    "dev_start": "202310",
+    "n_train": 579859,
+    "n_dev": 56021,
+    "n_valid": 312334,
+    "pos_train": 5286,
+    "pos_dev": 696,
+    "pos_valid": 3832,
+    "rate_train": 0.009116009236728239,
+    "rate_dev": 0.012423912461398404,
+    "rate_valid": 0.012268917248842584,
+    "train": {
+      "auc": 0.9985717056261317,
+      "gini": 0.9971434112522635,
+      "ks": 0.9819070318523248
+    },
+    "dev": {
+      "auc": 0.969509845167791,
+      "gini": 0.9390196903355821,
+      "ks": 0.8256828770431776
+    },
+    "valid": {
+      "auc": 0.879644111776905,
+      "gini": 0.7592882235538101,
+      "ks": 0.6078287267847978
+    },
+    "psi_train_valid": 0.01671773449855425,
+    "elapsed_sec": 214.4,
+    "gain_top15": [
+      {
+        "feature": "CRIF_EVENT_CNT",
+        "gain_pct": 18.631
+      },
+      {
+        "feature": "STD_INDS_MID2",
+        "gain_pct": 14.61
+      },
+      {
+        "feature": "C302_MISSING_YN",
+        "gain_pct": 13.252
+      },
+      {
+        "feature": "C302_CRI_ORD",
+        "gain_pct": 4.037
+      },
+      {
+        "feature": "CRIF_OVD_AM_SUM",
+        "gain_pct": 2.918
+      },
+      {
+        "feature": "JEMU_191502_val",
+        "gain_pct": 2.673
+      },
+      {
+        "feature": "JEMU_126000",
+        "gain_pct": 2.294
+      },
+      {
+        "feature": "JEMU_118000",
+        "gain_pct": 2.113
+      },
+      {
+        "feature": "BUSINESS_AGE",
+        "gain_pct": 1.927
+      },
+      {
+        "feature": "OBV_LD_AM",
+        "gain_pct": 1.904
+      },
+      {
+        "feature": "JEMU_118100",
+        "gain_pct": 1.883
+      },
+      {
+        "feature": "JEMU_118900",
+        "gain_pct": 1.765
+      },
+      {
+        "feature": "JEMU_191310_val",
+        "gain_pct": 1.673
+      },
+      {
+        "feature": "JEMU_114000",
+        "gain_pct": 1.266
+      },
+      {
+        "feature": "JEMU_191503_val",
+        "gain_pct": 1.203
+      }
+    ]
+  },
+  {
+    "scenario": "A3",
+    "desc": "A0 + CG01 점수 + 이력플래그 (둘 다 연 단위 누수)",
+    "n_features": 154,
+    "best_iteration": 3823,
+    "n_estimators_cap": 10000,
+    "hit_cap": false,
+    "reg_variant": "R2",
+    "scale_pos_weight": 108.6971,
+    "dev_start": "202310",
+    "n_train": 579859,
+    "n_dev": 56021,
+    "n_valid": 312334,
+    "pos_train": 5286,
+    "pos_dev": 696,
+    "pos_valid": 3832,
+    "rate_train": 0.009116009236728239,
+    "rate_dev": 0.012423912461398404,
+    "rate_valid": 0.012268917248842584,
+    "train": {
+      "auc": 0.9988564310402679,
+      "gini": 0.9977128620805358,
+      "ks": 0.9829761786370157
+    },
+    "dev": {
+      "auc": 0.9873123808633415,
+      "gini": 0.974624761726683,
+      "ks": 0.8850059211243904
+    },
+    "valid": {
+      "auc": 0.9217232204055238,
+      "gini": 0.8434464408110476,
+      "ks": 0.7013282221373079
+    },
+    "psi_train_valid": 0.04316822053646757,
+    "elapsed_sec": 146.7,
+    "gain_top15": [
+      {
+        "feature": "CG01_MISSING_YN",
+        "gain_pct": 25.049
+      },
+      {
+        "feature": "CG01_KIS_SCORE",
+        "gain_pct": 16.55
+      },
+      {
+        "feature": "C302_MISSING_YN",
+        "gain_pct": 13.571
+      },
+      {
+        "feature": "STD_INDS_MID2",
+        "gain_pct": 11.327
+      },
+      {
+        "feature": "C302_CRI_ORD",
+        "gain_pct": 3.473
+      },
+      {
+        "feature": "JEMU_126000",
+        "gain_pct": 2.629
+      },
+      {
+        "feature": "JEMU_191310_val",
+        "gain_pct": 1.996
+      },
+      {
+        "feature": "BUSINESS_AGE",
+        "gain_pct": 1.448
+      },
+      {
+        "feature": "JEMU_debt_ratio",
+        "gain_pct": 1.415
+      },
+      {
+        "feature": "JEMU_118100",
+        "gain_pct": 1.294
+      },
+      {
+        "feature": "JEMU_191503_val",
+        "gain_pct": 0.9
+      },
+      {
+        "feature": "OBV_LD_AM",
+        "gain_pct": 0.881
+      },
+      {
+        "feature": "JEMU_191502_val",
+        "gain_pct": 0.848
+      },
+      {
+        "feature": "JEMU_asset_turnover_avg",
+        "gain_pct": 0.826
+      },
+      {
+        "feature": "JEMU_121000",
+        "gain_pct": 0.734
+      }
+    ]
+  },
+  {
+    "scenario": "A4",
+    "desc": "A0 + CG01_MISSING_YN 만 (연 단위 누수)",
+    "n_features": 153,
+    "best_iteration": 4766,
+    "n_estimators_cap": 10000,
+    "hit_cap": false,
+    "reg_variant": "R2",
+    "scale_pos_weight": 108.6971,
+    "dev_start": "202310",
+    "n_train": 579859,
+    "n_dev": 56021,
+    "n_valid": 312334,
+    "pos_train": 5286,
+    "pos_dev": 696,
+    "pos_valid": 3832,
+    "rate_train": 0.009116009236728239,
+    "rate_dev": 0.012423912461398404,
+    "rate_valid": 0.012268917248842584,
+    "train": {
+      "auc": 0.9989759764608536,
+      "gini": 0.9979519529217071,
+      "ks": 0.9822730477902826
+    },
+    "dev": {
+      "auc": 0.9715474780684669,
+      "gini": 0.9430949561369337,
+      "ks": 0.839174600453953
+    },
+    "valid": {
+      "auc": 0.8862770109366388,
+      "gini": 0.7725540218732776,
+      "ks": 0.5972830505397698
+    },
+    "psi_train_valid": 0.0371036877548033,
+    "elapsed_sec": 183.8,
+    "gain_top15": [
+      {
+        "feature": "C302_MISSING_YN",
+        "gain_pct": 18.389
+      },
+      {
+        "feature": "STD_INDS_MID2",
+        "gain_pct": 15.702
+      },
+      {
+        "feature": "CG01_MISSING_YN",
+        "gain_pct": 11.425
+      },
+      {
+        "feature": "C302_CRI_ORD",
+        "gain_pct": 7.575
+      },
+      {
+        "feature": "JEMU_191310_val",
+        "gain_pct": 4.882
+      },
+      {
+        "feature": "JEMU_118900",
+        "gain_pct": 2.276
+      },
+      {
+        "feature": "JEMU_115000",
+        "gain_pct": 2.167
+      },
+      {
+        "feature": "BUSINESS_AGE",
+        "gain_pct": 2.101
+      },
+      {
+        "feature": "JEMU_112000",
+        "gain_pct": 1.985
+      },
+      {
+        "feature": "JEMU_118100",
+        "gain_pct": 1.95
+      },
+      {
+        "feature": "JEMU_126000",
+        "gain_pct": 1.775
+      },
+      {
+        "feature": "JEMU_191503_val",
+        "gain_pct": 1.699
+      },
+      {
+        "feature": "OBV_LD_AM",
+        "gain_pct": 1.588
+      },
+      {
+        "feature": "JEMU_asset_turnover_avg",
+        "gain_pct": 1.231
+      },
+      {
+        "feature": "OBV_XPC_LSS_AM",
+        "gain_pct": 1.224
+      }
+    ]
+  },
+  {
+    "scenario": "A7",
+    "desc": "누수 상한. 누수 변수 전부 되넣음",
+    "n_features": 162,
+    "best_iteration": 3493,
+    "n_estimators_cap": 10000,
+    "hit_cap": false,
+    "reg_variant": "R2",
+    "scale_pos_weight": 108.6971,
+    "dev_start": "202310",
+    "n_train": 579859,
+    "n_dev": 56021,
+    "n_valid": 312334,
+    "pos_train": 5286,
+    "pos_dev": 696,
+    "pos_valid": 3832,
+    "rate_train": 0.009116009236728239,
+    "rate_dev": 0.012423912461398404,
+    "rate_valid": 0.012268917248842584,
+    "train": {
+      "auc": 0.998787833487077,
+      "gini": 0.997575666974154,
+      "ks": 0.9846787893067093
+    },
+    "dev": {
+      "auc": 0.9879189714903055,
+      "gini": 0.975837942980611,
+      "ks": 0.8847761659161383
+    },
+    "valid": {
+      "auc": 0.9398202133174234,
+      "gini": 0.8796404266348468,
+      "ks": 0.7387015955300684
+    },
+    "psi_train_valid": 0.04186255358440846,
+    "elapsed_sec": 159.9,
+    "gain_top15": [
+      {
+        "feature": "CG01_KIS_SCORE",
+        "gain_pct": 53.452
+      },
+      {
+        "feature": "STD_INDS_MID2",
+        "gain_pct": 8.996
+      },
+      {
+        "feature": "C302_CRI_ORD",
+        "gain_pct": 6.228
+      },
+      {
+        "feature": "COPR_OPNP_C",
+        "gain_pct": 3.397
+      },
+      {
+        "feature": "CRIF_RLS_OCU_DT",
+        "gain_pct": 2.672
+      },
+      {
+        "feature": "exp_rate",
+        "gain_pct": 1.496
+      },
+      {
+        "feature": "JEMU_asset_turnover_avg",
+        "gain_pct": 1.273
+      },
+      {
+        "feature": "JEMU_118100",
+        "gain_pct": 1.1
+      },
+      {
+        "feature": "C302_MISSING_YN",
+        "gain_pct": 0.97
+      },
+      {
+        "feature": "JEMU_126000",
+        "gain_pct": 0.853
+      },
+      {
+        "feature": "BUSINESS_AGE",
+        "gain_pct": 0.763
+      },
+      {
+        "feature": "CRIF_WORST_RSNC",
+        "gain_pct": 0.741
+      },
+      {
+        "feature": "JEMU_191502_val",
+        "gain_pct": 0.69
+      },
+      {
+        "feature": "CRIF_OVD_AM_SUM",
+        "gain_pct": 0.649
+      },
+      {
+        "feature": "CG01_MISSING_YN",
+        "gain_pct": 0.633
+      }
+    ]
+  },
+  {
+    "scenario": "A5",
+    "desc": "A0 − C302_CRI_ORD (등급 서열의 한계 기여)",
+    "n_features": 151,
+    "best_iteration": 4926,
+    "n_estimators_cap": 10000,
+    "hit_cap": false,
+    "reg_variant": "R2",
+    "scale_pos_weight": 108.6971,
+    "dev_start": "202310",
+    "n_train": 579859,
+    "n_dev": 56021,
+    "n_valid": 312334,
+    "pos_train": 5286,
+    "pos_dev": 696,
+    "pos_valid": 3832,
+    "rate_train": 0.009116009236728239,
+    "rate_dev": 0.012423912461398404,
+    "rate_valid": 0.012268917248842584,
+    "train": {
+      "auc": 0.9981254514518192,
+      "gini": 0.9962509029036384,
+      "ks": 0.9729334614882499
+    },
+    "dev": {
+      "auc": 0.9669476344069268,
+      "gini": 0.9338952688138535,
+      "ks": 0.8251089694646577
+    },
+    "valid": {
+      "auc": 0.8335501366736418,
+      "gini": 0.6671002733472835,
+      "ks": 0.5089567181050748
+    },
+    "psi_train_valid": 0.022790272106126323,
+    "elapsed_sec": 158.7,
+    "gain_top15": [
+      {
+        "feature": "C302_MISSING_YN",
+        "gain_pct": 18.667
+      },
+      {
+        "feature": "STD_INDS_MID2",
+        "gain_pct": 18.312
+      },
+      {
+        "feature": "JEMU_191310_val",
+        "gain_pct": 5.045
+      },
+      {
+        "feature": "BUSINESS_AGE",
+        "gain_pct": 3.344
+      },
+      {
+        "feature": "JEMU_191502_val",
+        "gain_pct": 3.066
+      },
+      {
+        "feature": "JEMU_126000",
+        "gain_pct": 2.768
+      },
+      {
+        "feature": "OBV_LD_AM",
+        "gain_pct": 2.757
+      },
+      {
+        "feature": "JEMU_191503_val",
+        "gain_pct": 2.436
+      },
+      {
+        "feature": "JEMU_118900",
+        "gain_pct": 2.375
+      },
+      {
+        "feature": "JEMU_115000",
+        "gain_pct": 2.281
+      },
+      {
+        "feature": "JEMU_118100",
+        "gain_pct": 2.132
+      },
+      {
+        "feature": "OBV_XPC_LSS_AM",
+        "gain_pct": 2.098
+      },
+      {
+        "feature": "JEMU_114000",
+        "gain_pct": 1.633
+      },
+      {
+        "feature": "JEMU_191104_val",
+        "gain_pct": 1.529
+      },
+      {
+        "feature": "JEMU_123000",
+        "gain_pct": 1.455
+      }
+    ]
+  },
+  {
+    "scenario": "A6",
+    "desc": "A0 − C302_MISSING_YN (이력 유무의 한계 기여)",
+    "n_features": 151,
+    "best_iteration": 4129,
+    "n_estimators_cap": 10000,
+    "hit_cap": false,
+    "reg_variant": "R2",
+    "scale_pos_weight": 108.6971,
+    "dev_start": "202310",
+    "n_train": 579859,
+    "n_dev": 56021,
+    "n_valid": 312334,
+    "pos_train": 5286,
+    "pos_dev": 696,
+    "pos_valid": 3832,
+    "rate_train": 0.009116009236728239,
+    "rate_dev": 0.012423912461398404,
+    "rate_valid": 0.012268917248842584,
+    "train": {
+      "auc": 0.997510531499409,
+      "gini": 0.9950210629988181,
+      "ks": 0.9655436170162124
+    },
+    "dev": {
+      "auc": 0.9681461686689415,
+      "gini": 0.9362923373378831,
+      "ks": 0.8207583454093108
+    },
+    "valid": {
+      "auc": 0.8464622992364382,
+      "gini": 0.6929245984728765,
+      "ks": 0.5312776265114303
+    },
+    "psi_train_valid": 0.01849343050413724,
+    "elapsed_sec": 84.0,
+    "gain_top15": [
+      {
+        "feature": "C302_CRI_ORD",
+        "gain_pct": 28.329
+      },
+      {
+        "feature": "STD_INDS_MID2",
+        "gain_pct": 17.797
+      },
+      {
+        "feature": "JEMU_126000",
+        "gain_pct": 3.347
+      },
+      {
+        "feature": "BUSINESS_AGE",
+        "gain_pct": 2.799
+      },
+      {
+        "feature": "JEMU_115000",
+        "gain_pct": 2.494
+      },
+      {
+        "feature": "JEMU_114000",
+        "gain_pct": 2.329
+      },
+      {
+        "feature": "JEMU_191310_val",
+        "gain_pct": 2.233
+      },
+      {
+        "feature": "OBV_LD_AM",
+        "gain_pct": 2.206
+      },
+      {
+        "feature": "JEMU_191503_val",
+        "gain_pct": 2.198
+      },
+      {
+        "feature": "JEMU_118100",
+        "gain_pct": 2.136
+      },
+      {
+        "feature": "JEMU_191502_val",
+        "gain_pct": 1.753
+      },
+      {
+        "feature": "OBV_XPC_LSS_AM",
+        "gain_pct": 1.641
+      },
+      {
+        "feature": "JEMU_125100",
+        "gain_pct": 1.38
+      },
+      {
+        "feature": "JEMU_191104_val",
+        "gain_pct": 1.249
+      },
+      {
+        "feature": "JEMU_123000",
+        "gain_pct": 1.244
+      }
+    ]
+  },
+  {
+    "scenario": "A8",
+    "desc": "A0 − JEMU sentinel 파생 36개",
+    "n_features": 116,
+    "best_iteration": 4300,
+    "n_estimators_cap": 10000,
+    "hit_cap": false,
+    "reg_variant": "R2",
+    "scale_pos_weight": 108.6971,
+    "dev_start": "202310",
+    "n_train": 579859,
+    "n_dev": 56021,
+    "n_valid": 312334,
+    "pos_train": 5286,
+    "pos_dev": 696,
+    "pos_valid": 3832,
+    "rate_train": 0.009116009236728239,
+    "rate_dev": 0.012423912461398404,
+    "rate_valid": 0.012268917248842584,
+    "train": {
+      "auc": 0.9976474444373433,
+      "gini": 0.9952948888746866,
+      "ks": 0.9678007364272503
+    },
+    "dev": {
+      "auc": 0.9682970274916767,
+      "gini": 0.9365940549833534,
+      "ks": 0.825014101625193
+    },
+    "valid": {
+      "auc": 0.8451513749774671,
+      "gini": 0.6903027499549341,
+      "ks": 0.5276365166775532
+    },
+    "psi_train_valid": 0.018350759698660384,
+    "elapsed_sec": 76.6,
+    "gain_top15": [
+      {
+        "feature": "C302_CRI_ORD",
+        "gain_pct": 27.416
+      },
+      {
+        "feature": "STD_INDS_MID2",
+        "gain_pct": 17.827
+      },
+      {
+        "feature": "JEMU_126000",
+        "gain_pct": 4.097
+      },
+      {
+        "feature": "BUSINESS_AGE",
+        "gain_pct": 2.806
+      },
+      {
+        "feature": "JEMU_118100",
+        "gain_pct": 2.321
+      },
+      {
+        "feature": "OBV_LD_AM",
+        "gain_pct": 2.309
+      },
+      {
+        "feature": "JEMU_191503_val",
+        "gain_pct": 2.246
+      },
+      {
+        "feature": "JEMU_191310_val",
+        "gain_pct": 2.0
+      },
+      {
+        "feature": "JEMU_114000",
+        "gain_pct": 1.981
+      },
+      {
+        "feature": "JEMU_191502_val",
+        "gain_pct": 1.807
+      },
+      {
+        "feature": "OBV_XPC_LSS_AM",
+        "gain_pct": 1.557
+      },
+      {
+        "feature": "JEMU_115000",
+        "gain_pct": 1.484
+      },
+      {
+        "feature": "JEMU_123000",
+        "gain_pct": 1.36
+      },
+      {
+        "feature": "JEMU_125100",
+        "gain_pct": 1.298
+      },
+      {
+        "feature": "JEMU_asset_turnover_avg",
+        "gain_pct": 1.233
+      }
+    ]
+  },
+  {
+    "scenario": "C0",
+    "desc": "A0 − 업종 피처 전부 (업종 없이 얼마가 나오는가)",
+    "n_features": 150,
+    "best_iteration": 6130,
+    "n_estimators_cap": 10000,
+    "hit_cap": false,
+    "reg_variant": "R2",
+    "scale_pos_weight": 108.6971,
+    "dev_start": "202310",
+    "n_train": 579859,
+    "n_dev": 56021,
+    "n_valid": 312334,
+    "pos_train": 5286,
+    "pos_dev": 696,
+    "pos_valid": 3832,
+    "rate_train": 0.009116009236728239,
+    "rate_dev": 0.012423912461398404,
+    "rate_valid": 0.012268917248842584,
+    "train": {
+      "auc": 0.9983846516513529,
+      "gini": 0.9967693033027059,
+      "ks": 0.97515071020129
+    },
+    "dev": {
+      "auc": 0.9737638094644498,
+      "gini": 0.9475276189288997,
+      "ks": 0.8297766853130146
+    },
+    "valid": {
+      "auc": 0.8509109652557854,
+      "gini": 0.7018219305115707,
+      "ks": 0.5483064036195433
+    },
+    "psi_train_valid": 0.02873794950333349,
+    "elapsed_sec": 92.7,
+    "gain_top15": [
+      {
+        "feature": "C302_MISSING_YN",
+        "gain_pct": 16.554
+      },
+      {
+        "feature": "C302_CRI_ORD",
+        "gain_pct": 7.003
+      },
+      {
+        "feature": "JEMU_191310_val",
+        "gain_pct": 5.454
+      },
+      {
+        "feature": "BUSINESS_AGE",
+        "gain_pct": 3.523
+      },
+      {
+        "feature": "JEMU_191502_val",
+        "gain_pct": 3.434
+      },
+      {
+        "feature": "OBV_LD_AM",
+        "gain_pct": 2.972
+      },
+      {
+        "feature": "JEMU_118100",
+        "gain_pct": 2.914
+      },
+      {
+        "feature": "JEMU_115000",
+        "gain_pct": 2.715
+      },
+      {
+        "feature": "JEMU_191503_val",
+        "gain_pct": 2.6
+      },
+      {
+        "feature": "JEMU_114000",
+        "gain_pct": 2.181
+      },
+      {
+        "feature": "JEMU_126000",
+        "gain_pct": 2.056
+      },
+      {
+        "feature": "OBV_XPC_LSS_AM",
+        "gain_pct": 2.042
+      },
+      {
+        "feature": "exp_fx_industry",
+        "gain_pct": 1.753
+      },
+      {
+        "feature": "JEMU_121000",
+        "gain_pct": 1.698
+      },
+      {
+        "feature": "exp_fx_hybrid",
+        "gain_pct": 1.696
+      }
+    ]
+  },
+  {
+    "scenario": "C1",
+    "desc": "업종 대분류(SECTION) 만",
+    "n_features": 151,
+    "best_iteration": 4103,
+    "n_estimators_cap": 10000,
+    "hit_cap": false,
+    "reg_variant": "R2",
+    "scale_pos_weight": 108.6971,
+    "dev_start": "202310",
+    "n_train": 579859,
+    "n_dev": 56021,
+    "n_valid": 312334,
+    "pos_train": 5286,
+    "pos_dev": 696,
+    "pos_valid": 3832,
+    "rate_train": 0.009116009236728239,
+    "rate_dev": 0.012423912461398404,
+    "rate_valid": 0.012268917248842584,
+    "train": {
+      "auc": 0.9962983449021509,
+      "gini": 0.9925966898043017,
+      "ks": 0.9567670236055387
+    },
+    "dev": {
+      "auc": 0.9708314245498129,
+      "gini": 0.9416628490996257,
+      "ks": 0.8184045945847682
+    },
+    "valid": {
+      "auc": 0.8595129965795115,
+      "gini": 0.719025993159023,
+      "ks": 0.5552054970893155
+    },
+    "psi_train_valid": 0.031202230008062524,
+    "elapsed_sec": 63.3,
+    "gain_top15": [
+      {
+        "feature": "C302_CRI_ORD",
+        "gain_pct": 28.958
+      },
+      {
+        "feature": "STD_INDS_SECTION",
+        "gain_pct": 3.683
+      },
+      {
+        "feature": "BUSINESS_AGE",
+        "gain_pct": 3.239
+      },
+      {
+        "feature": "JEMU_126000",
+        "gain_pct": 3.141
+      },
+      {
+        "feature": "JEMU_114000",
+        "gain_pct": 2.867
+      },
+      {
+        "feature": "JEMU_191503_val",
+        "gain_pct": 2.852
+      },
+      {
+        "feature": "OBV_LD_AM",
+        "gain_pct": 2.76
+      },
+      {
+        "feature": "JEMU_118100",
+        "gain_pct": 2.701
+      },
+      {
+        "feature": "JEMU_115000",
+        "gain_pct": 2.668
+      },
+      {
+        "feature": "JEMU_191310_val",
+        "gain_pct": 2.476
+      },
+      {
+        "feature": "JEMU_191502_val",
+        "gain_pct": 2.031
+      },
+      {
+        "feature": "OBV_XPC_LSS_AM",
+        "gain_pct": 1.898
+      },
+      {
+        "feature": "JEMU_125100",
+        "gain_pct": 1.627
+      },
+      {
+        "feature": "JEMU_asset_turnover_avg",
+        "gain_pct": 1.547
+      },
+      {
+        "feature": "JEMU_112000",
+        "gain_pct": 1.48
+      }
+    ]
+  },
+  {
+    "scenario": "C2",
+    "desc": "업종 중분류(MID2) 만",
+    "n_features": 151,
+    "best_iteration": 5379,
+    "n_estimators_cap": 10000,
+    "hit_cap": false,
+    "reg_variant": "R2",
+    "scale_pos_weight": 108.6971,
+    "dev_start": "202310",
+    "n_train": 579859,
+    "n_dev": 56021,
+    "n_valid": 312334,
+    "pos_train": 5286,
+    "pos_dev": 696,
+    "pos_valid": 3832,
+    "rate_train": 0.009116009236728239,
+    "rate_dev": 0.012423912461398404,
+    "rate_valid": 0.012268917248842584,
+    "train": {
+      "auc": 0.9985597505078834,
+      "gini": 0.9971195010157667,
+      "ks": 0.9776627676525191
+    },
+    "dev": {
+      "auc": 0.9696274106507523,
+      "gini": 0.9392548213015046,
+      "ks": 0.8311677340272476
+    },
+    "valid": {
+      "auc": 0.8431526952742439,
+      "gini": 0.6863053905484877,
+      "ks": 0.5223001332223898
+    },
+    "psi_train_valid": 0.018467397866139157,
+    "elapsed_sec": 101.3,
+    "gain_top15": [
+      {
+        "feature": "C302_CRI_ORD",
+        "gain_pct": 27.127
+      },
+      {
+        "feature": "STD_INDS_MID2",
+        "gain_pct": 18.079
+      },
+      {
+        "feature": "JEMU_126000",
+        "gain_pct": 3.022
+      },
+      {
+        "feature": "BUSINESS_AGE",
+        "gain_pct": 2.776
+      },
+      {
+        "feature": "JEMU_115000",
+        "gain_pct": 2.424
+      },
+      {
+        "feature": "JEMU_114000",
+        "gain_pct": 2.314
+      },
+      {
+        "feature": "JEMU_191503_val",
+        "gain_pct": 2.244
+      },
+      {
+        "feature": "OBV_LD_AM",
+        "gain_pct": 2.209
+      },
+      {
+        "feature": "JEMU_118100",
+        "gain_pct": 2.141
+      },
+      {
+        "feature": "JEMU_191310_val",
+        "gain_pct": 2.092
+      },
+      {
+        "feature": "JEMU_191502_val",
+        "gain_pct": 1.746
+      },
+      {
+        "feature": "OBV_XPC_LSS_AM",
+        "gain_pct": 1.637
+      },
+      {
+        "feature": "JEMU_125100",
+        "gain_pct": 1.475
+      },
+      {
+        "feature": "JEMU_123000",
+        "gain_pct": 1.374
+      },
+      {
+        "feature": "JEMU_191104_val",
+        "gain_pct": 1.274
+      }
+    ]
+  },
+  {
+    "scenario": "C3",
+    "desc": "업종 둘 다 (= A0)",
+    "n_features": 152,
+    "best_iteration": 4813,
+    "n_estimators_cap": 10000,
+    "hit_cap": false,
+    "reg_variant": "R2",
+    "scale_pos_weight": 108.6971,
+    "dev_start": "202310",
+    "n_train": 579859,
+    "n_dev": 56021,
+    "n_valid": 312334,
+    "pos_train": 5286,
+    "pos_dev": 696,
+    "pos_valid": 3832,
+    "rate_train": 0.009116009236728239,
+    "rate_dev": 0.012423912461398404,
+    "rate_valid": 0.012268917248842584,
+    "train": {
+      "auc": 0.9982189193385828,
+      "gini": 0.9964378386771655,
+      "ks": 0.9730097720846822
+    },
+    "dev": {
+      "auc": 0.9700185164986418,
+      "gini": 0.9400370329972836,
+      "ks": 0.8283852730209682
+    },
+    "valid": {
+      "auc": 0.8433698805361958,
+      "gini": 0.6867397610723915,
+      "ks": 0.5307258288279945
+    },
+    "psi_train_valid": 0.016681525391769973,
+    "elapsed_sec": 90.1,
+    "gain_top15": [
+      {
+        "feature": "STD_INDS_MID2",
+        "gain_pct": 19.228
+      },
+      {
+        "feature": "C302_MISSING_YN",
+        "gain_pct": 16.713
+      },
+      {
+        "feature": "C302_CRI_ORD",
+        "gain_pct": 6.851
+      },
+      {
+        "feature": "JEMU_191310_val",
+        "gain_pct": 4.686
+      },
+      {
+        "feature": "BUSINESS_AGE",
+        "gain_pct": 3.662
+      },
+      {
+        "feature": "JEMU_191502_val",
+        "gain_pct": 2.929
+      },
+      {
+        "feature": "OBV_LD_AM",
+        "gain_pct": 2.426
+      },
+      {
+        "feature": "JEMU_115000",
+        "gain_pct": 2.322
+      },
+      {
+        "feature": "JEMU_118100",
+        "gain_pct": 2.186
+      },
+      {
+        "feature": "JEMU_126000",
+        "gain_pct": 2.094
+      },
+      {
+        "feature": "JEMU_191503_val",
+        "gain_pct": 1.814
+      },
+      {
+        "feature": "JEMU_114000",
+        "gain_pct": 1.638
+      },
+      {
+        "feature": "OBV_XPC_LSS_AM",
+        "gain_pct": 1.592
+      },
+      {
+        "feature": "JEMU_125100",
+        "gain_pct": 1.342
+      },
+      {
+        "feature": "JEMU_123000",
+        "gain_pct": 1.304
+      }
+    ]
+  },
+  {
     "scenario": "C4",
     "desc": "최적 조합. 업종 대분류만 + C302_CRI_ORD만",
     "n_features": 150,
@@ -34,7 +1420,7 @@
       "ks": 0.5504542514275563
     },
     "psi_train_valid": 0.026217992128710708,
-    "elapsed_sec": 122.8,
+    "elapsed_sec": 115.9,
     "gain_top15": [
       {
         "feature": "C302_CRI_ORD",
@@ -133,7 +1519,7 @@
       "ks": 0.5498451917203679
     },
     "psi_train_valid": 0.02613295958597725,
-    "elapsed_sec": 103.9,
+    "elapsed_sec": 93.7,
     "gain_top15": [
       {
         "feature": "C302_CRI_ORD",

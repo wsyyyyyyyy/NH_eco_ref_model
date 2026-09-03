@@ -247,10 +247,270 @@ def split_table(series: dict[str, tuple[pd.Series, str]], rate: pd.Series,
 
 # ══════════════════════════════════════════════════════════════════════
 
+# ══════════════════════════════════════════════════════════════════════
+# E축 1단계 — 거시 전수 부호 검사 (2026-09-02)
+# ══════════════════════════════════════════════════════════════════════
+# E0-1 은 대표 8개만 봤다. 거시를 10개 이상 편입하려면 **전수**로 재야 한다.
+# 대상은 cleaned 산출물의 변환 변수 중 _log_ret / _vol_m / _diff12 / _yoy 다.
+#
+#   ★ _ma3m 은 제외한다. 원본과 상관이 매우 높아 중복이고 VIF 문제를 만든다.
+#   ★ 수준(LV_)·누적(CUM_/DUR_/REL_/PCT_) 계열도 제외한다 — 누적 지수의 단조
+#     증가가 부도율 단조 증가와 겹쳐 **공통 추세로 상관이 나오는 함정**이다
+#     (CPI_core 수준의 Train/Valid 상관이 +0.978/+0.910 으로 강해진 것이 그 예다).
+#     차분·변화율만 본다.
+
+SIGN_AUDIT_SUFFIX = ("_log_ret", "_vol_m", "_diff12", "_yoy")
+SIGN_AUDIT_EXCLUDE_SUFFIX = ("_ma3m",)
+SIGN_AUDIT_EXCLUDE_PREFIX = ("LV_", "CUM_", "DUR_", "REL_", "PCT_")
+
+#: 통과 조건. 완화 시 relaxed 값을 쓴다.
+SIGN_PASS = {"train_abs": 0.15, "valid_abs": 0.10}
+SIGN_PASS_RELAXED = {"train_abs": 0.10, "valid_abs": 0.05}
+SIGN_TARGET_N = 10          # 이 미만이면 완화 후 재실행
+SIGN_ABORT_N = 5            # 완화 후에도 이 미만이면 중단
+
+OUT_SIGN_JSON = config.VALIDATION_DIR / "macro_sign_audit_full.json"
+
+
+# ── 추가 후보 (2026-09-02, 금리·스프레드 계열 0개 대응) ──────────────
+# 조건 (d)는 "누적 지수의 단조 증가가 부도율 단조 증가와 겹쳐 공통 추세로 상관이
+# 나오는 함정"(CPI_core 유형)을 막는 규칙이었다. **스프레드는 누적 지수가 아니라
+# 두 금리의 차이라 단조 증가하지 않으므로 이 함정에 해당하지 않는다.**
+# 따라서 스프레드 수준은 예외로 검사 대상에 넣는다.
+#
+#   ★ LV_base_rate / LV_treasury_bond_3y / LV_corporate_bond_3y_AA 는 넣지 않는다.
+#     E0-1 에서 Train/Valid 부호 반전이 명확히 확인됐다 (+0.977/−0.918 등).
+LEVEL_EXTRA = ["LV_credit_spread", "LV_liquidity_spread"]
+
+#: 신규 스프레드 3종. (이름, 좌변, 우변)
+#: 위기 시 확대·평시 축소이므로 금리 절대수준과 달리 사이클 반전에 덜 민감할 수 있다.
+NEW_SPREADS: list[tuple[str, str, str]] = [
+    ("spread_term",     "treasury_bond_10y",    "treasury_bond_3y"),
+    ("spread_credit",   "corporate_bond_3y_AA", "treasury_bond_3y"),
+    ("KORIBOR_spread",  "KORIBOR_3m",           "base_rate"),
+]
+
+
+def _shifted_levels() -> pd.DataFrame:
+    """원천 레벨에 **impute_data 와 같은 공표 시차**를 적용한 프레임.
+
+    ★ 원천(model_input_monthly.csv)은 시차 미적용 상태다. 여기서 스프레드를 그냥
+      계산하면 시차가 다른 계열이 섞인다 — `KORIBOR_spread` 는 KORIBOR_3m(Group A,
+      +0)과 base_rate(Group C, +2)의 차이이므로 원천에서 빼면 2개월 어긋난 값이 된다.
+      impute_data 의 Phase 1 을 그대로 재현해 시차를 맞춘 뒤 계산한다.
+    """
+    from api_data_processing import impute_data as imp
+
+    raw = pd.read_csv(RAW_MONTHLY)
+    raw["BASE_YM"] = pd.to_datetime(raw["date"]).dt.strftime("%Y%m")
+    raw = raw.sort_values("BASE_YM").set_index("BASE_YM").drop(columns=["date"])
+    for c in raw.columns:
+        raw[c] = pd.to_numeric(raw[c], errors="coerce")
+
+    groups = (("B", imp.GROUP_B_COLS, imp.LAG_MONTHS_B),
+              ("C", imp.GROUP_C_COLS, imp.LAG_MONTHS_C),
+              ("D", imp.GROUP_D_COLS, imp.LAG_MONTHS_D))
+    for _, cols, lag in groups:
+        cs = [c for c in cols if c in raw.columns]
+        if cs:
+            raw[cs] = raw[cs].shift(lag)
+    # Phase 1 과 같이 ffill -> bfill
+    return raw.ffill().bfill()
+
+
+def build_extra_candidates() -> pd.DataFrame:
+    """추가 검사 대상: 스프레드 수준 2종 + 신규 스프레드 3종(수준·diff12)."""
+    frames = []
+
+    # (1) Phase 6 수준 계열
+    lv_path = config.macro_input_path().with_name("model_input_monthly_level.csv")
+    if lv_path.exists():
+        lv = pd.read_csv(lv_path, dtype={"BASE_YM": str})
+        lv["BASE_YM"] = lv["BASE_YM"].astype(str).str.strip()
+        keep = [c for c in LEVEL_EXTRA if c in lv.columns]
+        if keep:
+            frames.append(lv.set_index("BASE_YM")[keep])
+            log.info("  Phase 6 수준 계열 추가: %s", keep)
+    else:
+        log.warning("  %s 없음 — 수준 계열 추가를 건너뜀", lv_path.name)
+
+    # (2) 신규 스프레드 (시차 적용 레벨에서 계산)
+    shifted = _shifted_levels()
+    made = {}
+    for name, a, b in NEW_SPREADS:
+        if a not in shifted.columns or b not in shifted.columns:
+            log.warning("  %s 생략 — 원천에 %s 없음", name,
+                        a if a not in shifted.columns else b)
+            continue
+        lvl = shifted[a] - shifted[b]
+        made[f"NEW_{name}"] = lvl
+        made[f"NEW_{name}_diff12"] = lvl - lvl.shift(12)
+    if made:
+        frames.append(pd.DataFrame(made))
+        log.info("  신규 스프레드 추가: %s", sorted(made))
+    return pd.concat(frames, axis=1) if frames else pd.DataFrame()
+
+
+def _sign_windows(rate: pd.Series, m: pd.DataFrame) -> dict[str, list[str]]:
+    """4개 구간의 BASE_YM 목록. 분할 경계는 split_spec 이 정본이다."""
+    from eda_pipeline import split_spec
+    idx = [x for x in rate.index if x in m.index]
+    tr = [x for x in idx if x < split_spec.DEV_START]
+    va = [x for x in idx if x >= split_spec.VALID_START]
+    half = len(tr) // 2
+    return {"train_early": tr[:half], "train_late": tr[half:],
+            "train_all": tr, "valid": va}
+
+
+def sign_audit_full(relax: bool = False, with_extra: bool = True) -> dict:
+    """거시 변환 변수 전수의 4구간 부호 일치 검사."""
+    rate = default_rate_by_month()
+    m = cleaned_diffs()
+
+    cols = [c for c in m.columns
+            if c.endswith(SIGN_AUDIT_SUFFIX)
+            and not c.endswith(SIGN_AUDIT_EXCLUDE_SUFFIX)
+            and not c.startswith(SIGN_AUDIT_EXCLUDE_PREFIX)]
+
+    extra_cols: list[str] = []
+    if with_extra:
+        ex = build_extra_candidates()
+        if not ex.empty:
+            m = m.join(ex, how="left")
+            extra_cols = [c for c in ex.columns if c in m.columns]
+            cols = cols + extra_cols
+
+    win = _sign_windows(rate, m)
+    thr = SIGN_PASS_RELAXED if relax else SIGN_PASS
+
+    log.info("전수 부호 검사 대상 %d개 (전체 %d − _ma3m/수준계열 제외)",
+             len(cols), len(m.columns))
+    log.info("  구간: train_early %d개월 / train_late %d개월 / "
+             "train_all %d개월 / valid %d개월",
+             *[len(win[k]) for k in ("train_early", "train_late",
+                                     "train_all", "valid")])
+    log.info("  임계: |r(train_all)| >= %.2f / |r(valid)| >= %.2f%s",
+             thr["train_abs"], thr["valid_abs"], "  (완화)" if relax else "")
+
+    rows = []
+    for c in cols:
+        r = {"feature": c}
+        for k, ix in win.items():
+            v, why = _corr(m[c], rate, ix)
+            r[k] = v
+            if why:
+                r.setdefault("notes", []).append(f"{k}: {why}")
+        vals = [r[k] for k in ("train_early", "train_late", "train_all", "valid")]
+        finite = all(np.isfinite(v) for v in vals)
+        r["measurable"] = bool(finite)
+        if not finite:
+            r["pass"] = False
+            r["fail_reason"] = "판정불가 (구간 중 하나 이상 측정 실패)"
+            rows.append(r)
+            continue
+        signs = {np.sign(v) for v in vals}
+        r["sign_consistent"] = bool(len(signs) == 1 and 0 not in signs)
+        r["sign"] = "+" if vals[0] > 0 else "-"
+        reasons = []
+        if not r["sign_consistent"]:
+            reasons.append("4구간 부호 불일치")
+        if abs(r["train_all"]) < thr["train_abs"]:
+            reasons.append(f"|r(train_all)|={abs(r['train_all']):.3f} "
+                           f"< {thr['train_abs']}")
+        if abs(r["valid"]) < thr["valid_abs"]:
+            reasons.append(f"|r(valid)|={abs(r['valid']):.3f} "
+                           f"< {thr['valid_abs']}")
+        r["pass"] = not reasons
+        if reasons:
+            r["fail_reason"] = " / ".join(reasons)
+        rows.append(r)
+
+    for r in rows:
+        r["is_extra"] = r["feature"] in extra_cols
+    passed = [r for r in rows if r["pass"]]
+    return {"relaxed": relax, "thresholds": thr,
+            "extra_candidates": extra_cols,
+            "windows": {k: len(v) for k, v in win.items()},
+            "n_candidates": len(cols), "n_pass": len(passed),
+            "passed": passed, "all": rows}
+
+
+def print_sign_audit(res: dict) -> None:
+    p = res["passed"]
+    print()
+    print("=" * 100)
+    print(f"E축 1단계 — 거시 전수 부호 검사  (대상 {res['n_candidates']}개 / "
+          f"통과 {res['n_pass']}개{'  ※ 완화 임계' if res['relaxed'] else ''})")
+    print("=" * 100)
+    print(f"  구간 개월수: " + " / ".join(f"{k} {v}" for k, v in res["windows"].items()))
+    print(f"  임계: |r(train_all)| >= {res['thresholds']['train_abs']} / "
+          f"|r(valid)| >= {res['thresholds']['valid_abs']}")
+    print()
+    if not p:
+        print("  통과 변수 없음")
+    else:
+        print(f"  {'변수':34s} {'부호':>4s} {'Tr전반':>8s} {'Tr후반':>8s} "
+              f"{'Tr전체':>8s} {'Valid':>8s}")
+        for r in sorted(p, key=lambda x: -abs(x["train_all"])):
+            tag = " ★추가후보" if r.get("is_extra") else ""
+            print(f"  {r['feature']:34s} {r['sign']:>4s} "
+                  f"{r['train_early']:+8.3f} {r['train_late']:+8.3f} "
+                  f"{r['train_all']:+8.3f} {r['valid']:+8.3f}{tag}")
+    ex = [r for r in res["all"] if r.get("is_extra")]
+    if ex:
+        print()
+        print("  ── 추가 후보 (스프레드 수준 · 신규 스프레드) 전수 ──")
+        print(f"  {'변수':34s} {'부호':>4s} {'Tr전반':>8s} {'Tr후반':>8s} "
+              f"{'Tr전체':>8s} {'Valid':>8s}  판정")
+        for r in ex:
+            if not r["measurable"]:
+                print(f"  {r['feature']:34s} {'—':>4s} "
+                      f"{'—':>8s} {'—':>8s} {'—':>8s} {'—':>8s}  판정불가")
+                continue
+            v = "통과" if r["pass"] else f"탈락: {r.get('fail_reason','')}"
+            print(f"  {r['feature']:34s} {r['sign']:>4s} "
+                  f"{r['train_early']:+8.3f} {r['train_late']:+8.3f} "
+                  f"{r['train_all']:+8.3f} {r['valid']:+8.3f}  {v}")
+
+    n_fail = res["n_candidates"] - res["n_pass"]
+    n_unmeasurable = sum(1 for r in res["all"] if not r["measurable"])
+    print()
+    print(f"  탈락 {n_fail}개 (그중 판정불가 {n_unmeasurable}개). "
+          f"목록은 {OUT_SIGN_JSON.name} 에만 남긴다.")
+
+
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--panel", default=str(PANEL))
-    ap.parse_args()
+    ap.add_argument("--full-sign-audit", action="store_true",
+                    help="E축 1단계: 거시 변환 변수 전수 4구간 부호 검사")
+    a = ap.parse_args()
+
+    if a.full_sign_audit:
+        res = sign_audit_full(relax=False)
+        print_sign_audit(res)
+        history = [res]
+        if res["n_pass"] < SIGN_TARGET_N:
+            print()
+            print(f"  ★ 통과 {res['n_pass']}개 < 목표 {SIGN_TARGET_N}개 — "
+                  f"임계를 완화해 재실행한다 "
+                  f"(train {SIGN_PASS['train_abs']}->{SIGN_PASS_RELAXED['train_abs']}, "
+                  f"valid {SIGN_PASS['valid_abs']}->{SIGN_PASS_RELAXED['valid_abs']})")
+            res2 = sign_audit_full(relax=True)
+            print_sign_audit(res2)
+            history.append(res2)
+            print()
+            print(f"  완화 전 {res['n_pass']}개 -> 완화 후 {res2['n_pass']}개")
+            if res2["n_pass"] < SIGN_ABORT_N:
+                print(f"  ★★ 완화 후에도 {res2['n_pass']}개 < {SIGN_ABORT_N}개 — "
+                      f"중단 조건이다. 보고 후 D6m 으로 확정할 것.")
+        OUT_SIGN_JSON.parent.mkdir(parents=True, exist_ok=True)
+        OUT_SIGN_JSON.write_text(
+            json.dumps({"runs": history}, ensure_ascii=False, indent=2),
+            encoding="utf-8")
+        print()
+        print(f"저장: {OUT_SIGN_JSON}")
+        return
 
     rate = default_rate_by_month()
     raw = raw_levels()

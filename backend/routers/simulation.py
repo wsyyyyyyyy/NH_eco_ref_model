@@ -52,7 +52,7 @@ def run_simulation(req: SimulationRequest):
     # 분포가 극단적으로 오른쪽 꼬리가 긴(소수 초고위험 기업이 40~99%대) 형태라,
     # 평균을 쓰면 전형적인 기업의 실제 체감 리스크(중앙값 기준 1~2%대)보다
     # 훨씬 높게(업종 평균 5~12%대) 나와 3단 위험 매트릭스가 상시 "고위험"으로만
-    # 분류되는 문제가 있었다(재학습 전 모델도 동일 현상 확인, docs/step29 참고).
+    # 분류되는 문제가 있었다(재학습 전 모델도 동일 현상 확인, docs/appendix/step29 참고).
     agg = {}
     for ind, b, s in zip(industries, base_prob, shocked_prob):
         if ind not in agg:

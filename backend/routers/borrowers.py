@@ -234,10 +234,15 @@ def get_borrower_capability(bzno: str, base_ym: Optional[str] = None, db=Depends
         WHERE division = (SELECT division FROM scored WHERE V_BZNO = ?)
     """
     df = db.execute(query, [str(base_ym), bzno]).df()
-    if df.empty or not (df['V_BZNO'] == int(bzno)).any():
+    # ★ [2026-09-03] V_BZNO 는 새 패널에서 **VARCHAR** 다. int 로 캐스팅해 비교하면
+    #   항상 False 가 되어 이 엔드포인트가 늘 404 를 냈다 (구 portal.duckdb 는
+    #   정수형이었다). 문자열로 맞춘다 — 사업자번호는 선행 0 이 의미를 가지므로
+    #   문자열 비교가 애초에 맞다.
+    _key = df['V_BZNO'].astype(str)
+    if df.empty or not (_key == str(bzno)).any():
         raise HTTPException(status_code=404, detail=f"Borrower {bzno} not found")
 
-    target = df[df['V_BZNO'] == int(bzno)].iloc[0]
+    target = df[_key == str(bzno)].iloc[0]
     industry_avg = df[['activity', 'profitability', 'stability', 'growth', 'scale']].mean()
 
     axes = {

@@ -1,0 +1,115 @@
+source,series_name,enabled,frequency,stat_code,item_code1,item_code2,item_code3,item_code4,ticker,field,expected_name_kr,old_stat_code,old_item_code1,old_item_code2
+# ============================================================
+# [1] 금리 (Interest Rates)
+# ============================================================
+ECOS,base_rate,Y,M,722Y001,0101000,,,,, ,한국은행 기준금리,,,
+ECOS,call_rate_overnight,Y,D,817Y002,010101000,,,,, ,콜금리(1일|전체거래),,,
+ECOS,call_rate_overnight_brokered,Y,D,817Y002,010102000,,,,, ,콜금리(1일|중개회사거래),,,
+ECOS,treasury_bond_1y,Y,D,817Y002,010190000,,,,, ,국고채(1년),817Y002,010260000,
+ECOS,treasury_bond_3y,Y,D,817Y002,010200000,,,,, ,국고채(3년),817Y002,010210000,
+ECOS,treasury_bond_5y,Y,D,817Y002,010200001,,,,, ,국고채(5년),,,
+ECOS,treasury_bond_10y,Y,D,817Y002,010210000,,,,, ,국고채(10년),817Y002,010220000,
+ECOS,corporate_bond_3y_AA,Y,D,817Y002,010300000,,,,, ,"회사채(3년, AA-)",817Y002,010190000,
+ECOS,KORIBOR_3m,Y,D,817Y002,010150000,,,,, ,KORIBOR(3개월),,,
+ECOS,KORIBOR_6m,Y,D,817Y002,010151000,,,,, ,KORIBOR(6개월),,,
+ECOS,KORIBOR_12m,Y,D,817Y002,010152000,,,,, ,KORIBOR(12개월),,,
+ECOS,CD_rate_91d,Y,M,721Y001,2010000,,,,, ,CD(91일),512Y014,99988,
+ECOS,treasury_bond_1y_monthly,Y,M,721Y001,5030000,,,,, ,국고채(1년),721Y001,1010200,
+# ============================================================
+# [2] 통화량 (Money Supply)
+# ============================================================
+ECOS,M2_broad_money,Y,M,161Y005,BBHS00,,,,, ,"M2(평잔,계절조정계열)",722Y001,0101000,
+ECOS,M1_narrow_money,Y,M,161Y001,BBLS00,,,,, ,"M1 (평잔, 계절조정계열)",104Y016,BDCA1,
+ECOS,Lf_liquidity,Y,M,171Y003,LAS0000,,,,, ,"Lf(금융기관유동성) : 상품별(평잔, 계절조정계열)",104Y014,BCA1,
+ECOS,monetary_base_sa,Y,M,102Y004,ABA1,,,,, ,본원통화|계절조정,,,
+# ============================================================
+# [3] 물가 (Prices)
+# ============================================================
+ECOS,PPI_total,Y,M,404Y014,*AA,,,,, ,총지수|생산자물가지수,901Y009,0,
+ECOS,CPI_core,Y,M,901Y010,QB,,,,, ,농산물및석유류제외지수,901Y062,P63A,
+ECOS,CPI_core_excl_food_energy,Y,M,901Y010,DB,,,,, ,식료품 및 에너지제외 지수,901Y062,P63ACA,
+ECOS,CPI_food_nonalcohol,Y,M,901Y009,A,,,,, ,식료품 및 비주류음료,901Y010,DB,
+ECOS,housing_price_index,Y,M,901Y062,P63A,,,,, ,총지수|주택매매가격지수,901Y063,P64AA,
+ECOS,export_price_index_KOR,Y,M,402Y014,*AA,W,,,, ,총지수|수출물가지수|원화기준,902Y015,KOR,
+# ============================================================
+# [4] 국제수지 (Balance of Payments)
+# ============================================================
+ECOS,current_account,Y,M,301Y013,000000,,,,, ,경상수지,301Y013,100000,
+ECOS,current_account_quarterly,Y,Q,301Y013,000000,,,,, ,경상수지,301Y013,100000,
+ECOS,goods_balance,Y,M,301Y013,100000,,,,, ,상품수지,301Y013,2B0000,
+# ============================================================
+# [5] 수출입 (Trade)
+# ============================================================
+ECOS,export_index,Y,M,403Y001,*AA,,,,, ,총지수|수출금액지수,403Y003,101111AA,
+ECOS,import_index,Y,M,403Y003,*AA,,,,, ,총지수|수입금액지수,403Y003,101112AA,
+ECOS,trade_total,N,M,403Y003,*AA,,,,, ,총지수|수입금액지수,,,
+# ============================================================
+# [6] 국민소득 (National Income)
+# ============================================================
+ECOS,GNI_annual,N,A,251Y003,S,,,,, ,국민총소득|실질GNI,,,
+ECOS,GNI_nominal,N,A,251Y003,NS1B,,,,, ,국민총소득|명목GNI,,,
+ECOS,GNI_per_capita,N,A,251Y003,NS1C,,,,, ,국민총소득|1인당GNI,,,
+# ============================================================
+# [7] 가계/기업 (Household/Corporate)
+# ============================================================
+ECOS,household_credit,Y,Q,151Y001,1000000,,,,, ,가계신용,121Y006,BECBLA01,
+ECOS,household_loan,Y,Q,151Y001,1100000,,,,, ,가계대출,121Y006,BECBLA02,
+# ============================================================
+# [8] 산업생산 (Industrial Production)
+# ============================================================
+ECOS,manufacturing_index,Y,A,501Y013,C,,,,, ,생산지수|제조업,,,
+# ============================================================
+# [9] Yahoo Finance 시장데이터 (Market Data)
+# ============================================================
+YAHOO,KOSPI,Y,D,,,,,,^KS11,Close,KOSPI Composite,,,
+YAHOO,KOSDAQ,Y,D,,,,,,^KQ11,Close,KOSDAQ Composite,,,
+YAHOO,USD_KRW,Y,D,,,,,,KRW=X,Close,USD/KRW,,,
+YAHOO,JPY_KRW,Y,D,,,,,,JPYKRW=X,Close,JPY/KRW,,,
+YAHOO,EUR_KRW,Y,D,,,,,,EURKRW=X,Close,EUR/KRW,,,
+ECOS,CNY_KRW,Y,D,731Y003,0000010,,,,, ,원/위안(종가),731Y003,0000008,
+YAHOO,WTI_crude_oil,Y,D,,,,,,CL=F,Close,Crude Oil,,,
+YAHOO,brent_crude_oil,Y,D,,,,,,BZ=F,Close,Brent Crude Oil,,,
+YAHOO,gold,Y,D,,,,,,GC=F,Close,Gold,,,
+YAHOO,silver,Y,D,,,,,,SI=F,Close,Silver,,,
+YAHOO,copper,Y,D,,,,,,HG=F,Close,Copper,,,
+YAHOO,US_10Y_treasury,Y,D,,,,,,^TNX,Close,10 Year,,,
+YAHOO,US_3M_tbill,Y,D,,,,,,^IRX,Close,13 WEEK TREASURY BILL,,,
+YAHOO,SP500,Y,D,,,,,,^GSPC,Close,S&P 500,,,
+YAHOO,NASDAQ,Y,D,,,,,,^IXIC,Close,NASDAQ Composite,,,
+YAHOO,DowJones,Y,D,,,,,,^DJI,Close,Dow Jones Industrial Average,,,
+YAHOO,VIX,Y,D,,,,,,^VIX,Close,Volatility Index,,,
+YAHOO,DXY_dollar_index,Y,D,,,,,,DX-Y.NYB,Close,US Dollar Index,,,
+YAHOO,Nikkei225,Y,D,,,,,,^N225,Close,Nikkei 225,,,
+YAHOO,Shanghai_Composite,Y,D,,,,,,000001.SS,Close,SSE Composite,,,
+YAHOO,natural_gas,Y,D,,,,,,NG=F,Close,Natural Gas,,,
+YAHOO,soybean,Y,D,,,,,,ZS=F,Close,Soybean,,,
+YAHOO,corn,Y,D,,,,,,ZC=F,Close,Corn,,,
+ECOS,BSI_mfg_biz,Y,M,512Y013,C0000,AA,,,,,기업경기조사(실적)|제 조 업|업황실적BSI,,,
+ECOS,BSI_mfg_export,Y,M,512Y013,C0000,AM,,,,,기업경기조사(실적)|제 조 업|수출실적BSI,,,
+ECOS,BSI_mfg_domestic,Y,M,512Y013,C0000,AL,,,,,기업경기조사(실적)|제 조 업|내수판매실적BSI,,,
+ECOS,BSI_nonmfg_biz,Y,M,512Y013,Y9900,AA,,,,,기업경기조사(실적)|비제조업|업황실적BSI,,,
+ECOS,CSI_composite,Y,M,511Y002,FME,99988,,,,,소비자동향조사|소비자심리지수,,,
+ECOS,CSI_living_prospect,Y,M,511Y002,FMBA,99988,,,,,소비자동향조사|생활형편전망CSI,,,
+ECOS,CP_91d,Y,D,817Y002,010503000,,,,,,CP(91일),,,
+ECOS,MSB_91d,Y,D,817Y002,010400000,,,,,,통안증권(91일),,,
+PUBLIC,unsold_housing,Y,M,,,,,,,,미분양,,,
+PUBLIC,unemployment_rate,Y,M,,,,,,,,실업률,,,
+PUBLIC,construction_cost_index,Y,M,,,,,,,,건설공사비지수,,,
+
+# ----------------------------------------------------------
+# [2026-08-30] GNI_annual / GNI_nominal / GNI_per_capita -> enabled=N
+#   사유: frequency=A(연간) 지표는 월 패널에 upsample+ffill 되어
+#   12개월간 동일 값이 된다. 시차를 얼마로 주든 (기업,연도) 내 변동이
+#   0 이 되어 시점 누수 구조가 된다 (STAGE 6 의 CG01_MISSING_YN 과 동일).
+#   data_preprocessing.md 도 GNI_annual 을 사전 드롭 대상으로 명시한다.
+#   되살리려면 enabled=Y 로 바꾸고 GROUP_*_COLS 에 배정할 것.
+#
+# [2026-09-01] GNI 3건 — **의도적 드롭으로 확정**. (d) 지표 부재 미결 3건과 구분한다.
+#   사유 1 (기존): 연간 지표는 월 패널에 upsample+ffill 되어 12개월 동일값이 된다.
+#     (기업,연도) 내 변동이 0 이 되어 시점 누수 구조가 된다.
+#   사유 2 (신규): 항목코드도 틀려 있다. 251Y003 은 Group1(구분코드) / Group2(계정항목)
+#     2차원 표인데, GNI_nominal(NS1B) / GNI_per_capita(NS1C) 는 Group2 코드를
+#     item_code1(Group1) 자리에 넣었고, GNI_annual(S) 는 Group2 를 지정하지 않았다.
+#   → 사유 1 만으로 이미 드롭이 확정이므로 항목코드는 정정하지 않는다.
+#     되살리는 결정이 나면 차원 구조부터 재설계할 것 (item_code1=구분코드, item_code2=계정항목).
+#   감사: eda_pipeline/output/validation/ECOS_MAPPING_AUDIT.md 「의도적 드롭」

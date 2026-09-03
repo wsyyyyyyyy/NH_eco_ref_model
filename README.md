@@ -1,192 +1,216 @@
-# 🚀 기업 부도 예측(Early Warning) AI 모델 개발 (ECO Ref Model)
+# NH ECO Ref Model — 기업 부도 조기경보 모델
 
-본 프로젝트는 기업의 재무, 비재무, 거시경제 데이터를 종합적으로 분석하여 향후 12개월 내 부도 발생 가능성을 예측하는 머신러닝 기반 조기경보시스템(EWS, Early Warning System) 개발 리포지토리입니다.
-
-## 🎯 프로젝트 목표
-1. **정확한 부도 예측**: LightGBM을 활용해 기업의 복합적인 리스크를 선제적으로 파악.
-2. **현업 수용성 극대화**: 예측 확률을 1~5등급의 Z-Score 리스크 등급으로 변환하고, 현업의 비용 구조(미탐 비용 >> 오탐 비용)를 반영한 최적의 의사결정 임계값을 산출.
-3. **기존 시스템의 한계 극복**: 은행 내부 조기경보등급(A등급) 내에 숨어있는 **사각지대(Blind Spot)를 발굴**하고, 평균 **6.8개월 먼저 부도를 경고**하는 조기경보 가치 입증.
+**향후 12개월 내 부도를 예측하는 모델을 만들고, 그 성능의 상당 부분이 시점 누수였다는 것을 측정으로 증명한 뒤, 누수를 제거하고 다시 만든 기록입니다.**
 
 ---
 
-## 🛠 데이터 파이프라인 & 전처리 (Data Pipeline)
+## 무엇을 만들었나
 
-전체 파이프라인은 `eda_pipeline/` 디렉토리 내에 단계별 스크립트(`step1` ~ `step13`)로 구성되어 있습니다.
+(기업 × 월) 패널에서 향후 12개월 내 부도를 예측하는 LightGBM 모델을 만들었습니다.
+처음 만든 모델의 높은 성능이 실력이 아니라 **미래 정보를 미리 본 결과(시점 누수)**
+였음을 변수마다 측정으로 증명하고, 누수를 제거한 뒤 다시 만들었습니다. 그 과정에서
+거시경제 지표를 결합하려 한 세 번의 시도와, 그중 두 번의 실패 원인까지 기록했습니다.
 
-### 1. 데이터 병합 (Data Integration)
-- **차주 기본 정보 & 재무 정보**: KIS 신용평가 데이터, 기업 재무제표(`JEMU`), 비재무 지표 병합.
-- **거시경제 지표 결합**: 코스피 지수, 환율(EUR/KRW), 금리, 물가상승률(CPI) 등 Macro 데이터를 시계열(패널) 형태로 조인.
-- **업종 데이터 고도화**: 국세청 홈택스 표준산업분류 연계표(`업종코드-표준산업분류 연계표_홈택스 게시.xlsx`)를 활용하여 숫자형 업종코드(`STD_INDS_CFC`)를 비즈니스 해석이 가능한 한글명으로 매핑.
+- **모델**: 향후 12개월 내 부도 발생 확률을 산출하는 LightGBM 분류기 (D8, 169피처)
+- **시점 정합성 진단 도구**: 변수의 이름이 아니라 **조인 로직**을 보고 시점 누수를 전수 판정하는 감사 파이프라인
+- **거시경제 결합 실험**: 거시 지표를 기업 단위 예측에 결합하려 한 시도와 그 실패의 원인 규명
+- **포털**: 차주별 리스크 설명(SHAP), 글로벌 대시보드, 거시 시뮬레이션 *(거시 시뮬레이션은 아직 구 모델 기준 — D8 미연동, [06](docs/06_비즈니스_임팩트.md) §5)*
 
-### 2. 결측치 및 이상치 처리 (Missing Value Handling)
-- **결측치의 비즈니스적 해석**: KIS 신용평가 점수(`CG01_KIS_SCORE`)나 신용불량사유 등 결측(Null)이 발생하는 경우 무작정 평균으로 대치하거나 삭제하지 않고 `-1` 또는 특정 상수로 대체했습니다. 
-- 모델은 이를 "점수가 없는 영세/신생 기업"이라는 강한 부도 리스크 시그널로 학습했으며, 이는 실제 데이터 분포와 현업의 비즈니스 상식에 완벽히 부합했습니다.
+> **읽는 축은 두 개입니다.** 기업 데이터는 **누가** 위험한지를 맞히고(변별력),
+> 거시 지표는 **언제** 위험이 커지는지를 설명합니다(수준 보정). 이 프로젝트의
+> 결론은 첫 번째 축은 성립했고, 두 번째 축은 관측 기간에 금리 사이클이 한 번뿐이라
+> 절반만 성립했다는 것입니다.
 
-### 3. 타겟 변수 및 시계열 분리 (Target Engineering & CV)
-- **타겟 차주 (Target Audience: 중소기업 집중)**: 전체 데이터 중 기업규모코드(`BZSCAL_C`)가 4.0(중소기업)인 기업군만 타겟팅하여 해당 세그먼트의 부도 패턴을 정밀하게 학습하도록 제한했습니다.
-  - **타겟팅 사유 (Data-Driven)**: 데이터 병합 후 탐색적 분석(EDA) 결과, 중소기업(4.0)을 제외한 다른 규모의 기업군(대기업, 중견기업 등)은 전체 표본 수와 실제 부도 발생 건수가 머신러닝 모델을 안정적으로 학습하기에 턱없이 부족했습니다. 이들을 무리하게 포함할 경우 모델의 학습 패턴이 교란(Noise)될 우려가 커, 실제 부도 건수의 91% 이상이 집중된 중소기업에 타겟을 집중했습니다.
-  
-  | 기업규모 (BZSCAL_C) | 총 관측치 수 (Total) | 실제 부도 건수 (Defaults) | 비고 |
-  | :--- | :--- | :--- | :--- |
-  | **4.0 (중소기업)** | **1,775,314** | **2,586** | **🌟 최종 모델링 대상** |
-  | 5.0 | 171,378 | 182 | 표본 및 부도수 부족 |
-  | 2.0 (중견기업 등) | 55,080 | 6 | 부도 거의 발생하지 않음 |
-  | 8.0 | 43,362 | 66 | 표본 부족 |
-  | 기타 (0.0, 1.0, 6.0, 9.0) | 28,284 | 0 | 부도 0건 (학습 불가) |
-- **Target**: 향후 12개월 내 부도 발생 여부 (`IS_BUDO_12M`).
-  - **과학적 타겟 설정 (Time-to-Default 분석)**: 사전 데이터 탐색(EDA) 과정에서 실제 부도 기업들의 '기준 시점 대비 부도 발생까지의 소요 기간(Time-to-Default)' 분포를 시각화 및 분석했습니다. 그 결과, 부도 징후 발현 후 12개월 이내에 실제 부도로 이어지는 비율이 통계적으로 유의미한 변곡점을 형성함을 확인했습니다. 이를 근거로 현업의 선제적 리스크 관리(채권 보전 등)가 가능한 최적의 골든타임을 12개월로 산정하여 최종 예측 타겟을 도출했습니다.
-- **Out-of-Time 검증**: 특정 시점의 경제 상황에 과적합되지 않도록, 학습(Train)은 2023년 12월 이전 데이터로, 검증(Valid)은 2024년 1월 이후 미래 데이터로 완벽히 분리(Out-of-Sample)하여 모델의 시간적 강건성(Robustness)을 확보했습니다.
+이 저장소에서 가장 중요한 산출물은 모델이 아니라 **[04_누수_발견과_제거](docs/04_누수_발견과_제거.md)** 입니다.
 
 ---
 
-## 🤖 모델링 및 심층 분석 (Modeling & Analysis)
+## 핵심 결과
 
-### 1. LightGBM 기반 베이스 모델 학습 (`step7`, `step8`)
-- **성과**: ROC AUC `0.9011` 달성.
-- **SHAP 분석**: 상위 50대 변수를 추출하여 재무지표(자본총계, 차입금 의존도), 거시경제지표(환율 변동성), 업력(`BUSINESS_AGE`)이 부도에 미치는 영향을 직관적으로 시각화.
-- **업종 심층 분석**: 경기 민감 산업(건설업, 인력 대행업 등)의 높은 위험도와 필수 소비재(식음료 제조 등)의 높은 안전도를 확인. 업종 변수를 통제(Ablation)하더라도 전체 성능은 유지됨을 증명하여 모델의 맹목적 과적합 우려를 해소했습니다.
+### 실무 단위로 먼저 — 상위 10%만 관리해도 부도 기업의 4분의 3을 잡습니다
 
-### 2. 경량화(Lean) 모델 및 VIF 다이어트 (`step9`)
-- **VIF < 10**: 다중공선성이 높은 지표들을 엄격하게 제거하여 기존 **230개의 변수를 80개 핵심 변수로 대폭 압축**했습니다.
-- **페널티 검증**: 탐지율(Recall)을 82.6%로 고정했을 때, 150개 변수를 덜어낸 Lean 모델의 추가 오경보 발생 건수는 전체 89만 건(Valid) 중 불과 3,216건(0.36%)에 불과했습니다. 모델 API 응답 속도 최적화 및 파이프라인 유지보수 비용을 혁신적으로 절감했습니다.
+학습에 쓰지 않은 **Valid 홀드아웃(202401~202505, 312,334행 / 부도 기업 554사)** 에서,
+예측 부도확률 상위 X% 를 집중 관리 대상으로 잡았을 때의 포착률입니다.
 
-### 3. Z-Score 리스크 등급화 (`step12`)
-- **실전 5등급 체계**: 기계학습 모델의 복잡한 로그-오즈(Log-odds) 값을 표준정규분포(Z-Score)로 정규화하여 현업 심사역들이 즉시 사용할 수 있는 5등급(G1~G5) 체계로 맵핑 완료했습니다.
-- 89만 건의 미래 Valid 셋 검증 결과, **G1(0.00%)부터 G5(22.92%)까지 부도율이 단 한 번의 역전 없이 완벽하게 단조 증가(Monotonic Increase)**함을 확인했습니다.
+| 집중 관리 범위 | 부도 기업 포착 | Lift |
+|---|--:|--:|
+| 상위 10% | **75.3% (417 / 554)** | 5.64 |
+| 상위 20% | 89.2% (494 / 554) | 3.73 |
+| 상위 30% | 93.5% (518 / 554) | 2.77 |
 
-### 4. 비용 기반 최적 임계값 도출 (Cost-Sensitivity)
-- 현업 피드백인 "부도 미탐 비용이 오경보 비용보다 압도적으로 높다"는 점을 수리적으로 반영하여 10배, 20배, 50배 민감도 분석(Sensitivity Analysis)을 수행했습니다.
-- 통계적 지표인 **F2-Score의 최적 임계값(`0.3797`)**이 '10배 미탐 비용' 시나리오와 완벽히 일치함을 증명했으며, 0.27~0.38 사이의 Threshold를 통해 실무 오경보 피로도와 부도 방어율의 최적 밸런스 설정 가이드라인을 제시했습니다.
+**재무제표만으로는 양호해 보이는데 부도한 기업**(NICE CRI 등급 상위 50%)도, 전 구간
+115사 중 상위 10% 로 **84.3%(97 / 115)** 포착합니다. 내부 조기경보모형이 재무 기반
+이라는 점에 비추면 재무 축의 사각지대를 메운다는 **간접 증거**입니다 — 내부 모형과의
+직접 대조는 데이터 한계로 하지 못했습니다([06](docs/06_비즈니스_임팩트.md) §2·§6-1).
 
-### 5. 핵심 성능 지표 검증 및 가상 지점 매핑 (`step13`)
-- **평가 지표 결과 (Valid):** ROC-AUC **0.9005**, Gini **80.1**, K-S **66.6**, PSI **0.1357** (2026-07-04 정규화 파라미터 재학습 반영, [step29](docs/step29_production_model_retrain_and_rescore.md) 참고)
-- 과거 AUROC 0.77 수준에 머물던 은행 내부 모형 대비 **압도적으로 정교한 예측력(0.9 돌파)**을 입증했습니다.
-- **데이터 활용 준비 완료:** 확보된 고도화 스코어링 데이터를 기반으로 전체 194만 건의 중소기업 데이터에 5개의 가상 지점(Virtual Branch, VB001~VB005) 맵핑(태깅)을 성공적으로 완료하여 현업 서비스 도입 준비를 마쳤습니다.
+<sub>출처: [`C1_venn_results.md`](docs/appendix/audit/C1_venn_results.md) §B·§D</sub>
 
----
+### 성능은 3층으로 읽어야 합니다
 
-## 🚀 비즈니스 임팩트 (Business Value & Conclusion)
+같은 데이터·같은 알고리즘에서 **어떤 변수를 넣는지에 따라** 성능이 이만큼 갈립니다.
 
-이 모델의 가장 큰 가치는 단순한 정확도 수치 향상을 넘어 **기존 은행 내부 조기경보모형의 치명적 맹점을 완벽히 해결**했다는 데 있습니다.
+| 층 | 구성 | Valid AUC | 의미 |
+|---|---|---|---|
+| **누수 포함 상한** | 누수 변수를 전부 되넣음 (A7) | **0.9398** | 미래 정보를 쓰면 여기까지 나온다. **모델의 실력이 아니다** |
+| **누수 제거** | 시점 정합 피처만, C302 정합분 제외 (A0c) | **0.7826** | 누수를 걷어냈을 때의 보수적 하단 |
+| **최종 구성** | C1 기반 + 거시 상호작용 14종 + 단조 제약 (D8) | **0.8548** | 시점 정합성을 지킨 값 — **실질 성능** |
 
-기존 내부 모형이 **"안전(A등급)"**하다고 맹신한 집단을 신규 AI 모델로 재평가한 결과, **실제 부도율이 30%에 육박하는 1.7만 개의 시한폭탄 차주(G5)**를 핀셋처럼 솎아냈습니다.
-이 A등급 內 시한폭탄 집단에서 실제로 부도가 터진 차주들의 과거 등급 궤적(Trajectory)을 추적한 결과:
-1. **완전한 사각지대 해소 (63.4%)**: 부도가 터지는 시점까지도 은행 내부 등급이 끝내 'A'를 유지했던 기업들을 AI 모델이 사전에 색출했습니다.
-2. **압도적인 조기 탐지 속도 (36.6%)**: 내부 모형이 뒤늦게 위험을 감지하여 B등급으로 하향 조정한 기업들에 대해, AI 모델이 이들보다 **평균 6.8개월 먼저 초고위험(G5) 상태임을 경고**했습니다.
+> 조건 — 전부 Valid 구간(202401~202505), 규제 R2, LightGBM.
+> `A7 0.9398` (시드 42 단일) · `A0c 0.7826` (시드 42 단일) ·
+> **`D8 0.8548` (시드 3회 평균, σ=0.0015, 피처 169)**
+> 원자료: [`step36_final_config.md`](docs/appendix/audit/step36_final_config.md) ·
+> [`step30_ablation_A_results.md`](docs/appendix/audit/step30_ablation_A_results.md)
+>
+> **누수 포함 상한 0.9398 을 성능으로 인용하지 마십시오.** 그 숫자의 용도는
+> "시점 정합성을 지키지 않으면 이런 값이 나온다" 를 보여 주는 것뿐입니다.
+> A7 에서는 `CG01_KIS_SCORE` **단일 변수가 gain 의 53.45%** 를 차지합니다.
 
-👉 **결론**: 본 예측 모델을 여신 심사 프로세스에 도입할 경우, 향후 발생할 막대한 충당금 손실을 방어할 수 있는 **반년(6.8개월)의 선제적 리스크 관리 골든타임**을 안정적으로 확보할 수 있습니다.
+**거시경제 결합은 두 번의 실패를 거쳐 세 번째에 성립했습니다.**
 
-> 위 63.4%/36.6%/6.8개월 수치는 `eda_pipeline/step11~12`의 별도 오프라인 분석 결과이며, 아래 §모델 검증 및 재학습(2026-07-04)에서 재학습한 모델 기준으로는 아직 재검증하지 않았습니다. 재학습 이후 실시간으로 재계산되는 벤 다이어그램/리드타임 수치는 [step29](docs/step29_production_model_retrain_and_rescore.md) §4를 참고하세요.
+거시 원본과 상호작용 8종을 그대로 넣은 구성(D3)은 실패했습니다 — PD-부도율 상관
+−0.127 → −0.453, 건수 MAPE 62.78% → 89.13%. 원인은 거시-부도 관계의
+**부호가 Train 과 Valid 에서 뒤집히는 것**이었습니다 (`base_rate_diff12`
+Train +0.904 / Valid −0.909). 관측 기간에 금리 사이클이 한 번뿐이라는 구조적 한계입니다.
 
----
+최종 구성(D8)은 **4구간 부호 검사를 통과한 계열만 선별**하고 부호를 **단조 제약으로
+강제**했습니다. 그 결과 AUC 손실 없이(−0.0001) 상관이 처음으로 양수로 전환되고
+(−0.0737 → +0.0060) MAPE 가 −5.23%p 개선됐습니다.
 
-## 🔬 모델 심화 검증 및 프로덕션 재학습 (Validation & Retraining, 2026-07-04)
-
-프로젝트 1차 완료 후, 교수님 및 심사위원 피드백에 대응하여 모델링 방법론의 정당성을 7대 주제로 철저히 검증하고([step28](docs/step28_model_validation_and_benchmarking.md)), 그 검증 결론을 반영해 실제 서비스 운영 모델의 재학습 및 `portal.duckdb` 내 194만 행 전체 패널의 재채점을 완수했습니다([step29](docs/step29_production_model_retrain_and_rescore.md)).
-
-### 1. 교수님 피드백 대응 7대 심화 검증 (`step28`)
-- **① 과적합(Overfitting) 진단 & 정규화**: Train 마지막 3개월을 전용 **Dev 셋(2023.10~12)으로 분리**하여 Early Stopping이 Valid 셋을 훔쳐보는 누수(Leakage)를 원천 차단했습니다. 여기에 LightGBM 정규화 파라미터(`num_leaves=15`, `min_child_samples=100`, `reg_alpha/lambda=1.0`)를 적용해 Train AUC를 0.96대로 억제하면서 순수 Hold-out Valid AUC는 오히려 상승하는 진정한 일반화 성능을 달성했습니다.
-- **② SHAP 안정성 & 다중공선성(VIF) 검증**: Train vs Valid 및 3회 부트스트랩 샘플링 간 상위 30/50개 변수의 **스피어만 상관계수가 >0.98**로 극도로 높은 순위 안정성을 입증했습니다. 상위 30개 변수 간 상관관계 분석 결과 VIF 다이어트가 중복을 이미 성공적으로 필터링했음을 확인했습니다.
-- **③ 변수 수 축소(Ablation) & Lean(80) 모델 타당성**: Top 20/30/50/80/100 변수 셋 비교 실험을 통해 Top 20/30은 예측력 손실이 발생함을 실증하고, **현재의 Lean(80) 모델이 예측력과 경량화의 최적 균형점**임을 입증했습니다.
-- **④ 14-Fold Walk-Forward 시계열 교차검증**: 6개월 롤링 단위의 14-Fold CV를 수행하여 테스트 폴드 AUC가 평균 0.90~0.92로 시간 경과에 따른 성능 열화(Drift)가 없음을 검증했습니다. 최근 구간의 표면적 지표 저하는 구조적 우측 절단(Right-censoring)에 따른 자연적 현상임을 규명했습니다.
-- **⑤ 타 ML 알고리즘 벤치마크**: Logistic Regression(0.814), Random Forest(0.887), XGBoost(0.898)와 정면 비교하여 비선형성과 결측치가 많은 SME 재무 데이터에서 LightGBM(0.901)이 압도적인 속도와 최고 예측력을 동시에 달성함을 증명했습니다.
-- **⑥ [추가검증] 순수 3-Way Split 검증**: Train/Valid/Test를 완전히 독립된 시간축(2021~23 / 2024 / 2025~26H1)으로 분리 실험하여 고정 모델의 18개월 이상 경과 시 열화(0.880)를 확인하고, **분기/반기 주기적 재학습 정책 필요성**을 실증했습니다.
-- **⑦ [추가검증] 228개 변수 전수 VIF 진단**: 원천 지표와 3개월 이동평균(`_ma3`) 동반 편입에 따른 고공선성을 규명하고, 현재 서비스 중인 Lean(80) 모델 내에서도 VIF 무한대 중복 3개 변수(`EUR_KRW_ma3` 등)를 식별하여 Step 29 제거 대상으로 확정했습니다.
-
-### 2. 프로덕션 모델 재학습 및 194만 행 DB 전수 재채점 (`step29`)
-- **① 실제 운영 LightGBM 모델 파라미터 적용 및 재학습**: Full 모델(230개)에 정규화 및 Dev 셋 Early Stopping을 적용해 정직한 순수 Hold-out Valid AUC **0.9005**, Gini **80.1**, K-S **66.6**, PSI **0.1357**을 달성했습니다. Lean 모델은 무한대 VIF 중복 3개 변수를 삭제하여 **77개 변수로 경량화**했음에도 Valid AUC **0.9023**을 기록했습니다.
-- **② 194만 행(`corporate_panel`) In-Place 전수 재채점**: 원천 CSV 재로딩 없이 `portal.duckdb` 내 1,944,418행 전체 피처를 직접 읽어 신규 모델로 재채점하는 파이프라인(`database/rescore_full_model.py`)을 구현해 `PROB_FULL`, `Z_SCORE`, `Z_GRADE`를 100% 갱신했습니다.
-- **③ Z-Score 정규화 및 16단계 등급 컷오프 갱신**: 신규 재학습 확률 분포의 실제 평균(`-3.4560`)과 표준편차(`2.0123`)로 정규화 공식을 교체하고, `backend/grade_mapping.py`의 16단계 `PROB_CUTOFFS` 상수를 재산출하여 E2E 정합성을 완결했습니다.
-- **④ E2E 서비스 검증 및 운영 런북 수립**: 포털 전 화면(대시보드 KPI, 예측 벤 다이어그램, 차주 상세, 매크로 시뮬레이션 등)에 대한 E2E 정합성 검증을 완료하고, 분기별 PSI 모니터링 기반 재학습 실행 매뉴얼(Runbook)을 수립했습니다.
+> 다만 **거시 gain 비중은 0.93%** 이고, 그중 대부분이 `KORIBOR 스프레드 × 단기부채비중`
+> **한 항**에서 나옵니다. "거시 14개가 고르게 작동한다" 가 아닙니다.
+> 자세한 내용은 [05_거시경제_결합](docs/05_거시경제_결합.md).
 
 ---
 
-## 🖥 AI 조기경보 웹 포털 (Portal & Real-Data Integration)
+## 데이터
 
-모델링 산출물을 실사용자가 쓸 수 있는 형태로 서비스화한 FastAPI + DuckDB 백엔드와 React 프론트엔드 포털입니다 (`step14` ~ `step20`).
+| 항목 | 값 |
+|---|---|
+| 원천 파일 | 11종 (`input/*.txt`, 파이프 구분) — 재무(JEMU) · 생산판매(AA17) · 외화부채(AC12) · 신용불량(CRIF) · NICE CRI등급(C302) · NICE신용평점(CG01) · 관찰세부등급(OBV) · 당행부도(BUDO) · 당행등급이력 · 종업원수 · 기업정보 |
+| 패널 | **948,214 행 × 265 컬럼** (기업 × 월) |
+| 기업 수 | **27,147 사** |
+| 기간 | **202101 ~ 202505** (53개월) |
+| 타겟 | `IS_BUDO_12M` — 관측시점 t 에서 t+1~t+12 사이 부도 |
+| 양성 | **9,814 행 (1.035%) / 988 사** |
+| 거시 지표 | 수집 65개(enabled=Y) → DROP 2 → **원지표 63개** → 정상성 변환 178개 (ECOS 40 · Yahoo 22 · KOSIS 3) |
+| 거시 상호작용 (3층) | **원지표 63개 → 4구간 부호 안정성 검증 → 상호작용항 14개** (검사 대상 97 / 부호 일치 15 / 상관 임계 통과 10 + 완화 5 / 압축 후 14, 8개 계열 — 상세 [05](docs/05_거시경제_결합.md) §7) |
+| Train | 635,880 행 / 24,203 사 / 양성 5,982 (0.9407%) — 202101~202312 |
+| Valid | 312,334 행 / 21,801 사 / 양성 3,832 (1.2269%) — 202401~202505 |
 
-### 1. 포털 구축 (`step14`, `step15`)
-- **DuckDB + FastAPI**: 194만 건 규모의 기업 시계열 패널(`portal.duckdb`)을 실시간 OLAP 조회하는 API 서버 구축.
-- **React 포털 UI/UX**: 글로벌 뱅크 뷰(전사 현황) → 지점 대시보드(차주 리스트) → 차주 상세(개별 심사) 3단 계층 구조의 실사용자 웹 포털 개발.
-
-### 2. 백엔드 안정화 및 모델 실연동 (`step16`, `step17`)
-- **거시경제 시뮬레이션 실모델화**: `/api/simulation`을 목업 대신 실제 LightGBM 모델 재추론(`model_inference.py`)으로 교체.
-- **데이터 정합성 확보**: 차주 리스트/상세 화면 간 등급 불일치 원인이었던 `(V_BZNO, BASE_YM)` 중복 행을 `dedup_panel_sql()`로 전면 제거, 기준연월 파라미터 미반영 버그 수정.
-- 운영 안전성: `.env` 기반 설정 분리, CORS 제한, LightGBM 모델 파일 CRLF 손상 방지용 `.gitattributes` 추가.
-
-### 3. 차주 상세 페이지 실데이터 전환 (`step18`, `step19`)
-- **재무/비재무 3개년 이력, 부도확률(PD) 시계열, 요인별 기여도(SHAP), 기업역량진단(Radar)**: 모두 하드코딩 mock을 제거하고 실제 DB 집계·`shap.TreeExplainer`·업종 백분위(`PERCENT_RANK`) 기반 실계산으로 교체.
-- **Gemini AI 조기경보 의견**: `google-genai` 구조화 출력(`response_schema`)으로 실시간 리스크 코멘트 생성, `(bzno, base_ym)` 캐싱 및 할당량 초과 시 정적 가이드로 자연스럽게 폴백하는 UX 적용.
-
-### 4. 글로벌 뱅크 뷰 실데이터 전환 (`step20`)
-- 전사 KPI, 등급분포, PD-LAG 실질 부도율 추이(`/api/dashboard/trend`), 업종별 리스크 매트릭스 산점도까지 남아있던 마지막 가짜 수식(mock)을 실제 월별 집계·실현 부도율(`IS_BUDO_12M`)로 전면 교체하여, 포털 전 화면이 end-to-end로 실데이터와 연동됨을 확인.
-
-### 5. "기존 모형" 비교 로직 실데이터화 및 매크로 시뮬레이션 고도화 (`step21` ~ `step27`)
-- **예측 벤 다이어그램 및 리드타임 실측화 (`step21`, `step22`, `step24`)**: 실제 당행 부도일(`DSH_DT`)과 기존 레거시 PD(`RZVL_POD`), 내부등급(`OBV_ELYWRN_OBV_GRD_DSC`) 실측 필드로 전면 교체하여 벤 다이어그램(ERM+내부 403건, ERM 단독 547건)과 평균 11.3개월의 선행 리드타임을 실시간 SQL로 집계했습니다. 왜곡 착시가 있던 PD-LAG 차트는 과감히 삭제했습니다.
-- **SHAP 중요도 기반 매크로 시뮬레이션 확장 (`step25`)**: 기준금리, 환율(USD/EUR), 유가, CPI, KOSPI, VIX, 원자재 등 SHAP 상위 거시 지표 9종 슬라이더 신설 및 단위 스케일/부호 버그 완벽 수정.
-- **균형 패널 설계 검증 및 보안/UX 완결 (`step23`, `step26`, `step27`)**: 글로벌 대시보드 기업 수 KPI가 불변하는 원인이 66개월 완전 균형 패널(Balanced Panel) 설계임을 실증하고, `/api/auth/login` 실제 계정 검증 엔드포인트 및 독립 실행형 목업(`mockup.html`) 제작, 하드코딩 점검 완수.
+> Train 내부에서 조기중단용 Dev(202310~202312, 56,021행)를 분리합니다.
+> Valid 는 최종 평가 1회만 사용합니다.
+> **가상 사업자번호 데이터**이며 실제 기업 정보가 아닙니다.
 
 ---
 
-## 📂 리포지토리 파일 구조 (File Structure)
+## 폴더 구조
 
-```text
-├── README.md                          # 프로젝트 오버뷰 및 요약 (현재 파일)
-├── docs/                              # 기획, 설계, 분석 결과 등 산출물 관리 (Walkthrough, Task 등)
-│   ├── 00_project_master_report.md    # ⭐ 데이터 명세~전처리~목표변수~모델링~성능~기존모형 비교~포털화 전체 종합 리포트
-│   ├── step01_to_06_data_pipeline_and_eda.md
-│   ├── step07_to_09_modeling_and_shap_analysis.md
-│   ├── step10_to_13_model_evaluation_and_walkthrough.md
-│   ├── step14_portal_api_setup.md             # Step 14 DuckDB+FastAPI 웹 포털 구축 명세
-│   ├── step15_integrated_portal_development_report.md # Step 15 AI 조기경보 웹 포털 UI/UX 종합 보고서
-│   ├── step16_backend_hardening_and_real_model_integration.md # Step 16 시뮬레이션 실모델화 및 백엔드 하드닝
-│   ├── step17_data_consistency_and_dedup_fixes.md      # Step 17 리스트/상세 정합성 및 중복행 제거
-│   ├── step18_borrower_detail_ux_and_ai_tips_structuring.md # Step 18 차주 상세 UX 개편 및 AI 팁 구조화
-│   ├── step19_gemini_reliability_and_real_shap_capability.md # Step 19 Gemini 안정화 및 실제 SHAP/역량진단
-│   ├── step20_global_dashboard_real_trend_and_industry_matrix.md # Step 20 글로벌 뱅크 뷰 실데이터 전환
-│   ├── step21_censoring_fix_and_prediction_venn.md    # Step 21 우측 절단 처리 및 예측 벤 다이어그램 도입
-│   ├── step22_prediction_venn_layout_polish.md        # Step 22 벤 다이어그램 레이아웃 및 툴팁 정리
-│   ├── step23_standalone_mockup_html.md               # Step 23 독립 실행형 목업 제작
-│   ├── step24_real_legacy_pod_and_default_date.md     # Step 24 실측 레거시 PD·부도일 도입 및 사각지대 실필드화
-│   ├── step25_macro_simulation_shap_driven_expansion.md # Step 25 SHAP 중요도 기반 매크로 시뮬레이션 9종 확장
-│   ├── step26_total_company_count_clarification.md    # Step 26 전체 기업 수 KPI 불변 원인 규명 (균형패널 검증)
-│   ├── step27_hardcoding_audit_auth_and_footer.md     # Step 27 하드코딩 점검, 로그인 인증 도입, 푸터 정리
-│   ├── step28_model_validation_and_benchmarking.md    # Step 28 과적합·다중공선성·워크포워드 CV·타 모델 비교 검증
-│   └── step29_production_model_retrain_and_rescore.md # Step 29 검증 결과 반영 재학습 + 전체 DB 재채점
-├── frontend/                          # React 18 + Vite + Recharts 기반 실사용자 ERM 조기경보 웹 포털
-│   └── src/
-│       ├── config.ts                  # API_BASE_URL 등 환경설정
-│       └── pages/                     # GlobalDashboard, BranchDashboard, BorrowerDetail, ModelMonitoring, MacroSimulation, LoginPage
-├── backend/                            # FastAPI 기반 실시간 DuckDB OLAP 조회 및 AI 조기경보 분석 API
-│   ├── main.py                        # FastAPI 앱 엔트리포인트, CORS/라우터 등록
-│   ├── database.py                    # DuckDB 커넥션 및 dedup_panel_sql 등 공통 쿼리 유틸
-│   ├── model_inference.py             # LightGBM 모델/SHAP explainer 로딩 및 실추론
-│   ├── grade_mapping.py                # PROB_FULL → 16단계 등급 매핑
-│   ├── feature_labels.py              # 모델 피처 코드 → 한글 라벨 매핑
-│   └── routers/                       # dashboard, borrowers, monitoring, simulation, ai API 라우터
-├── database/                          # portal.duckdb 기업 시계열 패널 데이터 저장소
-├── eda_pipeline/
-│   ├── step1_load.py                  # 원천 데이터 로드
-│   ├── step2_integrate.py             # 차주 기본정보 통합
-│   ├── step3_eda.py                   # 탐색적 데이터 분석
-│   ├── step4_borrower_sheet.py        # 차주 상세 명세서 뷰어 스크립트
-│   ├── step5_panel_prep.py            # 시계열 패널 데이터 변환
-│   ├── step6_macro_integration.py     # 거시경제 지표 시계열 결합
-│   ├── step7_modeling_shap.py         # LightGBM 학습 및 기초 SHAP 추출
-│   ├── step8_shap_analysis_top50.py   # 상위 50대 변수 및 업종 심층 분석
-│   ├── step9_vif_zscore_tuning.py     # 다중공선성(VIF) 다이어트 및 초기 Z-Score
-│   ├── step10_walkthrough_v2...       # Threshold 민감도 초기 분석
-│   ├── step11_compare_internal.py     # 은행 내부 A/B 등급 변별력 비교 분석
-│   ├── step12_walkthrough_v3...       # OOT Z-score, Lean 비용, F2-score 고도화 검증
-│   ├── step13_performance_metrics.py  # ROC-AUC, Gini, K-S, PSI 최종 성능 지표 추출
-│   ├── step14_overfit_diagnostics.py  # 과적합 진단 및 Dev 셋 Early Stopping 실험
-│   ├── step15_shap_stability_check.py # SHAP 순위 안정성 및 중복 변수 상관관계 검증
-│   ├── step16_topN_feature_ablation.py# 변수 수 축소(Top N) 및 Lean 모델 타당성 검증
-│   ├── step17_walkforward_cv.py       # 14-Fold 워크포워드 시계열 교차검증
-│   ├── step18_model_benchmark.py      # LogReg, RF, XGBoost 타 ML 모델 벤치마크
-│   ├── step20_true_3way_split_check.py# 순수 3-Way Split (Train/Valid/Test) 검증
-│   ├── step21_full_multicollinearity_check.py # 228개 변수 전수 VIF 다중공선성 진단
-│   ├── step23_retrain_production_models.py    # 프로덕션 Full/Lean LightGBM 최종 재학습
-│   ├── output/                        # 데이터 중간 산출물 및 시각화 이미지 (Git Ignore 처리)
-│   └── 업종코드-표준산업분류 연계표... # 한글 업종 매핑용 국세청 사전 데이터
 ```
+input/                        원천 TXT 11종 (파이프 구분, 0행=한글 논리명)
+api_data_processing/          거시경제 지표 수집·정제 (ECOS/KOSIS/Yahoo)
+eda_pipeline/                 전처리 → 패널 생성 → 학습 → 검증 (step1~step7 본류, step30~44 진단)
+eda_pipeline/output/          패널·모델·검증 산출물 (대용량 .csv/.duckdb 는 .gitignore 로 제외)
+backend/                      FastAPI — 모델 추론, 차주 조회, 시뮬레이션
+frontend/                     포털 UI
+database/                     DuckDB 빌드·마이그레이션 (portal_v2.duckdb 는 재빌드)
+docs/                         본 보고서 01~07 + 발표 대본
+docs/appendix/audit/          본문 수치의 근거 — 감사·검증 문서와 색인
+_archive/                     이전 세대 모델·문서·스크립트 보관. ★ 인용 금지 (_archive/README.md 참조)
+logs/                         무인 실행의 판단 기록·요약 (.gitignore)
+```
+
+---
+
+## 재현 방법
+
+### 0) 환경
+
+하나의 가상환경으로 통일합니다. 시스템 파이썬에는 lightgbm·scikit-learn·scipy 가 없습니다.
+
+| 패키지 | 버전 | | 패키지 | 버전 |
+|---|---|---|---|---|
+| Python | 3.14.3 (**3.11+ 면 됨**) | | lightgbm | 4.7.0 |
+| pandas | 3.0.5 | | scikit-learn | 1.9.0 |
+| numpy | 2.5.2 | | scipy | 1.18.1 |
+| duckdb | 1.5.5 | | shap | 0.52.0 |
+
+```bash
+python -m venv .venv && . .venv/Scripts/activate      # Windows
+pip install lightgbm==4.7.0 scikit-learn==1.9.0 scipy==1.18.1 shap==0.52.0 pandas duckdb
+```
+
+> ★ **경로에 한글이 있으면** LightGBM 의 C++ 파일 IO 가 `LightGBMError: Could not open`
+> 로 실패합니다. 이 저장소 코드는 `config.save_booster()` / `config.load_booster()`
+> (`model_str=` 경유)로 우회합니다. 직접 `lgb.Booster(model_file=...)` 를 호출하지 마십시오.
+> parquet 엔진(pyarrow)은 없으며 parquet 읽기·쓰기는 duckdb 로 합니다.
+
+### 1) 원천 데이터
+
+`input/*.txt` 11종은 **대회 제공 가상 데이터**입니다 — `V_BZNO`(사업자번호)와
+`CONM`(업체명)이 전부 합성값(`테스트1`~`테스트32135`)이며 실제 기업 정보가 아닙니다.
+
+### 2) 거시 지표 수집 (ECOS·KOSIS API 키 필요 — `.env.example` 참조)
+
+```bash
+python -m api_data_processing.main --target-freq M     # ECOS 44 / Yahoo 22 / KOSIS 3
+python -m api_data_processing.impute_data              # 공표 시차 그룹 A~D + 정상성 변환
+```
+
+### 3) 전처리 → 패널 → 학습
+
+```bash
+python -m eda_pipeline.run                             # step1~3 (load → 통합 → EDA)
+python -m eda_pipeline.step5_panel_prep --spine obv
+python -m eda_pipeline.step6_macro_integration --spine obv --segment none --tag real
+python -m eda_pipeline.step38_production_retrain       # D8 = lgbm_v2_full.txt (169피처)
+python -m eda_pipeline.step40_grade_threshold          # grade_mapping_v2 / threshold_v2
+```
+
+산출 parquet·csv 는 저장소에 포함하지 않습니다(`.gitignore`) — 위 단계로 생성됩니다.
+
+### 4) 포털 DB 빌드 + 백엔드
+
+```bash
+python -m database.rescore_v2_d8                       # portal_v2.duckdb 재빌드 + D8 채점
+uvicorn backend.main:app --port 8000
+```
+
+`portal_v2.duckdb`(약 1.5 GB)는 저장소에 포함하지 않습니다.
+`rescore_v2_d8` 이 `nh_panel_macro_12m_obv_none_real.parquet` 에서 재빌드합니다.
+
+### 소요 시간 (이 PC 실측)
+
+| 단계 | 시간 | 검증 |
+|---|---|---|
+| `rescore_v2_d8` (DB 재빌드 + 948,214행 채점) | **~1분** | ✅ 이번 정리에서 실행, 등급 분포 단조성 확인 |
+| `step44_macro_stress_d8` (D8 로드 + Valid 채점) | **~1.5분** | ✅ 실행 확인 |
+| backend 기동 + `/api/borrowers`·`/shap` 200 | **~10초** | ✅ 실행 확인 |
+| 2)~3) 전체 (거시 수집 + 패널 948k + D8 학습 시드 3회) | **미실측 (~30분+ 예상)** | ⚠️ 이번 정리에서는 미실행. 개별 모듈 import·`config` 경로 해석은 검증됨 |
+
+---
+
+## 문서 안내
+
+| 문서 | 내용 |
+|---|---|
+| [01_문제정의와_데이터](docs/01_문제정의와_데이터.md) | 무엇을 예측하려 했는지, 어떤 데이터를 썼는지 |
+| [02_전처리_설계](docs/02_전처리_설계.md) | 조인 단위·결측 처리·거시 공표 시차 설계 |
+| [03_모델링과_검증](docs/03_모델링과_검증.md) | 학습 조건과 판정 기준 (결과를 보기 전에 정한 규칙) |
+| **[04_누수_발견과_제거](docs/04_누수_발견과_제거.md)** | **★ 이 프로젝트의 핵심.** 시점 누수를 어떻게 측정으로 증명했는가 |
+| [05_거시경제_결합](docs/05_거시경제_결합.md) | 거시 결합 시도와 실패, 그 원인 규명 |
+| [06_비즈니스_임팩트](docs/06_비즈니스_임팩트.md) | 상위 X% 포착률·재무양호군·등급 체계·임계값 (현업 의사결정 단위) |
+| [07_한계와_향후과제](docs/07_한계와_향후과제.md) | 데이터의 구조적 한계, 알고도 남겨 둔 결함, 재현성 사고, 향후 과제 |
+
+**미결 항목과 정정 이력**은 [`PENDING_REVALIDATION.md`](docs/appendix/audit/PENDING_REVALIDATION.md) 에 시간순으로 기록되어 있습니다.
+
+---
+
+## 수치 인용 규칙
+
+이 저장소의 모든 성능 수치에는 **출처와 조건을 병기**합니다.
+
+> 예: `AUC 0.8548 (Valid, 시드 3회 평균, σ=0.0015, 규제 R2, D8 구성, 피처 169)`
+
+시점 누수를 포함한 초기 모델의 지표와 이전 세대 기준선의 값은 **인용하지 않습니다.**
+어떤 값이 그에 해당하는지는 [06_비즈니스_임팩트](docs/06_비즈니스_임팩트.md) 의
+"수치 기재 규칙" 절에 목록으로 있습니다.

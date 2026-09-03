@@ -69,7 +69,10 @@ def main():
     ignore_cols = ['V_BZNO', 'BASE_YM', 'SPLIT', 'IS_BUDO_12M']
     features_full = [c for c in df.columns if c not in ignore_cols]
     
-    model_full = lgb.Booster(model_file='eda_pipeline/output/lgbm_12m_model.txt')
+    # 누수 포함 모델은 Group E 정리에서 _archive/legacy_model/ 로 이동했다.
+    # 이 스크립트는 구세대(nh_panel_macro_12m.csv 의존)이며 D8 연동 시 재작성 대상이다 (07 문서 §6).
+    from eda_pipeline import config as _cfg
+    model_full = lgb.Booster(model_file=str(_cfg.MODEL_PATH_LEGACY_FULL))
     
     # Preprocess categorical features
     cat_cols_full = [c for c in df.select_dtypes(include=['object', 'string']).columns if c in features_full]

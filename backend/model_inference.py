@@ -1,31 +1,58 @@
+import os
+import sys
+
 import duckdb
 import lightgbm as lgb
 import pandas as pd
 
 from backend.database import DB_PATH, dedup_panel_sql
 
-MODEL_PATH = 'eda_pipeline/output/lgbm_12m_model.txt'
+_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if _ROOT not in sys.path:
+    sys.path.insert(0, _ROOT)
+
+from eda_pipeline import config as _cfg  # noqa: E402
+
+# ── [2026-09-03] 서빙 모델을 lean_macro 로 교체 ───────────────────────────
+#   종전 `lgbm_12m_model.txt` 는 구 누수 모델(230피처)로, CG01_KIS_SCORE /
+#   CRIF_* / COPR_OPNP_C 같은 사후 정보가 들어 있어 SHAP 설명이 성립하지 않았다.
+#   채택 모델은 `lgbm_v2_lean_macro.txt` (63피처, D8 상호작용 ix_* 14개 포함).
+#   경로에 한글이 있어 `lgb.Booster(model_file=...)` 는 LightGBM C++ IO 에서
+#   열지 못한다 — `config.load_booster()` 가 model_str 로 우회한다.
+MODEL_PATH = str(_cfg.OUTPUT_DIR / 'lgbm_v2_lean_macro.txt')
 
 _model = None
 _baseline_df = None
 _shap_explainer = None
 
+# 학습 프레임에서 category dtype 이었던 피처. LightGBM 의
+# `model.pandas_categorical` 은 "학습 DataFrame 컬럼 순서" 기준 리스트의 리스트라,
+# 모델 피처 순서대로 짝지어야 인코딩이 맞는다 (예전에는 무조건 [0] 을
+# OBV_ELYWRN_OBV_GRD_DSC 에 붙였는데, lean_macro 는 [0]=STD_INDS_SECTION,
+# [1]=OBV_... 이므로 그대로 두면 업종 코드를 등급 축으로 인코딩해 값이 망가진다).
+_CATEGORICAL_FEATURES = ('STD_INDS_SECTION', 'OBV_ELYWRN_OBV_GRD_DSC')
+
 
 def get_model() -> lgb.Booster:
     global _model
     if _model is None:
-        _model = lgb.Booster(model_file=MODEL_PATH)
+        _model = _cfg.load_booster(MODEL_PATH)
     return _model
 
 
 def _apply_categorical(df: pd.DataFrame, model: lgb.Booster) -> pd.DataFrame:
-    # LightGBM trained with OBV_ELYWRN_OBV_GRD_DSC as the sole categorical
-    # feature (categories '-1'/'A'/'B'); the exact category order must
-    # match model.pandas_categorical for encoding to line up.
-    cat_col = 'OBV_ELYWRN_OBV_GRD_DSC'
-    if cat_col in df.columns and model.pandas_categorical:
-        categories = model.pandas_categorical[0]
-        df[cat_col] = pd.Categorical(df[cat_col].astype(str), categories=categories)
+    """Restores the training-time pandas category dtype/order on the model's
+    categorical features so LightGBM's integer codes line up."""
+    if not model.pandas_categorical:
+        return df
+    cat_cols = [c for c in model.feature_name() if c in _CATEGORICAL_FEATURES]
+    if len(cat_cols) != len(model.pandas_categorical):
+        raise RuntimeError(
+            f"categorical 피처 {len(cat_cols)}개 vs pandas_categorical "
+            f"{len(model.pandas_categorical)}개 — _CATEGORICAL_FEATURES 갱신 필요")
+    for col, categories in zip(cat_cols, model.pandas_categorical):
+        if col in df.columns:
+            df[col] = pd.Categorical(df[col].astype(str), categories=categories)
     return df
 
 

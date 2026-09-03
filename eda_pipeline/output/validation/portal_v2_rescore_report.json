@@ -1,0 +1,56 @@
+{
+  "target": "database\\portal_v2.duckdb",
+  "rotated_to": "portal_v2_20260903_195407.duckdb",
+  "model": "lgbm_v2_full.txt",
+  "source_panel": "nh_panel_macro_12m_obv_none_real.parquet",
+  "thresholds_used": {
+    "f2": 0.6442670486314537,
+    "cost5": 0.9056082931323823,
+    "cost10": 0.6693860735028326,
+    "cost20": 0.5633516998356841
+  },
+  "z_mu": -4.186387031107627,
+  "z_sigma": 2.837346856919158,
+  "verification": {
+    "rows": 948214,
+    "dup": 0,
+    "monotone": true,
+    "grade_dist": [
+      {
+        "GRADE": "G1",
+        "n": 195438,
+        "n_budo": 32.0,
+        "rate_pct": 0.0164,
+        "lift": 0.015845434685143673
+      },
+      {
+        "GRADE": "G2",
+        "n": 313583,
+        "n_budo": 207.0,
+        "rate_pct": 0.066,
+        "lift": 0.0637682127572855
+      },
+      {
+        "GRADE": "G3",
+        "n": 309246,
+        "n_budo": 985.0,
+        "rate_pct": 0.3185,
+        "lift": 0.30772993580599145
+      },
+      {
+        "GRADE": "G4",
+        "n": 116157,
+        "n_budo": 2392.0,
+        "rate_pct": 2.0593,
+        "lift": 1.9896648565314854
+      },
+      {
+        "GRADE": "G5",
+        "n": 13790,
+        "n_budo": 6198.0,
+        "rate_pct": 44.9456,
+        "lift": 43.42576641369472
+      }
+    ]
+  }
+}

@@ -105,7 +105,7 @@ ECOS_PENDING = {
     "call_rate_overnight", "call_rate_overnight_brokered", "corporate_bond_3y_AA",
     "KORIBOR_12m", "KORIBOR_3m", "KORIBOR_6m", "treasury_bond_10y",
     "treasury_bond_1y", "treasury_bond_3y", "treasury_bond_5y",
-    "US_10Y_treasury", "US_2Y_treasury", "base_rate", "CD_rate_91d",
+    "US_10Y_treasury", "US_3M_tbill", "base_rate", "CD_rate_91d",
     "treasury_bond_1y_monthly", "CP_91d", "MSB_91d",
     "CPI_core", "CPI_core_excl_food_energy", "CPI_food_nonalcohol", "PPI_total",
     "housing_price_index", "M1_narrow_money", "M2_broad_money", "Lf_liquidity",

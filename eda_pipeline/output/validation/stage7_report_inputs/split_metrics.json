@@ -1,0 +1,30 @@
+{
+  "C1": {
+    "n_train": 579859,
+    "n_dev": 56021,
+    "n_valid": 312334,
+    "pos_train": 5286,
+    "pos_dev": 696,
+    "pos_valid": 3832,
+    "rate_train_pct": 0.9116009236728239,
+    "rate_dev_pct": 1.2423912461398405,
+    "rate_valid_pct": 1.2268917248842584,
+    "psi_train_valid": 0.031202230008062524,
+    "best_iteration": 4103,
+    "scale_pos_weight": 108.6971
+  },
+  "A0": {
+    "n_train": 579859,
+    "n_dev": 56021,
+    "n_valid": 312334,
+    "pos_train": 5286,
+    "pos_dev": 696,
+    "pos_valid": 3832,
+    "rate_train_pct": 0.9116009236728239,
+    "rate_dev_pct": 1.2423912461398405,
+    "rate_valid_pct": 1.2268917248842584,
+    "psi_train_valid": 0.016681525391769973,
+    "best_iteration": 4813,
+    "scale_pos_weight": 108.6971
+  }
+}

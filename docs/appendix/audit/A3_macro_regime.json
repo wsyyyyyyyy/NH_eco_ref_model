@@ -1,0 +1,1272 @@
+{
+  "generated_at": "2026-09-03T19:33:40",
+  "script": "eda_pipeline/step42_macro_regime.py",
+  "panel": "C:/Users/scudy/OneDrive/바탕 화면/sy/NH AI경진대회/NH_eco_ref_model/eda_pipeline/output/nh_panel_macro_12m_obv_none_real.parquet",
+  "macro_source": "C:/Users/scudy/OneDrive/바탕 화면/sy/NH AI경진대회/NH_eco_ref_model/api_data_processing/output/model_input/model_input_monthly.csv",
+  "window": "202101~202505",
+  "target": "IS_BUDO_12M (BASE_YM 기준 향후 12개월 부도)",
+  "panel_totals": {
+    "n_rows": 948214,
+    "n_pos": 9814,
+    "default_rate_pct": 1.035,
+    "n_months": 53
+  },
+  "base_rate_trajectory": {
+    "window": "202101~202505",
+    "n_months": 53,
+    "rate_min": 0.5,
+    "rate_max": 3.5,
+    "flat_low_until": "202107",
+    "first_hike_month": "202108",
+    "last_hike_month": "202301",
+    "hike_months": [
+      "202108",
+      "202111",
+      "202201",
+      "202204",
+      "202205",
+      "202207",
+      "202208",
+      "202210",
+      "202211",
+      "202301"
+    ],
+    "peak_rate": 3.5,
+    "peak_first_month": "202301",
+    "peak_last_month": "202409",
+    "peak_plateau_len": 21,
+    "first_cut_month": "202410",
+    "cut_months": [
+      "202410",
+      "202411",
+      "202502",
+      "202505"
+    ],
+    "diff12_first_positive": "202108",
+    "diff12_last_positive": "202312",
+    "diff12_first_nonpositive_after_tightening": "202401",
+    "diff12_first_negative_any": "202101",
+    "diff12_first_negative_post_tightening": "202410"
+  },
+  "base_rate_monthly": [
+    {
+      "BASE_YM": "202101",
+      "base_rate": 0.5,
+      "chg": 0.0,
+      "diff12": -0.75
+    },
+    {
+      "BASE_YM": "202102",
+      "base_rate": 0.5,
+      "chg": 0.0,
+      "diff12": -0.75
+    },
+    {
+      "BASE_YM": "202103",
+      "base_rate": 0.5,
+      "chg": 0.0,
+      "diff12": -0.25
+    },
+    {
+      "BASE_YM": "202104",
+      "base_rate": 0.5,
+      "chg": 0.0,
+      "diff12": -0.25
+    },
+    {
+      "BASE_YM": "202105",
+      "base_rate": 0.5,
+      "chg": 0.0,
+      "diff12": 0.0
+    },
+    {
+      "BASE_YM": "202106",
+      "base_rate": 0.5,
+      "chg": 0.0,
+      "diff12": 0.0
+    },
+    {
+      "BASE_YM": "202107",
+      "base_rate": 0.5,
+      "chg": 0.0,
+      "diff12": 0.0
+    },
+    {
+      "BASE_YM": "202108",
+      "base_rate": 0.75,
+      "chg": 0.25,
+      "diff12": 0.25
+    },
+    {
+      "BASE_YM": "202109",
+      "base_rate": 0.75,
+      "chg": 0.0,
+      "diff12": 0.25
+    },
+    {
+      "BASE_YM": "202110",
+      "base_rate": 0.75,
+      "chg": 0.0,
+      "diff12": 0.25
+    },
+    {
+      "BASE_YM": "202111",
+      "base_rate": 1.0,
+      "chg": 0.25,
+      "diff12": 0.5
+    },
+    {
+      "BASE_YM": "202112",
+      "base_rate": 1.0,
+      "chg": 0.0,
+      "diff12": 0.5
+    },
+    {
+      "BASE_YM": "202201",
+      "base_rate": 1.25,
+      "chg": 0.25,
+      "diff12": 0.75
+    },
+    {
+      "BASE_YM": "202202",
+      "base_rate": 1.25,
+      "chg": 0.0,
+      "diff12": 0.75
+    },
+    {
+      "BASE_YM": "202203",
+      "base_rate": 1.25,
+      "chg": 0.0,
+      "diff12": 0.75
+    },
+    {
+      "BASE_YM": "202204",
+      "base_rate": 1.5,
+      "chg": 0.25,
+      "diff12": 1.0
+    },
+    {
+      "BASE_YM": "202205",
+      "base_rate": 1.75,
+      "chg": 0.25,
+      "diff12": 1.25
+    },
+    {
+      "BASE_YM": "202206",
+      "base_rate": 1.75,
+      "chg": 0.0,
+      "diff12": 1.25
+    },
+    {
+      "BASE_YM": "202207",
+      "base_rate": 2.25,
+      "chg": 0.5,
+      "diff12": 1.75
+    },
+    {
+      "BASE_YM": "202208",
+      "base_rate": 2.5,
+      "chg": 0.25,
+      "diff12": 1.75
+    },
+    {
+      "BASE_YM": "202209",
+      "base_rate": 2.5,
+      "chg": 0.0,
+      "diff12": 1.75
+    },
+    {
+      "BASE_YM": "202210",
+      "base_rate": 3.0,
+      "chg": 0.5,
+      "diff12": 2.25
+    },
+    {
+      "BASE_YM": "202211",
+      "base_rate": 3.25,
+      "chg": 0.25,
+      "diff12": 2.25
+    },
+    {
+      "BASE_YM": "202212",
+      "base_rate": 3.25,
+      "chg": 0.0,
+      "diff12": 2.25
+    },
+    {
+      "BASE_YM": "202301",
+      "base_rate": 3.5,
+      "chg": 0.25,
+      "diff12": 2.25
+    },
+    {
+      "BASE_YM": "202302",
+      "base_rate": 3.5,
+      "chg": 0.0,
+      "diff12": 2.25
+    },
+    {
+      "BASE_YM": "202303",
+      "base_rate": 3.5,
+      "chg": 0.0,
+      "diff12": 2.25
+    },
+    {
+      "BASE_YM": "202304",
+      "base_rate": 3.5,
+      "chg": 0.0,
+      "diff12": 2.0
+    },
+    {
+      "BASE_YM": "202305",
+      "base_rate": 3.5,
+      "chg": 0.0,
+      "diff12": 1.75
+    },
+    {
+      "BASE_YM": "202306",
+      "base_rate": 3.5,
+      "chg": 0.0,
+      "diff12": 1.75
+    },
+    {
+      "BASE_YM": "202307",
+      "base_rate": 3.5,
+      "chg": 0.0,
+      "diff12": 1.25
+    },
+    {
+      "BASE_YM": "202308",
+      "base_rate": 3.5,
+      "chg": 0.0,
+      "diff12": 1.0
+    },
+    {
+      "BASE_YM": "202309",
+      "base_rate": 3.5,
+      "chg": 0.0,
+      "diff12": 1.0
+    },
+    {
+      "BASE_YM": "202310",
+      "base_rate": 3.5,
+      "chg": 0.0,
+      "diff12": 0.5
+    },
+    {
+      "BASE_YM": "202311",
+      "base_rate": 3.5,
+      "chg": 0.0,
+      "diff12": 0.25
+    },
+    {
+      "BASE_YM": "202312",
+      "base_rate": 3.5,
+      "chg": 0.0,
+      "diff12": 0.25
+    },
+    {
+      "BASE_YM": "202401",
+      "base_rate": 3.5,
+      "chg": 0.0,
+      "diff12": 0.0
+    },
+    {
+      "BASE_YM": "202402",
+      "base_rate": 3.5,
+      "chg": 0.0,
+      "diff12": 0.0
+    },
+    {
+      "BASE_YM": "202403",
+      "base_rate": 3.5,
+      "chg": 0.0,
+      "diff12": 0.0
+    },
+    {
+      "BASE_YM": "202404",
+      "base_rate": 3.5,
+      "chg": 0.0,
+      "diff12": 0.0
+    },
+    {
+      "BASE_YM": "202405",
+      "base_rate": 3.5,
+      "chg": 0.0,
+      "diff12": 0.0
+    },
+    {
+      "BASE_YM": "202406",
+      "base_rate": 3.5,
+      "chg": 0.0,
+      "diff12": 0.0
+    },
+    {
+      "BASE_YM": "202407",
+      "base_rate": 3.5,
+      "chg": 0.0,
+      "diff12": 0.0
+    },
+    {
+      "BASE_YM": "202408",
+      "base_rate": 3.5,
+      "chg": 0.0,
+      "diff12": 0.0
+    },
+    {
+      "BASE_YM": "202409",
+      "base_rate": 3.5,
+      "chg": 0.0,
+      "diff12": 0.0
+    },
+    {
+      "BASE_YM": "202410",
+      "base_rate": 3.25,
+      "chg": -0.25,
+      "diff12": -0.25
+    },
+    {
+      "BASE_YM": "202411",
+      "base_rate": 3.0,
+      "chg": -0.25,
+      "diff12": -0.5
+    },
+    {
+      "BASE_YM": "202412",
+      "base_rate": 3.0,
+      "chg": 0.0,
+      "diff12": -0.5
+    },
+    {
+      "BASE_YM": "202501",
+      "base_rate": 3.0,
+      "chg": 0.0,
+      "diff12": -0.5
+    },
+    {
+      "BASE_YM": "202502",
+      "base_rate": 2.75,
+      "chg": -0.25,
+      "diff12": -0.75
+    },
+    {
+      "BASE_YM": "202503",
+      "base_rate": 2.75,
+      "chg": 0.0,
+      "diff12": -0.75
+    },
+    {
+      "BASE_YM": "202504",
+      "base_rate": 2.75,
+      "chg": 0.0,
+      "diff12": -0.75
+    },
+    {
+      "BASE_YM": "202505",
+      "base_rate": 2.5,
+      "chg": -0.25,
+      "diff12": -1.0
+    }
+  ],
+  "boundary_validation": [
+    {
+      "boundary": "202205 | 202206",
+      "claimed": "저금리기(1% 미만 ~ 상승 초기) → 긴축기(상승 시작)",
+      "observed": "base_rate 는 202205=1.75, 202206=1.75 로 **경계 양쪽이 동일**하다. 실제 인상 개시월은 202108(0.50→0.75), 1.00% 돌파는 202111, 1% 초과 진입은 202201(1.25) 이다. 경계 직후의 인상 재개월은 202207(1.75→2.25, +50bp) 이다.",
+      "verdict": "MISMATCH",
+      "detail": "① 202206 에는 금리 이벤트가 없다(전월과 동일). ② 저금리기 명세 '1% 미만'은 구간 후반 202201~202205 가 1.25~1.75% 이므로 사실과 다르다. 실측 정렬 경계는 202107|202108(0.50 정체 종료·인상 개시) 또는 202206|202207(50bp 빅스텝 개시) 이다."
+    },
+    {
+      "boundary": "202312 | 202401",
+      "claimed": "긴축기(고점 도달) → 인하기(하락)",
+      "observed": "base_rate 는 202301 에 고점 3.50% 에 도달한 뒤 202409 까지 21개월 3.50% 를 유지했고, 실제 첫 인하는 202410(3.50→3.25) 이다. 즉 202401~202409 는 아직 '하락'이 아니라 '고점 유지' 구간이다. 다만 12개월 차분(base_rate_diff12) 기준으로는 202312 가 마지막 양(+0.25)이고 202401 부터 0 이하로 꺾인다.",
+      "verdict": "PARTIAL",
+      "detail": "레벨(수준) 기준으로는 어긋난다 — 인하 개시는 202410 이다. 그러나 모델이 실제로 투입하는 변수는 레벨이 아니라 base_rate_diff12 이며, 그 기준에서는 202401 이 긴축 임펄스가 소멸하는 정확한 전환점이다. 또한 202312|202401 은 TRAIN/VALID 분할 경계와 정확히 일치한다(split_spec.py). → 경계는 유지하되, 202401~202409 를 '고점 유지', 202410~202505 를 '실제 인하'로 쪼갠 4국면 정의를 함께 산출해 교차검증한다."
+    }
+  ],
+  "regimes_primary_definition": [
+    {
+      "regime": "저금리기",
+      "start": "202101",
+      "end": "202205"
+    },
+    {
+      "regime": "긴축기",
+      "start": "202206",
+      "end": "202312"
+    },
+    {
+      "regime": "인하기",
+      "start": "202401",
+      "end": "202505"
+    }
+  ],
+  "regimes_adjusted_definition": [
+    {
+      "regime": "저금리기(실측)",
+      "start": "202101",
+      "end": "202107"
+    },
+    {
+      "regime": "긴축기(실측)",
+      "start": "202108",
+      "end": "202212"
+    },
+    {
+      "regime": "고점유지기(실측)",
+      "start": "202301",
+      "end": "202409"
+    },
+    {
+      "regime": "인하기(실측)",
+      "start": "202410",
+      "end": "202505"
+    }
+  ],
+  "regime_default_rate_primary": [
+    {
+      "regime": "저금리기",
+      "period": "202101~202205",
+      "n_months": 17,
+      "n_rows": 283493,
+      "n_firms": 20172,
+      "n_pos": 2002,
+      "default_rate_pct": 0.7062,
+      "base_rate_min": 0.5,
+      "base_rate_max": 1.75,
+      "base_rate_mean": 0.8676,
+      "base_rate_start": 0.5,
+      "base_rate_end": 1.75,
+      "base_rate_delta": 1.25,
+      "base_rate_range": 1.25
+    },
+    {
+      "regime": "긴축기",
+      "period": "202206~202312",
+      "n_months": 19,
+      "n_rows": 352387,
+      "n_firms": 22200,
+      "n_pos": 3980,
+      "default_rate_pct": 1.1294,
+      "base_rate_min": 1.75,
+      "base_rate_max": 3.5,
+      "base_rate_mean": 3.1842,
+      "base_rate_start": 1.75,
+      "base_rate_end": 3.5,
+      "base_rate_delta": 1.75,
+      "base_rate_range": 1.75
+    },
+    {
+      "regime": "인하기",
+      "period": "202401~202505",
+      "n_months": 17,
+      "n_rows": 312334,
+      "n_firms": 21801,
+      "n_pos": 3832,
+      "default_rate_pct": 1.2269,
+      "base_rate_min": 2.5,
+      "base_rate_max": 3.5,
+      "base_rate_mean": 3.2059,
+      "base_rate_start": 3.5,
+      "base_rate_end": 2.5,
+      "base_rate_delta": -1.0,
+      "base_rate_range": 1.0
+    }
+  ],
+  "regime_default_rate_adjusted": [
+    {
+      "regime": "저금리기(실측)",
+      "period": "202101~202107",
+      "n_months": 7,
+      "n_rows": 110512,
+      "n_firms": 16881,
+      "n_pos": 737,
+      "default_rate_pct": 0.6669,
+      "base_rate_min": 0.5,
+      "base_rate_max": 0.5,
+      "base_rate_mean": 0.5,
+      "base_rate_start": 0.5,
+      "base_rate_end": 0.5,
+      "base_rate_delta": 0.0,
+      "base_rate_range": 0.0
+    },
+    {
+      "regime": "긴축기(실측)",
+      "period": "202108~202212",
+      "n_months": 17,
+      "n_rows": 301888,
+      "n_firms": 21027,
+      "n_pos": 2511,
+      "default_rate_pct": 0.8318,
+      "base_rate_min": 0.75,
+      "base_rate_max": 3.25,
+      "base_rate_mean": 1.75,
+      "base_rate_start": 0.75,
+      "base_rate_end": 3.25,
+      "base_rate_delta": 2.5,
+      "base_rate_range": 2.5
+    },
+    {
+      "regime": "고점유지기(실측)",
+      "period": "202301~202409",
+      "n_months": 21,
+      "n_rows": 389857,
+      "n_firms": 23035,
+      "n_pos": 4636,
+      "default_rate_pct": 1.1892,
+      "base_rate_min": 3.5,
+      "base_rate_max": 3.5,
+      "base_rate_mean": 3.5,
+      "base_rate_start": 3.5,
+      "base_rate_end": 3.5,
+      "base_rate_delta": 0.0,
+      "base_rate_range": 0.0
+    },
+    {
+      "regime": "인하기(실측)",
+      "period": "202410~202505",
+      "n_months": 8,
+      "n_rows": 145957,
+      "n_firms": 19611,
+      "n_pos": 1930,
+      "default_rate_pct": 1.3223,
+      "base_rate_min": 2.5,
+      "base_rate_max": 3.25,
+      "base_rate_mean": 2.875,
+      "base_rate_start": 3.25,
+      "base_rate_end": 2.5,
+      "base_rate_delta": -0.75,
+      "base_rate_range": 0.75
+    }
+  ],
+  "yearly_default_rate": [
+    {
+      "year": "2021",
+      "n_rows": 194033,
+      "n_firms": 18827,
+      "n_pos": 1297,
+      "default_rate_pct": 0.6684,
+      "n_ym": 12,
+      "base_rate_mean": 0.6458
+    },
+    {
+      "year": "2022",
+      "n_rows": 218367,
+      "n_firms": 20471,
+      "n_pos": 1951,
+      "default_rate_pct": 0.8935,
+      "n_ym": 12,
+      "base_rate_mean": 2.125
+    },
+    {
+      "year": "2023",
+      "n_rows": 223480,
+      "n_firms": 21145,
+      "n_pos": 2734,
+      "default_rate_pct": 1.2234,
+      "n_ym": 12,
+      "base_rate_mean": 3.5
+    },
+    {
+      "year": "2024",
+      "n_rows": 221308,
+      "n_firms": 20864,
+      "n_pos": 2559,
+      "default_rate_pct": 1.1563,
+      "n_ym": 12,
+      "base_rate_mean": 3.3958
+    },
+    {
+      "year": "2025",
+      "n_rows": 91026,
+      "n_firms": 19122,
+      "n_pos": 1273,
+      "default_rate_pct": 1.3985,
+      "n_ym": 5,
+      "base_rate_mean": 2.75
+    }
+  ],
+  "monthly_default_rate": [
+    {
+      "BASE_YM": "202101",
+      "n_rows": 15336,
+      "n_firms": 15336,
+      "n_pos": 100,
+      "split_min": "TRAIN",
+      "split_max": "TRAIN",
+      "default_rate_pct": 0.6520605112154407,
+      "base_rate": 0.5
+    },
+    {
+      "BASE_YM": "202102",
+      "n_rows": 15467,
+      "n_firms": 15467,
+      "n_pos": 108,
+      "split_min": "TRAIN",
+      "split_max": "TRAIN",
+      "default_rate_pct": 0.69826081334454,
+      "base_rate": 0.5
+    },
+    {
+      "BASE_YM": "202103",
+      "n_rows": 15645,
+      "n_firms": 15645,
+      "n_pos": 106,
+      "split_min": "TRAIN",
+      "split_max": "TRAIN",
+      "default_rate_pct": 0.6775327580696708,
+      "base_rate": 0.5
+    },
+    {
+      "BASE_YM": "202104",
+      "n_rows": 15787,
+      "n_firms": 15787,
+      "n_pos": 102,
+      "split_min": "TRAIN",
+      "split_max": "TRAIN",
+      "default_rate_pct": 0.6461012225248622,
+      "base_rate": 0.5
+    },
+    {
+      "BASE_YM": "202105",
+      "n_rows": 15981,
+      "n_firms": 15981,
+      "n_pos": 106,
+      "split_min": "TRAIN",
+      "split_max": "TRAIN",
+      "default_rate_pct": 0.663287654089231,
+      "base_rate": 0.5
+    },
+    {
+      "BASE_YM": "202106",
+      "n_rows": 16093,
+      "n_firms": 16093,
+      "n_pos": 108,
+      "split_min": "TRAIN",
+      "split_max": "TRAIN",
+      "default_rate_pct": 0.6710992356925372,
+      "base_rate": 0.5
+    },
+    {
+      "BASE_YM": "202107",
+      "n_rows": 16203,
+      "n_firms": 16203,
+      "n_pos": 107,
+      "split_min": "TRAIN",
+      "split_max": "TRAIN",
+      "default_rate_pct": 0.6603715361352837,
+      "base_rate": 0.5
+    },
+    {
+      "BASE_YM": "202108",
+      "n_rows": 16337,
+      "n_firms": 16337,
+      "n_pos": 104,
+      "split_min": "TRAIN",
+      "split_max": "TRAIN",
+      "default_rate_pct": 0.6365917855175368,
+      "base_rate": 0.75
+    },
+    {
+      "BASE_YM": "202109",
+      "n_rows": 16441,
+      "n_firms": 16441,
+      "n_pos": 106,
+      "split_min": "TRAIN",
+      "split_max": "TRAIN",
+      "default_rate_pct": 0.6447296393163433,
+      "base_rate": 0.75
+    },
+    {
+      "BASE_YM": "202110",
+      "n_rows": 16536,
+      "n_firms": 16536,
+      "n_pos": 108,
+      "split_min": "TRAIN",
+      "split_max": "TRAIN",
+      "default_rate_pct": 0.6531204644412192,
+      "base_rate": 0.75
+    },
+    {
+      "BASE_YM": "202111",
+      "n_rows": 16600,
+      "n_firms": 16600,
+      "n_pos": 114,
+      "split_min": "TRAIN",
+      "split_max": "TRAIN",
+      "default_rate_pct": 0.6867469879518072,
+      "base_rate": 1.0
+    },
+    {
+      "BASE_YM": "202112",
+      "n_rows": 17607,
+      "n_firms": 17607,
+      "n_pos": 128,
+      "split_min": "TRAIN",
+      "split_max": "TRAIN",
+      "default_rate_pct": 0.7269835860737207,
+      "base_rate": 1.0
+    },
+    {
+      "BASE_YM": "202201",
+      "n_rows": 17658,
+      "n_firms": 17658,
+      "n_pos": 130,
+      "split_min": "TRAIN",
+      "split_max": "TRAIN",
+      "default_rate_pct": 0.7362102163325405,
+      "base_rate": 1.25
+    },
+    {
+      "BASE_YM": "202202",
+      "n_rows": 17762,
+      "n_firms": 17762,
+      "n_pos": 134,
+      "split_min": "TRAIN",
+      "split_max": "TRAIN",
+      "default_rate_pct": 0.7544195473482715,
+      "base_rate": 1.25
+    },
+    {
+      "BASE_YM": "202203",
+      "n_rows": 17881,
+      "n_firms": 17881,
+      "n_pos": 144,
+      "split_min": "TRAIN",
+      "split_max": "TRAIN",
+      "default_rate_pct": 0.8053240870197416,
+      "base_rate": 1.25
+    },
+    {
+      "BASE_YM": "202204",
+      "n_rows": 17994,
+      "n_firms": 17994,
+      "n_pos": 148,
+      "split_min": "TRAIN",
+      "split_max": "TRAIN",
+      "default_rate_pct": 0.8224963876847837,
+      "base_rate": 1.5
+    },
+    {
+      "BASE_YM": "202205",
+      "n_rows": 18165,
+      "n_firms": 18165,
+      "n_pos": 149,
+      "split_min": "TRAIN",
+      "split_max": "TRAIN",
+      "default_rate_pct": 0.8202587393338838,
+      "base_rate": 1.75
+    },
+    {
+      "BASE_YM": "202206",
+      "n_rows": 18163,
+      "n_firms": 18163,
+      "n_pos": 152,
+      "split_min": "TRAIN",
+      "split_max": "TRAIN",
+      "default_rate_pct": 0.8368661564719484,
+      "base_rate": 1.75
+    },
+    {
+      "BASE_YM": "202207",
+      "n_rows": 18271,
+      "n_firms": 18271,
+      "n_pos": 159,
+      "split_min": "TRAIN",
+      "split_max": "TRAIN",
+      "default_rate_pct": 0.8702315144217612,
+      "base_rate": 2.25
+    },
+    {
+      "BASE_YM": "202208",
+      "n_rows": 18370,
+      "n_firms": 18370,
+      "n_pos": 178,
+      "split_min": "TRAIN",
+      "split_max": "TRAIN",
+      "default_rate_pct": 0.9689711486118672,
+      "base_rate": 2.5
+    },
+    {
+      "BASE_YM": "202209",
+      "n_rows": 18492,
+      "n_firms": 18492,
+      "n_pos": 180,
+      "split_min": "TRAIN",
+      "split_max": "TRAIN",
+      "default_rate_pct": 0.9733939000648929,
+      "base_rate": 2.5
+    },
+    {
+      "BASE_YM": "202210",
+      "n_rows": 18564,
+      "n_firms": 18564,
+      "n_pos": 190,
+      "split_min": "TRAIN",
+      "split_max": "TRAIN",
+      "default_rate_pct": 1.0234863176039646,
+      "base_rate": 3.0
+    },
+    {
+      "BASE_YM": "202211",
+      "n_rows": 18585,
+      "n_firms": 18585,
+      "n_pos": 193,
+      "split_min": "TRAIN",
+      "split_max": "TRAIN",
+      "default_rate_pct": 1.038471885929513,
+      "base_rate": 3.25
+    },
+    {
+      "BASE_YM": "202212",
+      "n_rows": 18462,
+      "n_firms": 18462,
+      "n_pos": 194,
+      "split_min": "TRAIN",
+      "split_max": "TRAIN",
+      "default_rate_pct": 1.0508070631567545,
+      "base_rate": 3.25
+    },
+    {
+      "BASE_YM": "202301",
+      "n_rows": 18461,
+      "n_firms": 18461,
+      "n_pos": 206,
+      "split_min": "TRAIN",
+      "split_max": "TRAIN",
+      "default_rate_pct": 1.115865879421483,
+      "base_rate": 3.5
+    },
+    {
+      "BASE_YM": "202302",
+      "n_rows": 18505,
+      "n_firms": 18505,
+      "n_pos": 216,
+      "split_min": "TRAIN",
+      "split_max": "TRAIN",
+      "default_rate_pct": 1.1672520940286408,
+      "base_rate": 3.5
+    },
+    {
+      "BASE_YM": "202303",
+      "n_rows": 18529,
+      "n_firms": 18529,
+      "n_pos": 224,
+      "split_min": "TRAIN",
+      "split_max": "TRAIN",
+      "default_rate_pct": 1.2089157536834152,
+      "base_rate": 3.5
+    },
+    {
+      "BASE_YM": "202304",
+      "n_rows": 18630,
+      "n_firms": 18630,
+      "n_pos": 228,
+      "split_min": "TRAIN",
+      "split_max": "TRAIN",
+      "default_rate_pct": 1.2238325281803542,
+      "base_rate": 3.5
+    },
+    {
+      "BASE_YM": "202305",
+      "n_rows": 18727,
+      "n_firms": 18727,
+      "n_pos": 235,
+      "split_min": "TRAIN",
+      "split_max": "TRAIN",
+      "default_rate_pct": 1.2548726437763658,
+      "base_rate": 3.5
+    },
+    {
+      "BASE_YM": "202306",
+      "n_rows": 18624,
+      "n_firms": 18624,
+      "n_pos": 230,
+      "split_min": "TRAIN",
+      "split_max": "TRAIN",
+      "default_rate_pct": 1.2349656357388317,
+      "base_rate": 3.5
+    },
+    {
+      "BASE_YM": "202307",
+      "n_rows": 18638,
+      "n_firms": 18638,
+      "n_pos": 235,
+      "split_min": "TRAIN",
+      "split_max": "TRAIN",
+      "default_rate_pct": 1.2608648996673462,
+      "base_rate": 3.5
+    },
+    {
+      "BASE_YM": "202308",
+      "n_rows": 18623,
+      "n_firms": 18623,
+      "n_pos": 229,
+      "split_min": "TRAIN",
+      "split_max": "TRAIN",
+      "default_rate_pct": 1.2296622456102668,
+      "base_rate": 3.5
+    },
+    {
+      "BASE_YM": "202309",
+      "n_rows": 18722,
+      "n_firms": 18722,
+      "n_pos": 235,
+      "split_min": "TRAIN",
+      "split_max": "TRAIN",
+      "default_rate_pct": 1.2552077769469074,
+      "base_rate": 3.5
+    },
+    {
+      "BASE_YM": "202310",
+      "n_rows": 18723,
+      "n_firms": 18723,
+      "n_pos": 231,
+      "split_min": "TRAIN",
+      "split_max": "TRAIN",
+      "default_rate_pct": 1.2337766383592372,
+      "base_rate": 3.5
+    },
+    {
+      "BASE_YM": "202311",
+      "n_rows": 18708,
+      "n_firms": 18708,
+      "n_pos": 234,
+      "split_min": "TRAIN",
+      "split_max": "TRAIN",
+      "default_rate_pct": 1.2508017960230917,
+      "base_rate": 3.5
+    },
+    {
+      "BASE_YM": "202312",
+      "n_rows": 18590,
+      "n_firms": 18590,
+      "n_pos": 231,
+      "split_min": "TRAIN",
+      "split_max": "TRAIN",
+      "default_rate_pct": 1.242603550295858,
+      "base_rate": 3.5
+    },
+    {
+      "BASE_YM": "202401",
+      "n_rows": 18554,
+      "n_firms": 18554,
+      "n_pos": 222,
+      "split_min": "VALID",
+      "split_max": "VALID",
+      "default_rate_pct": 1.1965074916460063,
+      "base_rate": 3.5
+    },
+    {
+      "BASE_YM": "202402",
+      "n_rows": 18566,
+      "n_firms": 18566,
+      "n_pos": 216,
+      "split_min": "VALID",
+      "split_max": "VALID",
+      "default_rate_pct": 1.1634169988150382,
+      "base_rate": 3.5
+    },
+    {
+      "BASE_YM": "202403",
+      "n_rows": 18543,
+      "n_firms": 18543,
+      "n_pos": 209,
+      "split_min": "VALID",
+      "split_max": "VALID",
+      "default_rate_pct": 1.1271099606320445,
+      "base_rate": 3.5
+    },
+    {
+      "BASE_YM": "202404",
+      "n_rows": 18557,
+      "n_firms": 18557,
+      "n_pos": 207,
+      "split_min": "VALID",
+      "split_max": "VALID",
+      "default_rate_pct": 1.115482028345099,
+      "base_rate": 3.5
+    },
+    {
+      "BASE_YM": "202405",
+      "n_rows": 18528,
+      "n_firms": 18528,
+      "n_pos": 207,
+      "split_min": "VALID",
+      "split_max": "VALID",
+      "default_rate_pct": 1.1172279792746114,
+      "base_rate": 3.5
+    },
+    {
+      "BASE_YM": "202406",
+      "n_rows": 18424,
+      "n_firms": 18424,
+      "n_pos": 208,
+      "split_min": "VALID",
+      "split_max": "VALID",
+      "default_rate_pct": 1.1289622231871472,
+      "base_rate": 3.5
+    },
+    {
+      "BASE_YM": "202407",
+      "n_rows": 18423,
+      "n_firms": 18423,
+      "n_pos": 211,
+      "split_min": "VALID",
+      "split_max": "VALID",
+      "default_rate_pct": 1.1453074960647018,
+      "base_rate": 3.5
+    },
+    {
+      "BASE_YM": "202408",
+      "n_rows": 18386,
+      "n_firms": 18386,
+      "n_pos": 213,
+      "split_min": "VALID",
+      "split_max": "VALID",
+      "default_rate_pct": 1.1584901555531384,
+      "base_rate": 3.5
+    },
+    {
+      "BASE_YM": "202409",
+      "n_rows": 18396,
+      "n_firms": 18396,
+      "n_pos": 209,
+      "split_min": "VALID",
+      "split_max": "VALID",
+      "default_rate_pct": 1.136116547075451,
+      "base_rate": 3.5
+    },
+    {
+      "BASE_YM": "202410",
+      "n_rows": 18362,
+      "n_firms": 18362,
+      "n_pos": 215,
+      "split_min": "VALID",
+      "split_max": "VALID",
+      "default_rate_pct": 1.1708964165123625,
+      "base_rate": 3.25
+    },
+    {
+      "BASE_YM": "202411",
+      "n_rows": 18348,
+      "n_firms": 18348,
+      "n_pos": 220,
+      "split_min": "VALID",
+      "split_max": "VALID",
+      "default_rate_pct": 1.1990407673860912,
+      "base_rate": 3.0
+    },
+    {
+      "BASE_YM": "202412",
+      "n_rows": 18221,
+      "n_firms": 18221,
+      "n_pos": 222,
+      "split_min": "VALID",
+      "split_max": "VALID",
+      "default_rate_pct": 1.2183744031611876,
+      "base_rate": 3.0
+    },
+    {
+      "BASE_YM": "202501",
+      "n_rows": 18191,
+      "n_firms": 18191,
+      "n_pos": 238,
+      "split_min": "VALID",
+      "split_max": "VALID",
+      "default_rate_pct": 1.308339288659227,
+      "base_rate": 3.0
+    },
+    {
+      "BASE_YM": "202502",
+      "n_rows": 18189,
+      "n_firms": 18189,
+      "n_pos": 241,
+      "split_min": "VALID",
+      "split_max": "VALID",
+      "default_rate_pct": 1.3249766342294793,
+      "base_rate": 2.75
+    },
+    {
+      "BASE_YM": "202503",
+      "n_rows": 18188,
+      "n_firms": 18188,
+      "n_pos": 256,
+      "split_min": "VALID",
+      "split_max": "VALID",
+      "default_rate_pct": 1.4075214427094787,
+      "base_rate": 2.75
+    },
+    {
+      "BASE_YM": "202504",
+      "n_rows": 18216,
+      "n_firms": 18216,
+      "n_pos": 270,
+      "split_min": "VALID",
+      "split_max": "VALID",
+      "default_rate_pct": 1.4822134387351777,
+      "base_rate": 2.75
+    },
+    {
+      "BASE_YM": "202505",
+      "n_rows": 18242,
+      "n_firms": 18242,
+      "n_pos": 268,
+      "split_min": "VALID",
+      "split_max": "VALID",
+      "default_rate_pct": 1.469137156013595,
+      "base_rate": 2.5
+    }
+  ],
+  "hypothesis_check": {
+    "statement": "인하기의 부도율이 가장 높다",
+    "primary_max_regime": "인하기",
+    "primary_max_rate_pct": 1.2269,
+    "primary_holds": true,
+    "adjusted_max_regime": "인하기(실측)",
+    "adjusted_max_rate_pct": 1.3223,
+    "adjusted_holds": true
+  },
+  "user_reference_yearly_pct": {
+    "2023": 1.24,
+    "2024": 1.176,
+    "2025": 1.417
+  },
+  "lag_correlation": {
+    "by_lag": [
+      {
+        "lag_months": 0,
+        "n": 53,
+        "corr": 0.8812
+      },
+      {
+        "lag_months": 1,
+        "n": 53,
+        "corr": 0.9025
+      },
+      {
+        "lag_months": 2,
+        "n": 53,
+        "corr": 0.9143
+      },
+      {
+        "lag_months": 3,
+        "n": 53,
+        "corr": 0.9252
+      },
+      {
+        "lag_months": 4,
+        "n": 53,
+        "corr": 0.9309
+      },
+      {
+        "lag_months": 5,
+        "n": 53,
+        "corr": 0.9283
+      },
+      {
+        "lag_months": 6,
+        "n": 53,
+        "corr": 0.9256
+      },
+      {
+        "lag_months": 7,
+        "n": 53,
+        "corr": 0.9198
+      },
+      {
+        "lag_months": 8,
+        "n": 53,
+        "corr": 0.9064
+      },
+      {
+        "lag_months": 9,
+        "n": 53,
+        "corr": 0.8861
+      },
+      {
+        "lag_months": 10,
+        "n": 53,
+        "corr": 0.8632
+      },
+      {
+        "lag_months": 11,
+        "n": 53,
+        "corr": 0.8325
+      },
+      {
+        "lag_months": 12,
+        "n": 53,
+        "corr": 0.8008
+      },
+      {
+        "lag_months": 13,
+        "n": 52,
+        "corr": 0.771
+      },
+      {
+        "lag_months": 14,
+        "n": 51,
+        "corr": 0.7377
+      },
+      {
+        "lag_months": 15,
+        "n": 50,
+        "corr": 0.7044
+      },
+      {
+        "lag_months": 16,
+        "n": 49,
+        "corr": 0.6743
+      },
+      {
+        "lag_months": 17,
+        "n": 48,
+        "corr": 0.6433
+      },
+      {
+        "lag_months": 18,
+        "n": 47,
+        "corr": 0.6127
+      },
+      {
+        "lag_months": 19,
+        "n": 46,
+        "corr": 0.5848
+      },
+      {
+        "lag_months": 20,
+        "n": 45,
+        "corr": 0.5627
+      },
+      {
+        "lag_months": 21,
+        "n": 44,
+        "corr": 0.5451
+      },
+      {
+        "lag_months": 22,
+        "n": 43,
+        "corr": 0.5334
+      },
+      {
+        "lag_months": 23,
+        "n": 42,
+        "corr": 0.5245
+      },
+      {
+        "lag_months": 24,
+        "n": 41,
+        "corr": 0.5179
+      }
+    ],
+    "argmax": {
+      "lag_months": 4,
+      "n": 53,
+      "corr": 0.9309
+    }
+  },
+  "split_confound": "인하기(202401~202505)는 split_spec.py 의 VALID 구간과 정확히 동일하다. 구간 간 부도율 비교는 학습/홀드아웃 경계와 겹치므로 모델 성능 해석과 분리해 읽어야 한다.",
+  "interpretation": "base_rate 는 202301 에 고점 3.50% 에 도달해 21개월 유지된 뒤 202410 부터 인하로 전환했지만, IS_BUDO_12M 부도율은 저금리기 0.706% → 긴축기 1.129% → 인하기 1.227% 로 단조 상승해 **금리가 내려가는 국면에서 가장 높다**(실측 궤적에 정렬한 4국면에서도 0.667% → 0.832% → 1.189% → 인하기 1.322% 로 순서가 같다). 월별로도 부도율 최고점은 202504(1.482%)로 금리 고점 도달보다 27개월, 인하 개시보다 6개월 늦으며, corr(부도율[t], base_rate[t-k]) 는 동시점(k=0, r=0.881)이 아니라 k=4개월(r=0.931)에서 단일 최대를 갖고 그 뒤 단조 감소한다(라벨이 t+1~t+12 부도를 담으므로 실제 부도 발생시점 기준 지연은 대략 4+6 ≈ 10개월). 따라서 이 표는 \"부도는 거시 긴축에 후행한다\"는 가설의 **직접 증거로 쓸 수 있다**. 다만 세 가지 유보를 명시해야 한다. 첫째, 연도별로는 1.223%(2023) → 1.156%(2024) 로 한 번 꺾였다가 1.399%(2025, 1~5월만) 로 재상승했고 월별 저점은 202404(1.115%) 이므로 단조 후행이 아니라 '긴축 고점 유지 구간에서 일단 정체·소폭 반락한 뒤 인하 국면에서 재점화'되는 2단 패턴이다. 둘째, 두 시계열 모두 관측창 내에서 우상향 추세를 갖기 때문에 상관계수의 **절대 수준**은 부풀려져 있다(k=0 에서도 이미 r=0.881) — 근거로 쓸 수 있는 것은 상관의 크기가 아니라 k=4 에서 단봉으로 꺾이는 **형태**와 구간별 순서다. 셋째, 인하기 구간(202401~202505)은 split_spec.py 의 VALID 홀드아웃과 정확히 겹쳐 국면 효과와 표본 시기 효과가 분리되지 않으므로, 이 표는 관측 사실로만 인용하고 모델 성능 변화의 원인으로 돌려서는 안 된다.",
+  "docs05_block": "### 거시 국면별 부도율\n\n국면은 base_rate 의 **수준**이 아니라 **변화 방향**으로 정의한다. 수준으로는 구간이\n구분되지 않는다(긴축기 평균 3.18% ≈ 인하기 평균 3.21%).\n\n| 국면 | 기간 | 성격 (실측) |\n|---|---|---|\n| 저금리기 | 202101~202205 | 0.50% 정체(202107까지) 후 인상 개시(202108), 구간말 1.75% |\n| 긴축기 | 202206~202312 | 50bp 빅스텝 개시(202207), 고점 3.50% 도달(202301) 후 유지 |\n| 인하기 | 202401~202505 | 12개월 긴축 임펄스 소멸(diff12 ≤ 0), 실제 인하 개시 202410, 수준은 여전히 2.50~3.50% |\n\n| 구간 | 기간 | 관측 행수 | 기업 수(distinct) | 양성 행수 | 부도율% | base_rate 평균 | base_rate 변화폭 |\n|---|---|---|---|---|---|---|---|\n| 저금리기 | 202101~202205 | 283,493 | 20,172 | 2,002 | 0.706 | 0.868 | 1.25 |\n| 긴축기 | 202206~202312 | 352,387 | 22,200 | 3,980 | 1.129 | 3.184 | 1.75 |\n| 인하기 | 202401~202505 | 312,334 | 21,801 | 3,832 | 1.227 | 3.206 | -1.00 |\n\n연도별 대조:\n\n| 연도 | 관측 행수 | 양성 행수 | 부도율% | base_rate 평균 |\n|---|---|---|---|---|\n| 2021 | 194,033 | 1,297 | 0.668 | 0.646 |\n| 2022 | 218,367 | 1,951 | 0.893 | 2.125 |\n| 2023 | 223,480 | 2,734 | 1.223 | 3.500 |\n| 2024 | 221,308 | 2,559 | 1.156 | 3.396 |\n| 2025 | 91,026 | 1,273 | 1.399 | 2.750 |\n\n> 2025 는 202501~202505 5개월만 패널에 포함된다.\n\n레벨 궤적에 정확히 정렬한 4국면으로 쪼개도 순서는 동일하다(교차검증):\n\n| 구간 | 기간 | 관측 행수 | 기업 수(distinct) | 양성 행수 | 부도율% | base_rate 평균 | base_rate 변화폭 |\n|---|---|---|---|---|---|---|---|\n| 저금리기(실측) | 202101~202107 | 110,512 | 16,881 | 737 | 0.667 | 0.500 | 0.00 |\n| 긴축기(실측) | 202108~202212 | 301,888 | 21,027 | 2,511 | 0.832 | 1.750 | 2.50 |\n| 고점유지기(실측) | 202301~202409 | 389,857 | 23,035 | 4,636 | 1.189 | 3.500 | 0.00 |\n| 인하기(실측) | 202410~202505 | 145,957 | 19,611 | 1,930 | 1.322 | 2.875 | -0.75 |\n\n**해석.** base_rate 는 202301 에 고점 3.50% 에 도달해 21개월 유지된 뒤 202410 부터 인하로 전환했지만, IS_BUDO_12M 부도율은 저금리기 0.706% → 긴축기 1.129% → 인하기 1.227% 로 단조 상승해 **금리가 내려가는 국면에서 가장 높다**(실측 궤적에 정렬한 4국면에서도 0.667% → 0.832% → 1.189% → 인하기 1.322% 로 순서가 같다). 월별로도 부도율 최고점은 202504(1.482%)로 금리 고점 도달보다 27개월, 인하 개시보다 6개월 늦으며, corr(부도율[t], base_rate[t-k]) 는 동시점(k=0, r=0.881)이 아니라 k=4개월(r=0.931)에서 단일 최대를 갖고 그 뒤 단조 감소한다(라벨이 t+1~t+12 부도를 담으므로 실제 부도 발생시점 기준 지연은 대략 4+6 ≈ 10개월). 따라서 이 표는 \"부도는 거시 긴축에 후행한다\"는 가설의 **직접 증거로 쓸 수 있다**. 다만 세 가지 유보를 명시해야 한다. 첫째, 연도별로는 1.223%(2023) → 1.156%(2024) 로 한 번 꺾였다가 1.399%(2025, 1~5월만) 로 재상승했고 월별 저점은 202404(1.115%) 이므로 단조 후행이 아니라 '긴축 고점 유지 구간에서 일단 정체·소폭 반락한 뒤 인하 국면에서 재점화'되는 2단 패턴이다. 둘째, 두 시계열 모두 관측창 내에서 우상향 추세를 갖기 때문에 상관계수의 **절대 수준**은 부풀려져 있다(k=0 에서도 이미 r=0.881) — 근거로 쓸 수 있는 것은 상관의 크기가 아니라 k=4 에서 단봉으로 꺾이는 **형태**와 구간별 순서다. 셋째, 인하기 구간(202401~202505)은 split_spec.py 의 VALID 홀드아웃과 정확히 겹쳐 국면 효과와 표본 시기 효과가 분리되지 않으므로, 이 표는 관측 사실로만 인용하고 모델 성능 변화의 원인으로 돌려서는 안 된다.\n\n가설 \"인하기가 가장 높다\" → **성립**\n(주 정의 최고 인하기 1.227% /\n실측 정렬 최고 인하기(실측) 1.322%).\n\n<sub>산출: `eda_pipeline/step42_macro_regime.py` · 원자료 `eda_pipeline/output/validation/A3_macro_regime.json` · 월별 `A3_monthly_default_rate.csv` / `A3_monthly_default_rate.png`</sub>"
+}

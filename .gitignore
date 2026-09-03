@@ -29,3 +29,11 @@ model_building/input/**/*.csv
 *.csv
 *.xlsx
 eda_pipeline/output/*.csv
+*.parquet
+
+# 예외 — 공유에 필수인 설정 CSV (거시 지표 정의·라벨 매핑). *.csv 전역 무시 아래에 둔다.
+!api_data_processing/config/indicators.csv
+!api_data_processing/config/indicator_names.csv
+!eda_pipeline/output/budo_events.csv
+# IDE
+.idea/

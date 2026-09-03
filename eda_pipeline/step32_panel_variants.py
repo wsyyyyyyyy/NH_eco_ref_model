@@ -143,6 +143,11 @@ CARRY_FORWARD_MAX_MONTHS = 12      # as-of 후 이월 상한
 CRIF_WINDOW_MONTHS = 12            # "최근 12개월 내 발생"
 
 RAW_AC12 = config.INPUT_DIR / "가상사업자_AC12_외화부채v.txt"
+# B4 가 구현만 되고 실행된 적이 없어 이 상수가 빠져 있었다 (2026-09-01 첫 실행에서 발견).
+# 발생일자 CRDBD_OCU_YY 는 YYYYMM 6자리라 _ym_int 를 그대로 쓸 수 있다.
+# 해제일 MAX(CRDBD_RLS_OCU_DT) / 해제사유 MAX(CRDBD_RLS_RSNC) 는 사용하지 않는다
+#   — 부도 대비 평균 +35개월로 100% 사후 정보다.
+RAW_CRIF = config.INPUT_DIR / "가상사업자_VH_CRIF_신용불량v.txt"
 
 
 def _ym_int(s: pd.Series) -> pd.Series:
@@ -173,14 +178,48 @@ def rebuild_ac12_asof(panel: pd.DataFrame) -> pd.DataFrame:
     raw["_M"] = _ym_int(raw["BAS_YM"])
     raw = raw[raw["_M"].notna()].copy()
 
+    # ★ [2026-09-02] 원천의 **물리 컬럼명**(FC_AM1 / LA_INSP_KRW_AM1 ...)을
+    #   step1 과 같은 논리명(US_FC_AM / US_KRW_AM ...)으로 먼저 바꾼다.
+    #   이 리네임이 빠져 있었다. 그래서 `AC12_{원천컬럼}` = AC12_FC_AM1 같은
+    #   **새 컬럼 10개가 추가되기만** 하고, 패널의 실제 AC12 피처
+    #   (AC12_US_FC_AM ... AC12_TOTAL_KRW_AM)는 연 단위 조인분 그대로
+    #   남아 있었다. B6/B46 의 AC12 정합화가 사실상 작동하지 않았다.
+    #   step31 재판정에서 AC12 10개의 (기업,연도) 내 변동이 여전히 0 인 것으로
+    #   드러났다 (2026-09-02).
+    #
+    #   리네임 맵과 EXT_OTHER 파생은 step1 을 정본으로 임포트한다.
+    #   여기에 사본을 두면 두 곳이 갈라진다.
+    from eda_pipeline.step1_load import AC12_RENAME
+    raw = raw.rename(columns=AC12_RENAME)
+    num = [c for c in raw.columns if c not in ("V_BZNO", "BAS_YM", "_M")]
+    for c in num:
+        raw[c] = pd.to_numeric(raw[c], errors="coerce")
+    # step1._process_ac12 와 같은 규칙: TOTAL 외 결측은 0, 기타통화는 잔차.
+    fill = [c for c in num if c != "TOTAL_KRW_AM"]
+    raw[fill] = raw[fill].fillna(0)
+    krw4 = [c for c in ("US_KRW_AM", "JP_KRW_AM", "CN_KRW_AM", "EU_KRW_AM")
+            if c in raw.columns]
+    raw["EXT_OTHER_KRW_AM"] = (raw["TOTAL_KRW_AM"].fillna(0)
+                               - raw[krw4].sum(axis=1)).clip(lower=0)
+
     feat = [c for c in raw.columns if c not in ("V_BZNO", "BAS_YM", "_M")]
     ren = {c: f"AC12_{c}" for c in feat}
     raw = raw.rename(columns=ren)
     cols = list(ren.values())
-    for c in cols:
-        raw[c] = pd.to_numeric(raw[c], errors="coerce")
     raw = (raw.sort_values(["V_BZNO", "_M"])
               .drop_duplicates(["V_BZNO", "_M"], keep="last"))
+
+    # 같은 사고를 다시 조용히 넘기지 않는다. 패널에 있는 AC12 금액 컬럼을
+    # 하나라도 덮어쓰지 못하면 정합화가 안 된 것이므로 중단한다.
+    panel_ac12 = {c for c in panel.columns
+                  if c.startswith("AC12_") and c != "AC12_STALE_MONTHS"}
+    uncovered = sorted(panel_ac12 - set(cols))
+    if uncovered:
+        raise ValueError(
+            f"AC12 정합화가 패널 컬럼 {len(uncovered)}개를 덮어쓰지 못한다: "
+            f"{uncovered}\n"
+            f"  원천에서 만든 컬럼: {sorted(cols)}\n"
+            f"  step1_load.AC12_RENAME 과 패널 컬럼명이 어긋났다는 뜻이다.")
 
     left = pd.DataFrame({
         "V_BZNO": panel["V_BZNO"].astype(str).values,
@@ -202,15 +241,24 @@ def rebuild_ac12_asof(panel: pd.DataFrame) -> pd.DataFrame:
     stale = merged["_M"].values - src_m
     too_old = stale > CARRY_FORWARD_MAX_MONTHS
 
+    # ★ 결측 처리는 step5 의 규칙을 그대로 따른다 (유형 1 = 구조적 부재).
+    #   step5._split_missing 은 AC12 를 "레코드 없음 = 외화부채 0" 으로 보고
+    #   HAS_AC12_YN 플래그를 세운 뒤 fillna(0.0) 한다.
+    #   여기서 NaN 으로 두면 B6 의 ΔAUC 가 '시점 교정 효과' 와
+    #   '0 -> NaN 의미 변경 효과' 를 섞어 버린다. 재는 것은 시점 하나여야 한다.
+    #   "레코드가 없다 / 오래됐다" 는 정보는 HAS_AC12_YN 과
+    #   AC12_STALE_MONTHS 가 따로 담는다.
     out = panel.copy()
     for c in cols:
         v = merged[c].values.astype(float)
         v[too_old] = np.nan
-        out[c] = v
+        out[c] = np.nan_to_num(v, nan=0.0)
     out["AC12_STALE_MONTHS"] = np.where(too_old, np.nan, stale)
     out["HAS_AC12_YN"] = (~np.isnan(out["AC12_STALE_MONTHS"].values)).astype(int)
 
     log.info(f"[B6] AC12 월 단위 as-of 재구성 — 행수 {n_before:,} 유지")
+    log.info(f"[B6]   덮어쓴 패널 AC12 컬럼 {len(panel_ac12 & set(cols))}개 "
+             f"/ 원천 산출 {len(cols)}개")
     log.info(f"[B6]   보유율 {out['HAS_AC12_YN'].mean():.2%} "
              f"(연 단위 조인 시 {panel.get('HAS_AC12_YN', pd.Series([np.nan])).mean():.2%})")
     log.info(f"[B6]   AC12_STALE_MONTHS 중앙값 {np.nanmedian(out['AC12_STALE_MONTHS']):.1f}개월, "
@@ -246,13 +294,25 @@ def rebuild_crif_asof(panel: pd.DataFrame) -> pd.DataFrame:
     # 기업별로 후보 이벤트를 붙인 뒤 창 조건으로 거른다.
     j = key.merge(raw[["V_BZNO", "_M", "_RSN", "_OVD", "_CODE"]]
                   .rename(columns={"_M": "_EV"}), on="V_BZNO", how="left")
-    win = (j["_EV"] <= j["_M"]) & (j["_EV"] > j["_M"] - CRIF_WINDOW_MONTHS)
-    j = j[win]
+    # BASE_YM 이전(같은 달 포함) 발생분 전체 — 여기서 두 창을 나눠 쓴다.
+    past = j[j["_EV"] <= j["_M"]]
+    # (1) 최근 12개월 창
+    win = (past["_EV"] > past["_M"] - CRIF_WINDOW_MONTHS)
+    j = past[win]
     agg = (j.groupby("_row")
              .agg(CRIF12_EVENT_CNT=("_EV", "size"),
                   CRIF12_RSN_AM_SUM=("_RSN", "sum"),
                   CRIF12_OVD_AM_SUM=("_OVD", "sum"),
                   CRIF12_WORST_RSNC=("_CODE", "min")))
+    # (2) 마지막 발생 시점 — 창을 걸지 않는다.
+    #     "최근 12개월에는 없지만 과거에 있었다" 를 12개월 창만으로는 표현할 수 없다.
+    #     _EV <= _M 이므로 미래 정보는 들어가지 않는다.
+    #
+    #     ★ [2026-09-02] 누적 건수 CRIF_CNT_EVER 는 산출하지 않는다 (승인).
+    #       CRIF_CNT_12M 과 비영 비율이 동일하고 값이 다른 행이 3개뿐이었다.
+    #       같은 정보를 두 컬럼으로 넣으면 중요도만 쪼개지고 해석이 흐려진다.
+    #       '과거에 있었다' 는 CRIF_MONTHS_SINCE 가 담는다.
+    agg_ever = past.groupby("_row").agg(_LAST_EV=("_EV", "max"))
 
     out = panel.copy()
     idx = np.arange(len(panel))
@@ -261,8 +321,26 @@ def rebuild_crif_asof(panel: pd.DataFrame) -> pd.DataFrame:
         v = pd.Series(fill, index=idx, dtype="float64")
         v.loc[agg.index] = agg[c].values
         out[c] = v.values
+    # '마지막 발생 이후 경과 개월'
+    last_ev = pd.Series(np.nan, index=idx, dtype="float64")
+    last_ev.loc[agg_ever.index] = agg_ever["_LAST_EV"].values
+    # _M 은 YYYYMM 정수라 단순 뺄셈이 개월 수가 아니다. 연·월로 분해해 센다.
+    base_m = key["_M"].values.astype(float)
+    months_since = ((base_m // 100 - last_ev // 100) * 12
+                    + (base_m % 100 - last_ev % 100))
+    # 이력이 없으면 NaN 이다. 0 으로 채우면 '방금 발생' 과 구분되지 않는다.
+    out["CRIF_MONTHS_SINCE"] = months_since
+
+    # 지시서 명칭에 맞춘 별칭 — 12개월 창 건수 / 가장 심각한 사유코드
+    out["CRIF_CNT_12M"] = out["CRIF12_EVENT_CNT"].values
+    out["CRIF_WORST_RSNC"] = out["CRIF12_WORST_RSNC"].values
+
     assert len(out) == n_before, f"CRIF 재구성에서 행수 변동: {n_before} -> {len(out)}"
     nz = int((out["CRIF12_EVENT_CNT"] > 0).sum())
+    n_hist = int(out["CRIF_MONTHS_SINCE"].notna().sum())
+    log.info(f"[B4]   발생 이력이 있는(경과월 산출 가능) 행 {n_hist:,} "
+             f"({n_hist/len(out):.3%}), CRIF_MONTHS_SINCE 중앙값 "
+             f"{np.nanmedian(out['CRIF_MONTHS_SINCE']):.1f}개월")
     log.info(f"[B4] CRIF 최근 {CRIF_WINDOW_MONTHS}개월 재구성 — 행수 {n_before:,} 유지")
     log.info(f"[B4]   발생 이력 있는 행 {nz:,} ({nz/len(out):.3%}) "
              f"(연 단위 조인분은 10,243행이었다)")

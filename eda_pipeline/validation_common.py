@@ -1,4 +1,4 @@
-"""모델 검증 스위트(docs/step28) 공통 로더/지표 유틸.
+"""모델 검증 스위트(docs/appendix/step28) 공통 로더/지표 유틸.
 
 패널은 6.76GB 원본 CSV 대신 DuckDB 의 corporate_panel 테이블에서 읽는다.
 필요한 컬럼만 push-down projection + FLOAT 캐스트로 당겨오므로 메모리가 견딘다.

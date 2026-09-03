@@ -1,0 +1,122 @@
+series_name,name_kr,name_en,category_kr,category_en,source,frequency,unit
+# ============================================================
+# [1] 금리 (Interest Rates)
+# ============================================================
+base_rate,한국은행 기준금리,BOK Base Rate,금리,Interest Rates,ECOS,M,연%
+call_rate_overnight,콜금리 (1일물 전체거래),Call Rate (Overnight All),금리,Interest Rates,ECOS,D,연%
+call_rate_overnight_brokered,콜금리 (1일물 중개회사거래),Call Rate (Overnight Brokered),금리,Interest Rates,ECOS,D,연%
+treasury_bond_1y,국고채 수익률 (1년),Treasury Bond Yield (1Y),금리,Interest Rates,ECOS,D,연%
+treasury_bond_3y,국고채 수익률 (3년),Treasury Bond Yield (3Y),금리,Interest Rates,ECOS,D,연%
+treasury_bond_5y,국고채 수익률 (5년),Treasury Bond Yield (5Y),금리,Interest Rates,ECOS,D,연%
+treasury_bond_10y,국고채 수익률 (10년),Treasury Bond Yield (10Y),금리,Interest Rates,ECOS,D,연%
+corporate_bond_3y_AA,회사채 수익률 (3년 AA-),Corporate Bond Yield (3Y AA-),금리,Interest Rates,ECOS,D,연%
+KORIBOR_3m,KORIBOR (3개월),KORIBOR (3M),금리,Interest Rates,ECOS,D,연%
+KORIBOR_6m,KORIBOR (6개월),KORIBOR (6M),금리,Interest Rates,ECOS,D,연%
+KORIBOR_12m,KORIBOR (12개월),KORIBOR (12M),금리,Interest Rates,ECOS,D,연%
+CD_rate_91d,CD 유통수익률 (91일),CD Rate (91D),금리,Interest Rates,ECOS,M,연%
+treasury_bond_1y_monthly,국고채 수익률 월평균 (1년),Treasury Bond Yield Monthly Avg (1Y),금리,Interest Rates,ECOS,M,연%
+# ============================================================
+# [2] 통화량 (Money Supply)
+# ============================================================
+M2_broad_money,M2 광의통화 (평잔),M2 Broad Money (Avg Balance),통화량,Money Supply,ECOS,M,십억원
+M1_narrow_money,M1 협의통화,M1 Narrow Money,통화량,Money Supply,ECOS,M,십억원
+Lf_liquidity,Lf 금융기관유동성,Lf Financial Institutions Liquidity,통화량,Money Supply,ECOS,M,십억원
+monetary_base_sa,본원통화 (계절조정 평잔),Monetary Base (SA Avg Balance),통화량,Money Supply,ECOS,M,십억원
+# ============================================================
+# [3] 물가 (Prices)
+# ============================================================
+PPI_total,생산자물가지수 (총지수),Producer Price Index (Total),물가,Prices,ECOS,M,2020=100
+CPI_core,소비자물가 근원물가지수,CPI Core Inflation Index,물가,Prices,ECOS,M,2020=100
+CPI_core_excl_food_energy,소비자물가 근원물가 (식료품·에너지 제외),CPI Core (Excl. Food & Energy),물가,Prices,ECOS,M,2020=100
+CPI_food_nonalcohol,소비자물가 식료품·비주류음료,CPI Food & Non-Alcoholic Beverages,물가,Prices,ECOS,M,2020=100
+housing_price_index,주택가격지수,Housing Price Index,물가,Prices,ECOS,M,2022.01=100
+export_price_index_KOR,수출물가지수 (한국),Export Price Index (Korea),물가,Prices,ECOS,A,지수
+# ============================================================
+# [4] 국제수지 (Balance of Payments)
+# ============================================================
+current_account,경상수지 (월별),Current Account (Monthly),국제수지,Balance of Payments,ECOS,M,백만달러
+current_account_quarterly,경상수지 (분기별),Current Account (Quarterly),국제수지,Balance of Payments,ECOS,Q,백만달러
+goods_balance,상품수지,Goods Balance,국제수지,Balance of Payments,ECOS,M,백만달러
+# ============================================================
+# [5] 수출입 (Trade)
+# ============================================================
+export_index,수출지수,Export Index,수출입,Trade,ECOS,M,2020=100
+import_index,수입지수,Import Index,수출입,Trade,ECOS,M,2020=100
+trade_total,무역 총지수,Trade Total Index,수출입,Trade,ECOS,M,2020=100
+# ============================================================
+# [6] 국민소득 (National Income)
+# ============================================================
+GNI_annual,국민총소득 (GNI 연간),Gross National Income (Annual),국민소득,National Income,ECOS,A,십억원
+GNI_nominal,명목 GNI,Nominal GNI,국민소득,National Income,ECOS,A,십억원
+GNI_per_capita,1인당 GNI,GNI Per Capita,국민소득,National Income,ECOS,A,달러
+# ============================================================
+# [7] 가계/기업 (Household/Corporate)
+# ============================================================
+household_credit,가계신용 합계,Household Credit Total,가계·기업,Household/Corporate,ECOS,Q,십억원
+household_loan,가계대출,Household Loans,가계·기업,Household/Corporate,ECOS,Q,십억원
+# ============================================================
+# [8] 산업생산 (Industrial Production)
+# ============================================================
+manufacturing_index,제조업생산지수,Manufacturing Production Index,산업생산,Industrial Production,ECOS,A,2020=100
+# ============================================================
+# [9] 국내 주가지수 (Domestic Stock Indices)
+# ============================================================
+KOSPI,코스피 종합지수,KOSPI Composite Index,국내 주가,Domestic Stocks,YAHOO,D,포인트
+KOSDAQ,코스닥 종합지수,KOSDAQ Composite Index,국내 주가,Domestic Stocks,YAHOO,D,포인트
+# ============================================================
+# [10] 환율 (Exchange Rates)
+# ============================================================
+USD_KRW,원/달러 환율,USD/KRW Exchange Rate,환율,Exchange Rates,YAHOO,D,원
+JPY_KRW,원/엔 환율,JPY/KRW Exchange Rate,환율,Exchange Rates,YAHOO,D,원
+EUR_KRW,원/유로 환율,EUR/KRW Exchange Rate,환율,Exchange Rates,YAHOO,D,원
+CNY_KRW,원/위안 환율 (종가),CNY/KRW Exchange Rate (Close),환율,Exchange Rates,ECOS,D,원
+# ============================================================
+# [11] 해외 주가지수 (Global Stock Indices)
+# ============================================================
+SP500,S&P 500 지수,S&P 500 Index,해외 주가,Global Stocks,YAHOO,D,포인트
+NASDAQ,나스닥 종합지수,NASDAQ Composite Index,해외 주가,Global Stocks,YAHOO,D,포인트
+DowJones,다우존스 산업평균지수,Dow Jones Industrial Average,해외 주가,Global Stocks,YAHOO,D,포인트
+Nikkei225,닛케이 225 지수,Nikkei 225 Index,해외 주가,Global Stocks,YAHOO,D,포인트(엔)
+Shanghai_Composite,상해종합지수,Shanghai Composite Index,해외 주가,Global Stocks,YAHOO,D,포인트
+# ============================================================
+# [12] 원자재 (Commodities)
+# ============================================================
+WTI_crude_oil,WTI 원유 선물,WTI Crude Oil Futures,원자재,Commodities,YAHOO,D,달러/배럴
+brent_crude_oil,브렌트유 선물,Brent Crude Oil Futures,원자재,Commodities,YAHOO,D,달러/배럴
+gold,금 선물,Gold Futures,원자재,Commodities,YAHOO,D,달러/트로이온스
+silver,은 선물,Silver Futures,원자재,Commodities,YAHOO,D,달러/트로이온스
+copper,구리 선물,Copper Futures,원자재,Commodities,YAHOO,D,달러/파운드
+natural_gas,천연가스 선물,Natural Gas Futures,원자재,Commodities,YAHOO,D,달러/MMBtu
+soybean,대두 선물,Soybean Futures,원자재,Commodities,YAHOO,D,센트/부셸
+corn,옥수수 선물,Corn Futures,원자재,Commodities,YAHOO,D,센트/부셸
+# ============================================================
+# [13] 해외 금리 및 변동성 (Global Rates & Volatility)
+# ============================================================
+US_10Y_treasury,미국 10년물 국채 수익률,US 10-Year Treasury Yield,해외 금리,Global Rates,YAHOO,D,연%
+US_3M_tbill,미국 13주 재정증권 수익률,US 13-Week Treasury Bill Yield,해외 금리,Global Rates,YAHOO,D,연%
+DXY_dollar_index,달러 인덱스 (DXY),US Dollar Index (DXY),해외 금리,Global Rates,YAHOO,D,포인트
+VIX,VIX 변동성 지수,CBOE Volatility Index (VIX),변동성,Volatility,YAHOO,D,포인트
+
+# ============================================================
+# [14] 심리, 위험, 스프레드 지표 (Sentiment, Risk, Spread)
+# ============================================================
+BSI_mfg_biz,제조업 업황BSI,BSI Mfg Business,심리,Sentiment,ECOS,M,지수
+BSI_mfg_export,제조업 수출BSI,BSI Mfg Export,심리,Sentiment,ECOS,M,지수
+BSI_mfg_domestic,제조업 내수BSI,BSI Mfg Domestic,심리,Sentiment,ECOS,M,지수
+BSI_nonmfg_biz,비제조업 업황BSI,BSI Non-Mfg Business,심리,Sentiment,ECOS,M,지수
+CSI_composite,소비자심리지수(CCSI),CCSI Composite,심리,Sentiment,ECOS,M,지수
+
+# ============================================================
+# [14] 심리, 위험, 스프레드 지표 (Sentiment, Risk, Spread)
+# ============================================================
+BSI_mfg_biz,제조업 업황BSI,BSI Mfg Business,심리,Sentiment,ECOS,M,지수
+BSI_mfg_export,제조업 수출BSI,BSI Mfg Export,심리,Sentiment,ECOS,M,지수
+BSI_mfg_domestic,제조업 내수BSI,BSI Mfg Domestic,심리,Sentiment,ECOS,M,지수
+BSI_nonmfg_biz,비제조업 업황BSI,BSI Non-Mfg Business,심리,Sentiment,ECOS,M,지수
+CSI_composite,소비자심리지수(CCSI),CCSI Composite,심리,Sentiment,ECOS,M,지수
+CSI_living_prospect,생활형편전망CSI,CSI Living Prospect,심리,Sentiment,ECOS,M,지수
+CP_91d,CP 금리 (91일),CP Rate (91D),금리,Interest Rates,ECOS,D,연%
+MSB_91d,통안증권 금리 (91일),MSB Rate (91D),금리,Interest Rates,ECOS,D,연%
+unsold_housing,미분양 주택수,Unsold Housing,실물위험,Real Risk,PUBLIC,M,호
+unemployment_rate,실업률,Unemployment Rate,실물위험,Real Risk,PUBLIC,M,%
+construction_cost_index,건설공사비지수,Construction Cost Index,실물위험,Real Risk,PUBLIC,M,지수

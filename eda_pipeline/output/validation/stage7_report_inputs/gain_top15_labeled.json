@@ -1,0 +1,186 @@
+{
+  "C1": [
+    {
+      "rank": 1,
+      "feature": "C302_CRI_ORD",
+      "gain_pct": 28.958,
+      "label": "나이스 CRI 신용등급"
+    },
+    {
+      "rank": 2,
+      "feature": "STD_INDS_SECTION",
+      "gain_pct": 3.683,
+      "label": ""
+    },
+    {
+      "rank": 3,
+      "feature": "BUSINESS_AGE",
+      "gain_pct": 3.239,
+      "label": "업력"
+    },
+    {
+      "rank": 4,
+      "feature": "JEMU_126000",
+      "gain_pct": 3.141,
+      "label": "영업외비용"
+    },
+    {
+      "rank": 5,
+      "feature": "JEMU_114000",
+      "gain_pct": 2.867,
+      "label": "비유동자산(계)"
+    },
+    {
+      "rank": 6,
+      "feature": "JEMU_191503_val",
+      "gain_pct": 2.852,
+      "label": ""
+    },
+    {
+      "rank": 7,
+      "feature": "OBV_LD_AM",
+      "gain_pct": 2.76,
+      "label": "대출 금액"
+    },
+    {
+      "rank": 8,
+      "feature": "JEMU_118100",
+      "gain_pct": 2.701,
+      "label": "자본금"
+    },
+    {
+      "rank": 9,
+      "feature": "JEMU_115000",
+      "gain_pct": 2.668,
+      "label": "자산총계"
+    },
+    {
+      "rank": 10,
+      "feature": "JEMU_191310_val",
+      "gain_pct": 2.476,
+      "label": ""
+    },
+    {
+      "rank": 11,
+      "feature": "JEMU_191502_val",
+      "gain_pct": 2.031,
+      "label": ""
+    },
+    {
+      "rank": 12,
+      "feature": "OBV_XPC_LSS_AM",
+      "gain_pct": 1.898,
+      "label": "예상 손실 금액"
+    },
+    {
+      "rank": 13,
+      "feature": "JEMU_125100",
+      "gain_pct": 1.627,
+      "label": "영업외수익"
+    },
+    {
+      "rank": 14,
+      "feature": "JEMU_asset_turnover_avg",
+      "gain_pct": 1.547,
+      "label": ""
+    },
+    {
+      "rank": 15,
+      "feature": "JEMU_112000",
+      "gain_pct": 1.48,
+      "label": "유동자산(계)"
+    }
+  ],
+  "A0": [
+    {
+      "rank": 1,
+      "feature": "STD_INDS_MID2",
+      "gain_pct": 19.228,
+      "label": ""
+    },
+    {
+      "rank": 2,
+      "feature": "C302_MISSING_YN",
+      "gain_pct": 16.713,
+      "label": ""
+    },
+    {
+      "rank": 3,
+      "feature": "C302_CRI_ORD",
+      "gain_pct": 6.851,
+      "label": "나이스 CRI 신용등급"
+    },
+    {
+      "rank": 4,
+      "feature": "JEMU_191310_val",
+      "gain_pct": 4.686,
+      "label": ""
+    },
+    {
+      "rank": 5,
+      "feature": "BUSINESS_AGE",
+      "gain_pct": 3.662,
+      "label": "업력"
+    },
+    {
+      "rank": 6,
+      "feature": "JEMU_191502_val",
+      "gain_pct": 2.929,
+      "label": ""
+    },
+    {
+      "rank": 7,
+      "feature": "OBV_LD_AM",
+      "gain_pct": 2.426,
+      "label": "대출 금액"
+    },
+    {
+      "rank": 8,
+      "feature": "JEMU_115000",
+      "gain_pct": 2.322,
+      "label": "자산총계"
+    },
+    {
+      "rank": 9,
+      "feature": "JEMU_118100",
+      "gain_pct": 2.186,
+      "label": "자본금"
+    },
+    {
+      "rank": 10,
+      "feature": "JEMU_126000",
+      "gain_pct": 2.094,
+      "label": "영업외비용"
+    },
+    {
+      "rank": 11,
+      "feature": "JEMU_191503_val",
+      "gain_pct": 1.814,
+      "label": ""
+    },
+    {
+      "rank": 12,
+      "feature": "JEMU_114000",
+      "gain_pct": 1.638,
+      "label": "비유동자산(계)"
+    },
+    {
+      "rank": 13,
+      "feature": "OBV_XPC_LSS_AM",
+      "gain_pct": 1.592,
+      "label": "예상 손실 금액"
+    },
+    {
+      "rank": 14,
+      "feature": "JEMU_125100",
+      "gain_pct": 1.342,
+      "label": "영업외수익"
+    },
+    {
+      "rank": 15,
+      "feature": "JEMU_123000",
+      "gain_pct": 1.304,
+      "label": "매출총이익(손실)"
+    }
+  ]
+}

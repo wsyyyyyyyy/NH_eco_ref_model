@@ -1,0 +1,268 @@
+{
+  "generated_at": "2026-09-03T19:28:29",
+  "stage_table": [
+    {
+      "n_rows": 951908,
+      "n_firms": 27150,
+      "ym_min": "202101",
+      "ym_max": "202505",
+      "n_months": 53,
+      "n_train": 637611,
+      "n_valid": 314297,
+      "stage": "step2_obv_panel",
+      "desc": "step2 통합 패널 (obv 스파인)",
+      "n_cols": 149,
+      "path": "C:\\Users\\scudy\\OneDrive\\바탕 화면\\sy\\NH AI경진대회\\NH_eco_ref_model\\eda_pipeline\\output\\nh_panel_full_obv.parquet"
+    },
+    {
+      "n_rows": 948214,
+      "n_firms": 27147,
+      "ym_min": "202101",
+      "ym_max": "202505",
+      "n_months": 53,
+      "pos": 9814,
+      "pos_firms": 988,
+      "n_train": 635880,
+      "n_valid": 312334,
+      "stage": "step5_prep",
+      "desc": "step5 전처리 + 12M 타겟 + 부도구간제외 + 우측절단",
+      "n_cols": 146,
+      "path": "C:\\Users\\scudy\\OneDrive\\바탕 화면\\sy\\NH AI경진대회\\NH_eco_ref_model\\eda_pipeline\\output\\nh_panel_prep_obv_none.parquet"
+    },
+    {
+      "n_rows": 948214,
+      "n_firms": 27147,
+      "ym_min": "202101",
+      "ym_max": "202505",
+      "n_months": 53,
+      "pos": 9814,
+      "pos_firms": 988,
+      "n_train": 635880,
+      "n_valid": 312334,
+      "stage": "step6_macro",
+      "desc": "step6 거시 결합 (합성 거시)",
+      "n_cols": 267,
+      "path": "C:\\Users\\scudy\\OneDrive\\바탕 화면\\sy\\NH AI경진대회\\NH_eco_ref_model\\eda_pipeline\\output\\nh_panel_macro_12m_obv_none.parquet"
+    },
+    {
+      "n_rows": 948214,
+      "n_firms": 27147,
+      "ym_min": "202101",
+      "ym_max": "202505",
+      "n_months": 53,
+      "pos": 9814,
+      "pos_firms": 988,
+      "n_train": 635880,
+      "n_valid": 312334,
+      "stage": "step6_macro_real",
+      "desc": "D축 실거시 최종 패널 (채점본 원천)",
+      "n_cols": 265,
+      "path": "C:\\Users\\scudy\\OneDrive\\바탕 화면\\sy\\NH AI경진대회\\NH_eco_ref_model\\eda_pipeline\\output\\nh_panel_macro_12m_obv_none_real.parquet"
+    },
+    {
+      "n_rows": 948214,
+      "n_firms": 27147,
+      "pos": 9814,
+      "pos_firms": 988,
+      "ym_min": "202101",
+      "ym_max": "202505",
+      "n_train": 635880,
+      "n_valid": 312334,
+      "stage": "portal_v2.duckdb",
+      "desc": "채점본 DB",
+      "n_cols": 280,
+      "path": "C:\\Users\\scudy\\OneDrive\\바탕 화면\\sy\\NH AI경진대회\\NH_eco_ref_model\\database\\portal_v2.duckdb"
+    }
+  ],
+  "firm_set_diffs": {
+    "step2_obv_panel__minus__step5_prep": [
+      "1000005069",
+      "1000008109",
+      "1000022097"
+    ],
+    "step5_prep__minus__step6_macro": [],
+    "step6_macro__minus__step6_macro_real": []
+  },
+  "missing_firms_spine_detail": [
+    {
+      "V_BZNO": "1000005069",
+      "n_rows": 2,
+      "ym_min": "202112",
+      "ym_max": "202201"
+    },
+    {
+      "V_BZNO": "1000008109",
+      "n_rows": 6,
+      "ym_min": "202112",
+      "ym_max": "202205"
+    },
+    {
+      "V_BZNO": "1000022097",
+      "n_rows": 7,
+      "ym_min": "202112",
+      "ym_max": "202206"
+    }
+  ],
+  "missing_firms_budo_check": [
+    {
+      "V_BZNO": "1000005069",
+      "in_budo_events": true,
+      "budo_events_rows": [
+        {
+          "V_BZNO": "1000005069",
+          "DEFAULT_YM": "202112",
+          "IS_RECOVERED": "0",
+          "RECOVER_DT": NaN,
+          "DEFAULT_DT": "2021-12-23",
+          "DSH_RSN_CNT": "1",
+          "DSH_RSN_DSC": "41",
+          "RECOVER_YM": NaN
+        }
+      ],
+      "in_raw_budo_txt": true,
+      "raw_budo_rows": [
+        {
+          "V_BZNO": "1000005069",
+          "DSH_DT": "20211223",
+          "DSH_RSN_DSC": "41",
+          "NMLZ_YN": "0",
+          "NMLZ_DT": "0",
+          "BRWR_DSH_YN": "1"
+        }
+      ]
+    },
+    {
+      "V_BZNO": "1000008109",
+      "in_budo_events": true,
+      "budo_events_rows": [
+        {
+          "V_BZNO": "1000008109",
+          "DEFAULT_YM": "202110",
+          "IS_RECOVERED": "0",
+          "RECOVER_DT": NaN,
+          "DEFAULT_DT": "2021-10-01",
+          "DSH_RSN_CNT": "1",
+          "DSH_RSN_DSC": "41",
+          "RECOVER_YM": NaN
+        }
+      ],
+      "in_raw_budo_txt": true,
+      "raw_budo_rows": [
+        {
+          "V_BZNO": "1000008109",
+          "DSH_DT": "20211001",
+          "DSH_RSN_DSC": "41",
+          "NMLZ_YN": "0",
+          "NMLZ_DT": "0",
+          "BRWR_DSH_YN": "1"
+        }
+      ]
+    },
+    {
+      "V_BZNO": "1000022097",
+      "in_budo_events": true,
+      "budo_events_rows": [
+        {
+          "V_BZNO": "1000022097",
+          "DEFAULT_YM": "202110",
+          "IS_RECOVERED": "1",
+          "RECOVER_DT": "2026-03-18",
+          "DEFAULT_DT": "2021-10-23",
+          "DSH_RSN_CNT": "1",
+          "DSH_RSN_DSC": "41",
+          "RECOVER_YM": "202603"
+        }
+      ],
+      "in_raw_budo_txt": true,
+      "raw_budo_rows": [
+        {
+          "V_BZNO": "1000022097",
+          "DSH_DT": "20211023",
+          "DSH_RSN_DSC": "41",
+          "NMLZ_YN": "1",
+          "NMLZ_DT": "20260318",
+          "BRWR_DSH_YN": "1"
+        }
+      ]
+    }
+  ],
+  "positives_reconstruction": {
+    "EXCLUDE_DEFAULT_MONTH": true,
+    "CENSOR_END": "202605",
+    "HORIZON_MONTHS": 12,
+    "a_after_target": {
+      "rows": 951908,
+      "pos": 9985
+    },
+    "b_after_drop_in_default": {
+      "rows": 948214,
+      "pos": 9814
+    },
+    "c_after_censoring": {
+      "rows": 948214,
+      "pos": 9814
+    },
+    "lost_positives": {
+      "n_rows": 171,
+      "n_firms": 55,
+      "ym_min": "202109",
+      "ym_max": "202505",
+      "note": "부도 진행 중(부도월~정상화월) 이면서 12개월 내 다음 부도가 또 있는 행. 재부도 기업의 부도 진행 구간이므로 학습에서 빼야 한다."
+    },
+    "rows_dropped_in_default": 3694,
+    "rows_dropped_censoring": 0
+  },
+  "positives_by_split": {
+    "final_panel_by_split": [
+      {
+        "SPLIT": "TRAIN",
+        "n": 635880,
+        "pos": 5982.0
+      },
+      {
+        "SPLIT": "VALID",
+        "n": 312334,
+        "pos": 3832.0
+      }
+    ],
+    "final_panel_three_way": [
+      {
+        "g": "1_TRAIN_core",
+        "n": 579859,
+        "pos": 5286.0,
+        "neg": 574573.0,
+        "neg_per_pos": 108.69712447975785
+      },
+      {
+        "g": "2_DEV",
+        "n": 56021,
+        "pos": 696.0,
+        "neg": 55325.0,
+        "neg_per_pos": 79.48994252873563
+      },
+      {
+        "g": "3_VALID",
+        "n": 312334,
+        "pos": 3832.0,
+        "neg": 308502.0,
+        "neg_per_pos": 80.50678496868476
+      }
+    ],
+    "scale_pos_weight_crosscheck": {
+      "step38_recorded": 108.6971,
+      "panel_train_core_neg_per_pos": 108.69712447975785,
+      "match": true
+    },
+    "d8_valid_scores": {
+      "n": 312334.0,
+      "pos": 3832.0
+    },
+    "d8_valid_scores_cols": [
+      "V_BZNO",
+      "BASE_YM",
+      "IS_BUDO_12M",
+      "PRED_PROB",
+      "LOG_ODDS"
+    ]
+  }
+}

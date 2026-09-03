@@ -125,8 +125,23 @@ FEATURE_LINEAGE: dict[str, list[str]] = {
 }
 
 
-def _leaky_ancestors(col: str, _seen: set[str] | None = None) -> list[str]:
-    """상류를 재귀적으로 훑어 KNOWN_LEAK 에 걸리는 조상을 모두 반환한다."""
+def _leaky_ancestors(col: str, measured: dict[str, int] | None = None,
+                     _seen: set[str] | None = None) -> list[str]:
+    """상류를 재귀적으로 훑어 **이 패널에서** 누수인 조상을 모두 반환한다.
+
+    ★ [2026-09-02] `measured` 를 받도록 바꿨다.
+
+    KNOWN_LEAK 은 "이 컬럼은 연 단위 조인이다" 라는 **과거 관측의 목록**이다.
+    교정된 패널(B4/B6/B46)을 감사할 때 그 목록을 그대로 쓰면, 월 단위 as-of 로
+    다시 붙여 (기업,연도) 내 변동이 생긴 컬럼도 계속 누수로 남는다.
+    그러면 교정의 효과를 이 진단으로는 볼 수 없다.
+
+    그래서 조상의 누수 여부도 **이 패널에서 실측한 변동 건수**로 판정한다.
+      - 조상이 이 패널에 있고 변동 > 0  -> 교정됨. 누수 아님
+      - 조상이 이 패널에 있고 변동 == 0 -> 누수 유지
+      - 조상이 이 패널에 없다          -> 확인할 수 없으므로 KNOWN_LEAK 을 따른다
+    `measured` 를 주지 않으면 종전과 같이 목록만으로 판정한다.
+    """
     _seen = _seen or set()
     if col in _seen:
         return []
@@ -134,15 +149,17 @@ def _leaky_ancestors(col: str, _seen: set[str] | None = None) -> list[str]:
     out = []
     for parent in FEATURE_LINEAGE.get(col, []):
         if parent in KNOWN_LEAK:
-            out.append(parent)
-        out.extend(_leaky_ancestors(parent, _seen))
+            if measured is None or measured.get(parent, 0) == 0:
+                out.append(parent)
+        out.extend(_leaky_ancestors(parent, measured, _seen))
     return sorted(set(out))
 
 
-def _classify(col: str, n_vary: int, n_distinct: int) -> tuple[str, str]:
+def _classify(col: str, n_vary: int, n_distinct: int,
+              measured: dict[str, int] | None = None) -> tuple[str, str]:
     if n_distinct <= 1:
         return "무분산", "패널 전체에서 값이 1개뿐"
-    bad = _leaky_ancestors(col)
+    bad = _leaky_ancestors(col, measured)
     if bad:
         return "(d) 부분오염", f"상류에 누수 성분: {', '.join(bad)}"
     if n_vary > 0:
@@ -159,11 +176,25 @@ def _classify(col: str, n_vary: int, n_distinct: int) -> tuple[str, str]:
     return "(b) 시점누수?", "변동 0건. 조인 단위 확인 필요"
 
 
-def audit() -> pd.DataFrame:
-    con = config.connect_db("v2")
+def audit(panel: Path | None = None) -> pd.DataFrame:
+    """시점 정합성 감사. `panel` 을 주면 portal_v2 대신 그 parquet 을 본다.
+
+    B4/B6/B46 교정 패널의 (b) 판정이 해소됐는지 보려면 같은 진단을 그 패널에
+    돌려야 한다. portal_v2 는 교정 전 패널이므로 비교 대상이 못 된다.
+    """
+    if panel is not None:
+        if not panel.exists():
+            raise FileNotFoundError(panel)
+        import duckdb
+        con = duckdb.connect()
+        src = f"read_parquet('{panel.as_posix()}')"
+        label = panel.name
+    else:
+        con = config.connect_db("v2")
+        src = config.PANEL_TABLE
+        label = f"portal_v2.{config.PANEL_TABLE}"
     try:
-        cols = con.execute(
-            f"SELECT * FROM {config.PANEL_TABLE} LIMIT 0").df().columns.tolist()
+        cols = con.execute(f"SELECT * FROM {src} LIMIT 0").df().columns.tolist()
         meta = json.loads(
             (config.OUTPUT_DIR / "macro_columns_v2.json").read_text(encoding="utf-8"))
         # 상호작용항은 거시 제외분이지만 (d) 판정 대상이므로 진단에는 포함한다.
@@ -171,24 +202,36 @@ def audit() -> pd.DataFrame:
         feats = [c for c in feature_columns(pd.DataFrame(columns=cols),
                                             extra_exclude=["V_BRANCH_CODE"])
                  if c not in drop]
-        print(f"진단 대상 피처 {len(feats)}개 (거시 {len(drop)}개 제외)\n")
+        print(f"패널 {label}")
+        print(f"진단 대상 피처 {len(feats)}개 (거시 {len(drop)}개 제외)")
+        print()
 
-        rows = []
+        # ── 1차: 전 피처 실측 ────────────────────────────────────
+        # 분류를 나중에 하는 이유는 (d) 부분오염 판정이 **조상의 실측값**을
+        # 필요로 하기 때문이다. 한 번에 분류하면 조상을 아직 재지 않았다.
+        stat = {}
         for i, c in enumerate(feats, 1):
             n_distinct = con.execute(
-                f'SELECT COUNT(DISTINCT "{c}") FROM {config.PANEL_TABLE}').fetchone()[0]
+                f'SELECT COUNT(DISTINCT "{c}") FROM {src}').fetchone()[0]
             n_vary = con.execute(f'''
                 SELECT COUNT(*) FROM (
-                  SELECT V_BZNO FROM {config.PANEL_TABLE}
+                  SELECT V_BZNO FROM {src}
                   GROUP BY V_BZNO, SUBSTR(BASE_YM, 1, 4)
                   HAVING COUNT(DISTINCT "{c}") > 1)''').fetchone()[0]
-            cls, note = _classify(c, n_vary, n_distinct)
-            rows.append(dict(feature=c, n_vary=n_vary, n_distinct=n_distinct,
-                             classification=cls, note=note))
+            stat[c] = (int(n_vary), int(n_distinct))
             if i % 25 == 0:
                 print(f"  ... {i}/{len(feats)}")
     finally:
         con.close()
+
+    # ── 2차: 실측을 근거로 분류 ──────────────────────────────────
+    measured = {c: v[0] for c, v in stat.items()}
+    rows = []
+    for c in feats:
+        n_vary, n_distinct = stat[c]
+        cls, note = _classify(c, n_vary, n_distinct, measured)
+        rows.append(dict(feature=c, n_vary=n_vary, n_distinct=n_distinct,
+                         classification=cls, note=note))
     return pd.DataFrame(rows)
 
 
@@ -217,6 +260,11 @@ def main() -> None:
     ap.add_argument("--changemonth", action="store_true")
     ap.add_argument("--level", action="store_true",
                     help="E1-3: Phase 6 수준·누적 계열 12개 감사")
+    ap.add_argument("--panel", default=None,
+                    help="감사 대상 parquet 경로. 기본은 portal_v2 패널 테이블. "
+                         "B46 교정 패널 재판정에 쓴다")
+    ap.add_argument("--out-suffix", default="",
+                    help="산출 CSV 파일명 접미사 (덮어쓰기 방지)")
     a = ap.parse_args()
     OUT.mkdir(parents=True, exist_ok=True)
 
@@ -241,8 +289,9 @@ def main() -> None:
         df.to_csv(OUT / "jemu_change_month.csv", index=False, encoding="utf-8-sig")
         return
 
-    df = audit()
-    df.to_csv(OUT / "temporal_join_audit.csv", index=False, encoding="utf-8-sig")
+    df = audit(Path(a.panel) if a.panel else None)
+    out_csv = OUT / f"temporal_join_audit{a.out_suffix}.csv"
+    df.to_csv(out_csv, index=False, encoding="utf-8-sig")
 
     print("\n" + "=" * 74)
     print("분류 집계")
@@ -274,7 +323,8 @@ def main() -> None:
     print("=" * 74)
     for _, r in leak.iterrows():
         print(f"  {r['feature']:34s} {r['note']}")
-    print(f"\n저장: {OUT / 'temporal_join_audit.csv'}")
+    print()
+    print(f"저장: {out_csv}")
 
 
 
