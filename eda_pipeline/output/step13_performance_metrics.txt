@@ -1,19 +1,20 @@
-=== STEP 13: Core Performance Metrics (retrained, docs/step29) ===
+=== STEP 13: Core Performance Metrics (lgbm_v2_lean_macro.txt, 59-feature D8 Model) ===
 
 [1] ROC-AUC Score
- - Train AUC : 0.9958
- - Valid AUC : 0.9005
- - Degradation : 0.0953
+ - Train AUC : 0.9970
+ - Valid AUC : 0.8541
+ - Degradation : 0.1429
 
 [2] Gini Index
- - Train Gini: 0.9916 (99.2)
- - Valid Gini: 0.8010 (80.1)
+ - Train Gini: 0.9940 (99.4)
+ - Valid Gini: 0.7082 (70.8)
 
 [3] Kolmogorov-Smirnov (K-S) Statistic
- - Train K-S : 0.9425 (94.3)
- - Valid K-S : 0.6663 (66.6)
+ - Train K-S : 0.9592 (95.9)
+ - Valid K-S : 0.5500 (55.0)
    * Interpretation: > 0.4 (40) indicates excellent separation.
 
 [4] Population Stability Index (PSI)
- - Total PSI : 0.1357
+ - Total PSI : 0.0208
    * Interpretation: < 0.1 (Very Stable), 0.1~0.25 (Monitor), > 0.25 (Unstable, Needs Retraining)
+
