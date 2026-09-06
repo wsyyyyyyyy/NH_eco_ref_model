@@ -46,7 +46,11 @@ def run_simulation(req: SimulationRequest):
     base_prob = model.predict(baseline[features])
     shocked_prob = model.predict(shocked[features])
 
-    industries = baseline['STD_INDS_CFC'].apply(get_industry_name)
+    ind_col = 'STD_INDS_SECTION' if 'STD_INDS_SECTION' in baseline.columns else ('STD_INDS_CFC' if 'STD_INDS_CFC' in baseline.columns else None)
+    if ind_col:
+        industries = baseline[ind_col].apply(get_industry_name)
+    else:
+        industries = pd.Series(['기타 업종'] * len(baseline))
 
     # 산업별 대표 리스크는 평균(mean)이 아닌 중앙값(median)을 사용한다. 부도확률
     # 분포가 극단적으로 오른쪽 꼬리가 긴(소수 초고위험 기업이 40~99%대) 형태라,
