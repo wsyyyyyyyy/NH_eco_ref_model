@@ -109,6 +109,21 @@ def get_feature_row(bzno: str, base_ym: str | None) -> pd.DataFrame:
 
 
 def get_industry_name(code) -> str:
+    if not code or pd.isna(code):
+        return '기타 업종'
+    str_code = str(code).strip().upper()
+    SECTION_MAP = {
+        'A': '농업, 임업 및 어업', 'B': '광업', 'C': '제조업',
+        'D': '전기, 가스 공급업', 'E': '수도, 하수, 폐기물 처리업',
+        'F': '건설업', 'G': '도매 및 소매업', 'H': '운수 및 창고업',
+        'I': '숙박 및 음식점업', 'J': '정보통신업', 'K': '금융 및 보험업',
+        'L': '부동산업', 'M': '전문, 과학 및 기술', 'N': '사업시설 관리 지원업',
+        'O': '공공 행정 및 국방', 'P': '교육 서비스업', 'Q': '보건업 및 사회복지 서비스업',
+        'R': '예술, 스포츠 서비스업', 'S': '협회 및 개인 서비스업'
+    }
+    if str_code in SECTION_MAP:
+        return SECTION_MAP[str_code]
+
     try:
         division = int(str(int(float(code))).zfill(5)[:2])
     except (ValueError, TypeError):
@@ -284,5 +299,51 @@ def apply_macro_shock(df: pd.DataFrame, interest_rate: float, exchange_rate: flo
         shocked['copper_vol_m_ma3m'] = shocked['copper_vol_m_ma3m'] + abs(commodity_log_ret) * 20.0
     if 'silver_vol_m_ma3m' in shocked.columns:
         shocked['silver_vol_m_ma3m'] = shocked['silver_vol_m_ma3m'] + abs(commodity_log_ret) * 20.0
+
+    # ── [2026-09-06] lgbm_v2_lean_macro.txt 서빙 모델 전용: 14개 상호작용항(ix_*) 갱신 ──
+    is_mfg = (shocked['STD_INDS_SECTION'] == 'C').astype(float) if 'STD_INDS_SECTION' in shocked.columns else 0.0
+    exp_young = (shocked['BUSINESS_AGE'] <= 5).astype(float) if 'BUSINESS_AGE' in shocked.columns else 0.0
+
+    if 'ix_KORIBOR_spread_d12__liq' in shocked.columns and 'exp_liq' in shocked.columns:
+        shocked['ix_KORIBOR_spread_d12__liq'] = shocked['ix_KORIBOR_spread_d12__liq'] + interest_rate_pp * shocked['exp_liq']
+
+    if 'ix_export_index__mfg' in shocked.columns:
+        shocked['ix_export_index__mfg'] = shocked['ix_export_index__mfg'] + gdp_growth * is_mfg
+
+    if 'ix_current_account_quarterly__mfg' in shocked.columns:
+        shocked['ix_current_account_quarterly__mfg'] = shocked['ix_current_account_quarterly__mfg'] + gdp_growth * is_mfg
+
+    if 'ix_CPI_food_nonalcohol__rate' in shocked.columns and 'exp_rate' in shocked.columns:
+        shocked['ix_CPI_food_nonalcohol__rate'] = shocked['ix_CPI_food_nonalcohol__rate'] + inflation * shocked['exp_rate']
+
+    if 'ix_unsold_housing__mfg' in shocked.columns:
+        shocked['ix_unsold_housing__mfg'] = shocked['ix_unsold_housing__mfg'] - gdp_growth * 5.0 * is_mfg
+
+    if 'ix_BSI_mfg_domestic__mfg' in shocked.columns:
+        shocked['ix_BSI_mfg_domestic__mfg'] = shocked['ix_BSI_mfg_domestic__mfg'] + gdp_growth * 2.0 * is_mfg
+
+    if 'ix_CSI_composite__young' in shocked.columns:
+        shocked['ix_CSI_composite__young'] = shocked['ix_CSI_composite__young'] + gdp_growth * 2.0 * exp_young
+
+    if 'ix_soybean_vol__inv' in shocked.columns and 'exp_inv' in shocked.columns:
+        shocked['ix_soybean_vol__inv'] = shocked['ix_soybean_vol__inv'] + abs(commodity_log_ret) * 30.0 * shocked['exp_inv']
+
+    if 'ix_gold_ret__inv' in shocked.columns and 'exp_inv' in shocked.columns:
+        shocked['ix_gold_ret__inv'] = shocked['ix_gold_ret__inv'] + commodity_log_ret * shocked['exp_inv']
+
+    if 'ix_Shanghai_Composite_ret__mfg' in shocked.columns:
+        shocked['ix_Shanghai_Composite_ret__mfg'] = shocked['ix_Shanghai_Composite_ret__mfg'] + kospi_log_ret * is_mfg
+
+    if 'ix_CNY_KRW_vol__mfg' in shocked.columns:
+        shocked['ix_CNY_KRW_vol__mfg'] = shocked['ix_CNY_KRW_vol__mfg'] + abs(fx_log_ret) * 0.5 * is_mfg
+
+    if 'ix_EUR_KRW_vol__mfg' in shocked.columns:
+        shocked['ix_EUR_KRW_vol__mfg'] = shocked['ix_EUR_KRW_vol__mfg'] + abs(eur_log_ret) * 30.0 * is_mfg
+
+    if 'ix_CNY_KRW_ret__fx_hybrid' in shocked.columns and 'exp_fx_hybrid' in shocked.columns:
+        shocked['ix_CNY_KRW_ret__fx_hybrid'] = shocked['ix_CNY_KRW_ret__fx_hybrid'] + fx_log_ret * shocked['exp_fx_hybrid']
+
+    if 'ix_JPY_KRW_ret__mfg' in shocked.columns:
+        shocked['ix_JPY_KRW_ret__mfg'] = shocked['ix_JPY_KRW_ret__mfg'] + fx_log_ret * is_mfg
 
     return shocked
