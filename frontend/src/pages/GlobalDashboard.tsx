@@ -84,11 +84,27 @@ const PredictionVenn = ({ pc }: { pc: any }) => {
   );
 };
 
-export default function GlobalDashboard({ baseYm = '202402' }: { baseYm?: string }) {
+export default function GlobalDashboard({ baseYm = '202505' }: { baseYm?: string }) {
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [useRealData, setUseRealData] = useState(true);
   const [predictionComparison, setPredictionComparison] = useState<any>(null);
+  const [availableMonths, setAvailableMonths] = useState<string[]>([]);
+  const [selectedMonth, setSelectedMonth] = useState<string>(baseYm);
+
+  useEffect(() => {
+    fetch(`${API_BASE_URL}/api/dashboard/months`)
+      .then(res => res.json())
+      .then(d => {
+        if (d.months && d.months.length > 0) {
+          setAvailableMonths(d.months);
+          if (!selectedMonth || selectedMonth === '202402') {
+            setSelectedMonth(d.months[0]);
+          }
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     if (!useRealData) {
@@ -104,7 +120,7 @@ export default function GlobalDashboard({ baseYm = '202402' }: { baseYm?: string
   useEffect(() => {
     setLoading(true);
     if (useRealData) {
-      fetch(`${API_BASE_URL}/api/dashboard/summary?base_ym=${baseYm}`)
+      fetch(`${API_BASE_URL}/api/dashboard/summary?base_ym=${selectedMonth}`)
         .then(res => res.json())
         .then(d => {
           setData(d);
@@ -117,21 +133,11 @@ export default function GlobalDashboard({ baseYm = '202402' }: { baseYm?: string
     } else {
       setTimeout(() => {
           let d = JSON.parse(JSON.stringify(globalMock));
-          if (baseYm === '202401') {
-              d.total_companies = Math.floor(d.total_companies * 0.95);
-              d.risk_companies = Math.floor(d.risk_companies * 0.92);
-              d.grade_distribution.forEach((g: any) => g.cnt = Math.floor(g.cnt * 0.95));
-          } else if (baseYm === '202312') {
-              d.total_companies = Math.floor(d.total_companies * 0.90);
-              d.risk_companies = Math.floor(d.risk_companies * 0.85);
-              d.grade_distribution.forEach((g: any) => g.cnt = Math.floor(g.cnt * 0.90));
-          }
-
           setData(d);
           setLoading(false);
       }, 200);
     }
-  }, [baseYm, useRealData]);
+  }, [selectedMonth, useRealData]);
 
   if (loading) return <div className="p-6">Loading Data...</div>;
   if (!data) return <div className="p-6">Error loading data.</div>;
@@ -139,13 +145,33 @@ export default function GlobalDashboard({ baseYm = '202402' }: { baseYm?: string
   const safeCount = data.total_companies - data.risk_companies;
   const riskRatio = ((data.risk_companies / data.total_companies) * 100).toFixed(1);
 
-
   return (
     <div className="flex-col" style={{gap: '24px'}}>
       <div className="flex-row" style={{justifyContent: 'space-between', marginBottom: '8px', alignItems: 'center'}}>
         <div className="flex-col" style={{gap: '8px'}}>
           <h1 className="font-bold">글로벌 뱅크 뷰</h1>
-          <p className="font-regular">전체 은행 관점의 포트폴리오 리스크 요약 (기준일: {baseYm})</p>
+          <div className="flex-row" style={{alignItems: 'center', gap: '12px'}}>
+            <p className="font-regular" style={{margin: 0}}>전체 은행 관점의 포트폴리오 리스크 요약</p>
+            {availableMonths.length > 0 && (
+              <select
+                value={selectedMonth}
+                onChange={(e) => setSelectedMonth(e.target.value)}
+                style={{
+                  padding: '4px 10px',
+                  borderRadius: '6px',
+                  border: '1px solid var(--border-color)',
+                  backgroundColor: 'var(--bg-card)',
+                  fontSize: '13px',
+                  fontWeight: 600,
+                  cursor: 'pointer'
+                }}
+              >
+                {availableMonths.map(m => (
+                  <option key={m} value={m}>기준월: {m}</option>
+                ))}
+              </select>
+            )}
+          </div>
         </div>
         <button 
           onClick={() => setUseRealData(!useRealData)}
@@ -173,13 +199,13 @@ export default function GlobalDashboard({ baseYm = '202402' }: { baseYm?: string
         <div className="card flex-col">
           <div className="flex-row" style={{gap: '8px', marginBottom: '16px'}}>
             <Users size={20} color="var(--primary)" />
-            <span className="font-semibold" style={{color: 'var(--text-muted)'}}>관측 대상 전체 기업 수</span>
+            <span className="font-semibold" style={{color: 'var(--text-muted)'}}>선택 기준월 관측 차주 수</span>
           </div>
           <div className="flex-row" style={{alignItems: 'baseline', gap: '8px'}}>
             <div className="font-extrabold" style={{fontSize: '36px'}}>{data.total_companies.toLocaleString()}</div>
             <span className="font-medium" style={{color: 'var(--text-muted)'}}>개사</span>
           </div>
-          <p className="font-regular" style={{marginTop: '12px', fontSize: '12px'}}>전체 관측기간(2021.01~2026.06) 내내 데이터가 있는 고정 패널 — 기준월을 바꿔도 동일</p>
+          <p className="font-regular" style={{marginTop: '12px', fontSize: '12px'}}>선택 기준월({selectedMonth}) 단일 시점 관측 차주 (전체 53개월 패널 통산 유일 차주는 총 27,147개사)</p>
         </div>
         
         <div className="card card-danger flex-col">
